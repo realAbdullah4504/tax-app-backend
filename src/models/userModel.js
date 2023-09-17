@@ -1,32 +1,51 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { JWT_SECRET } = require('../../config/vars'); // Import JWT_SECRET from vars.js
+const validator = require("validator");
+const { JWT_SECRET } = require('../../config/vars');
 
 const userSchema = new mongoose.Schema({
-  username: {
+  firstName: {
     type: String,
-    required: [true, 'Username is required'],
-    unique: true,
+    // required: [true, "please provide your first name."],
+  },
+  surName: {
+    type: String,
+    // required: [true, "please provide your surname."],
   },
   email: {
     type: String,
-    required: [true, 'Email is required'],
     unique: true,
+    // required: [true, "please provide your email."],
     lowercase: true,
-    validate: {
-      validator: function (value) {
-        // Simple email validation
-        return /\S+@\S+\.\S+/.test(value);
-      },
-      message: 'Invalid email address',
-    },
+    // validate: [validator.isEmail, "please provide a valid email."],
+  },
+  phoneNumber: {
+    type: String,
+    // required: [true, "please provide your phone."],
   },
   password: {
     type: String,
-    required: [true, 'Password is required'],
+    // required: [true, 'Password is required'],
     minlength: [6, 'Password must be at least 6 characters long'],
     select: false,
+  },
+  verificationCode: {
+    type: Number,
+    default: null,
+  },
+  tob:{
+    type: Boolean,
+    // required: [true, "please provide tob"],
+  },
+  taxAgent:{
+    type: Boolean,
+    // required: [true, "please provide tob"],
+  },
+  isActive: {
+    type: Boolean,
+    required: [true, '2FA with SMS is required'],
+    default: false
   },
 });
 
@@ -46,6 +65,11 @@ userSchema.pre('save', async function (next) {
 userSchema.methods.isValidPassword = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
+
+userSchema.pre(/^find/, function (next) {
+  this.find({isActive :{$ne:false}})
+  next()
+});
 
 // Token generation method
 userSchema.methods.generateToken = function () {

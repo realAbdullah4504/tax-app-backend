@@ -6,13 +6,9 @@ const cryptoService = require('../services/cryptoService');
 
 const router = express.Router();
 
-router.post('/sample-route', (req, res) => {
-    console.log("🚀 ~ file: apiRoutes.js:16 ~ router.post ~ req.body:", req.body)
-    res.status(200).json({ message: "congratulations, data transmitted successfully!", data: "success"})
-});
 router.post('/register', createUserValidator, UserController.registerUser);
-router.post('/verify-code', verifyCodeValidator, UserController.verifyCode);
-router.post('/login', loginUserValidator, UserController.loginUser);
+router.post('/verify-code', [authenticate, verifyCodeValidator], UserController.verifyCode);
+router.post('/login', [authenticate, loginUserValidator], UserController.loginUser);
 
 
 // Protected route using the authenticate middleware

@@ -1,8 +1,9 @@
 const mongoose = require('mongoose');
+const { MONGODB_URI } = require('../config/vars');
 
 const connectDB = async () => {
   try {
-    await mongoose.connect('mongodb://localhost/node-test-app', {
+    await mongoose.connect(MONGODB_URI, {
       useNewUrlParser: true,
       useUnifiedTopology: true,
     });
