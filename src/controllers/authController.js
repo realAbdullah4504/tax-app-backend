@@ -1,9 +1,10 @@
 const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
-const createAppError = require("../utils/helper/appError");
 const User = require("../models/userModel");
+const UserService = require('../services/userService');
 const AppError = require('../errors/AppError');
-const { JWT_SECRE, JWT_COOKIE_EXPIRE_IN, NODE_ENV } = require('../../config/vars');
+const { validationResult } = require('express-validator');
+const { JWT_COOKIE_EXPIRE_IN, NODE_ENV } = require('../../config/vars');
 const sendAppResponse = require("../utils/helper/appResponse");
 
 const signUpToken = (id) => {
@@ -12,7 +13,7 @@ const signUpToken = (id) => {
   });
 };
 
-exports.createSendToken = (user, statusCode, res, msg='') => {
+const createSendToken = (user, statusCode, res, msg='') => {
   console.log("createSendToken func call!", user)
   if (!user) throw new AppError('Something went wrong', 500);
 
@@ -44,14 +45,25 @@ exports.createSendToken = (user, statusCode, res, msg='') => {
   // });
 };
 
-// exports.signUp = async (user, statusCode, res) => {
-//   try {
-//     createSendToken(user, statusCode, res);
-//   } catch (error) {
-//     console.log("error ", error);
-//     throw new AppError('Token generation failed', 201);
-//   }
-// };
+exports.signUp = async(req, res, next) => {
+    try {
+      const errors = validationResult(req);
+      if (!errors.isEmpty()) {
+        throw new AppError('Validation failed', 400);
+      }
+      const { email, phoneNumber } = req.body;
+      const existUser = await UserService.userExists({ email, phoneNumber });
+      if(existUser) sendAppResponse({res, statusCode:200, status:'success', message:'User already register.'})
+       const userData =  await UserService.registerUser(req.body);
+          // Send SMS code to mobile number and save reg record into db
+        const verificationCode = await UserService.sendVerificationCode(phoneNumber);
+        if (!verificationCode)  throw new AppError('Something went wrong to generate verification code', 500);
+          const respMsg = 'Registration is successful! Please activate your account using the verification code sent to your registered phone number';
+          createSendToken(userData, 200, res, respMsg);
+    } catch (error) {
+      next(error);
+    }
+};
 
 exports.logIn = async (req, res, next) => {
   try {

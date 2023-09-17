@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const connectDB = require("../config/db");
 const apiRoutes = require("./routes/apiRoutes");
+const userRoutes = require("./routes/userRoutes");
 const { PORT, NODE_ENV } = require("../config/vars");
 const cryptoService = require("./services/cryptoService");
 const errorHandler = require("./middlewares/errorHandler");
@@ -80,9 +81,9 @@ app.use("/api", (req, res, next) => {
   
     next();
   });
-
 // Define your API routes
 app.use("/api", apiRoutes);
+app.use("/api/v1/users", userRoutes);
 
 // Apply your errorHandler middleware
 app.use(errorHandler);

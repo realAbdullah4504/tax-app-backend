@@ -1,6 +1,6 @@
 const sendAppResponse = (data = {}) => {
   const { res, statusCode, status, ...rest } = data;
-  res.status(statusCode).json({
+ return res.status(statusCode).json({
     status,
     statusCode,
     ...rest,

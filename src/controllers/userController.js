@@ -7,34 +7,19 @@ const User = require('../models/userModel');
 const UserController = {
   async registerUser(req, res, next) {
     try {
-      console.log("Reg Body ==> ", req.body);
       const errors = validationResult(req);
-      console.log("Error msgs list:  ", errors.array());
       if (!errors.isEmpty()) {
         throw new AppError('Validation failed', 400);
       }
-
-      const { firstName, surName, email, phoneNumber, password } = req.body;
+      const { email, phoneNumber } = req.body;
       const existUser = await UserService.userExists({ email, phoneNumber });
-      console.log("existUser ", existUser);
-      if (!existUser) {
-        // Send SMS code to mobile number and save reg record into db
-        const verificationCode = await UserService.sendVerificationCode({phoneNumber});
-        if (verificationCode) {
-        const userData =  await UserService.registerUser(req.body);
-
-          // const userData = await UserService.findUserByEmail(email);
-          console.log("get user data ==> ", userData);
+      if(existUser) sendAppResponse({res, statusCode:200, status:'success', message:'User already register.'})
+       const userData =  await UserService.registerUser(req.body);
+          // Send SMS code to mobile number and save reg record into db
+        const verificationCode = await UserService.sendVerificationCode(phoneNumber);
+        if (!verificationCode)  throw new AppError('Something went wrong to generate verification code', 500);
           const respMsg = 'Registration is successful! Please activate your account using the verification code sent to your registered phone number';
           createSendToken(userData, 200, res, respMsg);
-          // res.json({ message: 'Registration is successful! Please activate your account using the verification code sent to your registered phone number' });
-        } else {
-          throw new AppError('Something went wrong to generate verification code', 500);
-        }
-      } else {
-        res.json({ message: 'User already registered' });
-      }
-
     } catch (error) {
       next(error);
     }
