@@ -79,7 +79,14 @@ const UserService = {
   },
 
   async findUserByPhone(phoneNumber) {
-    return User.findOne({ phoneNumber }); //.select('+password');
+    return await User.findOne({ phoneNumber }); //.select('+password');
+  },
+
+  async findUserById(id) {
+    console.log("User id => ", id);
+    const resp = await User.findById(id); //.select('+password');
+    console.log("User resp is : ", resp);
+    return resp;
   },
 
   async authenticateUser(email, password) {
@@ -101,8 +108,7 @@ const UserService = {
         return null;
       }
 
-      const token = this.generateToken(user);
-      return token;
+      return user;
     } catch (error) {
       throw error;
     }

@@ -1,18 +1,13 @@
 const express = require('express');
-const { createUserValidator, verifyCodeValidator, loginUserValidator } = require('../middlewares/validators');
 const UserController = require('../controllers/userController');
 const { authenticate } = require('../middlewares/auth');
-const cryptoService = require('../services/cryptoService');
 
 const router = express.Router();
 
 router.post('/sample-route', (req, res) => {
     console.log("🚀 ~ file: apiRoutes.js:16 ~ router.post ~ req.body:", req.body)
-    res.status(200).json({ message: "congratulations, data transmitted successfully!", data: "success"})
+    res.status(200).json({ message: "congratulations, data transmitted successfully!", data: "success" })
 });
-router.post('/register', createUserValidator, UserController.registerUser);
-router.post('/verify-code', verifyCodeValidator, UserController.verifyCode);
-router.post('/login', loginUserValidator, UserController.loginUser);
 
 
 // Protected route using the authenticate middleware

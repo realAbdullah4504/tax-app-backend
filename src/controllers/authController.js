@@ -1,10 +1,9 @@
-const crypto = require("crypto");
 const jwt = require("jsonwebtoken");
 const User = require("../models/userModel");
 const UserService = require('../services/userService');
 const AppError = require('../errors/AppError');
 const { validationResult } = require('express-validator');
-const { JWT_COOKIE_EXPIRE_IN, NODE_ENV } = require('../../config/vars');
+const { JWT_SECRET, JWT_COOKIE_EXPIRE_IN, NODE_ENV } = require('../../config/vars');
 const sendAppResponse = require("../utils/helper/appResponse");
 
 const signUpToken = (id) => {
@@ -13,7 +12,7 @@ const signUpToken = (id) => {
   });
 };
 
-const createSendToken = (user, statusCode, res, msg='') => {
+const createSendToken = (user, statusCode, res, msg = '') => {
   console.log("createSendToken func call!", user)
   if (!user) throw new AppError('Something went wrong', 500);
 
@@ -26,8 +25,7 @@ const createSendToken = (user, statusCode, res, msg='') => {
   };
   if (NODE_ENV === "production") cookieOptions.secure = true;
   res.cookie("jwt", token, cookieOptions);
-  // user.password = undefined;
-  delete user?.password;
+  user.password = undefined;
 
   sendAppResponse({
     res,
@@ -36,196 +34,73 @@ const createSendToken = (user, statusCode, res, msg='') => {
     status: "success",
     data: user,
     message: msg
-})
-
-  // res.status(statusCode).json({
-  //   status: "success",
-  //   token,
-  //   data: user,
-  // });
+  })
 };
 
-exports.signUp = async(req, res, next) => {
-    try {
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
-        throw new AppError('Validation failed', 400);
-      }
-      const { email, phoneNumber } = req.body;
-      const existUser = await UserService.userExists({ email, phoneNumber });
-      if(existUser) sendAppResponse({res, statusCode:200, status:'success', message:'User already register.'})
-       const userData =  await UserService.registerUser(req.body);
-          // Send SMS code to mobile number and save reg record into db
-        const verificationCode = await UserService.sendVerificationCode(phoneNumber);
-        if (!verificationCode)  throw new AppError('Something went wrong to generate verification code', 500);
-          const respMsg = 'Registration is successful! Please activate your account using the verification code sent to your registered phone number';
-          createSendToken(userData, 200, res, respMsg);
-    } catch (error) {
-      next(error);
-    }
+exports.sendTokenToClient = async (req, res, next) => {
+  createSendToken(req, res, next);
 };
 
-exports.logIn = async (req, res, next) => {
+exports.signUp = async (req, res, next) => {
   try {
+    const errors = validationResult(req);
+    console.log("errors ", errors);
+    if (!errors.isEmpty()) {
+      throw new AppError('Validation failed', 400);
+    }
+    const { email, phoneNumber } = req.body;
+    const existUser = await UserService.userExists({ email, phoneNumber });
+    if (existUser) sendAppResponse({ res, statusCode: 200, status: 'success', message: 'User already register.' })
+    const userData = await UserService.registerUser(req.body);
+    // Send SMS code to mobile number and save reg record into db
+    const verificationCode = await UserService.sendVerificationCode(phoneNumber);
+    if (!verificationCode) throw new AppError('Something went wrong to generate verification code', 500);
+    userData.verificationCode = verificationCode;
+    await userData.save();
+
+    const respMsg = 'Registration is successful! Please activate your account using the verification code sent to your registered phone number';
+    createSendToken(userData, 200, res, respMsg);
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.verifyCode = async (req, res, next) => {
+  try {
+    const { code } = req.body;
+    const user = req.user;
+    const userData = await UserService.findUserById(user._id);
+    const isValid = userData?.verificationCode === parseInt(code);
+    if (!isValid) throw new AppError('Your code is invalid', 500);
+    const updateData = { verificationCode: null, active: true };
+    // update the current user data
+    await User.findByIdAndUpdate(userData?.id, updateData, {
+      new: false,
+      runValidator: true,
+    });
+    sendAppResponse({ res, statusCode: 200, status: 'success', message: 'Your account has been active successfully.' });
+  } catch (error) {
+    next(error);
+  }
+}
+
+exports.loginUser = async (req, res, next) => {
+  try {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      throw new AppError('Validation failed', 400);
+    }
+
     const { email, password } = req.body;
 
-    // check if email and password exist
-    if (!email || !password) {
-      throw createAppError("Please provide email and password", 404);
+    const user = await UserService.loginUser(email, password);
+    if (!user) {
+      throw new AppError('Invalid credentials', 401);
     }
 
-    // check if user exist and password is correct
-    const user = await User.findOne({ email }).select("+password");
-    const isCorrectPassword = await user.correctPassword(
-      password,
-      user?.password
-    );
-
-    if (!user || !isCorrectPassword) {
-      throw createAppError("Incorrect email and password", 401);
-    }
-
-    // if everything is ok, send token to client
-    createSendToken(user, 200, res);
-  } catch (error) {
-    next(error);
-  }
-};
-exports.authentication = async (req, res, next) => {
-  try {
-    let token;
-    // 1) Getting token and check if it's there
-    if (
-      req?.headers?.authorization &&
-      req?.headers?.authorization.startsWith("Bearer")
-    ) {
-      token = req?.headers?.authorization.split(" ")[1];
-    }
-    if (!token) {
-      throw createAppError(
-        "You are not logged in! so please login to get access",
-        401
-      );
-    }
-    // 2) Verification Token
-    const decoded = jwt.verify(token, JWT_SECRET);
-    // 3) check if user still exist
-    const user = await User.findById(decoded.id);
-    if (!user) {
-      throw createAppError(
-        "The user belonging to this token does no longer exist",
-        401
-      );
-    }
-    // 4) check if user changed password after the token was issued
-    if (user.changePasswordAfter(decoded.iat)) {
-      throw createAppError(
-        "The user changed password. please login again",
-        401
-      );
-    }
-    req.user = user;
-    next();
-  } catch (error) {
-    next(error);
-  }
-};
-exports.authorization = (roles) => {
-  return (req, res, next) => {
-    try {
-      if (!roles.includes(req.user.role)) {
-        throw createAppError(
-          "You don't have permission to perform this action.",
-          403
-        );
-      }
-    } catch (error) {
-      next(error);
-    }
-  };
-};
-exports.forgetPassword = async (req, res, next) => {
-  try {
-    const { email } = req.body;
-    const user = await User.findOne({ email });
-    if (!user) {
-      throw createAppError("There is no user with the email address.", 404);
-    }
-    const resetToken = user.createPasswordResetToken();
-    await user.save({ validateBeforeSave: false });
-    const resetUrl = `${req.protocol}://${req.get(
-      "host"
-    )}/api/v1/users/resetPassword/${resetToken}`;
-    const message = `Forget your password submit a PATCH request with your new password and confirmPassword to: ${resetUrl}.\n if you didn't forget password, ignore this email`;
-    //  try {
-    //   await sendEmail({
-    //     email,
-    //     subject:'Your password reset token (valid 10 minutes)',
-    //     message
-    //   })
-    //   res.status(200).json({
-    //     statusCode: 200,
-    //     status: 'success',
-    //     resetToken,
-    //   });
-    //  } catch (err) {
-    //   user.passwordResetToken = undefined;
-    //   user.passwordResetExpiry = undefined;
-    //   await user.save({ validateBeforeSave: false });
-    //   throw createAppError('There is an error sending email. Try again', 500);
-    //  return next(err)
-    //  }
-    res.status(200).json({ status: "success", resetToken });
-  } catch (error) {
-    next(error);
-  }
-};
-exports.resetPassword = async (req, res, next) => {
-  try {
-    // 1 Get user based on the token
-    const hashedToken = crypto
-      .createHash("sha256")
-      .update(req.params.token)
-      .digest("hex");
-    const user = await User.findOne({
-      passwordResetToken: hashedToken,
-      passwordResetExpiry: { $gt: Date.now() },
-    });
-    // 2 if token is not expired, there is a user, set new password
-    if (!user) {
-      throw createAppError("Token is invalid or expired.", 400);
-    }
-    // 3 update the changePasswordAt property for the user
-    user.password = req.body.password;
-    user.passwordConfirm = req.body.passwordConfirm;
-    user.passwordResetToken = undefined;
-    user.passwordResetExpiry = undefined;
-    await user.save();
-    // 4 log the user in, send jwt
-    createSendToken(user, 201, res);
-  } catch (error) {
-    next(error);
-  }
-};
-exports.updatePassword = async (req, res, next) => {
-  try {
-    const { currentPassword, password, passwordConfirm } = req.body;
-    // Get user from DB
-    const user = await User.findById(req.user.id).select("+password");
-    // Check current password is correct
-    const isCorrectPassword = await user.correctPassword(
-      currentPassword,
-      user?.password
-    );
-    if (!isCorrectPassword) {
-      throw createAppError("Your password id wrong", 401);
-    }
-    // update password
-    user.password = password;
-    user.passwordConfirm = passwordConfirm;
-    await user.save();
-    // send token
-    createSendToken(user, 201, res);
+    const token = signUpToken(user?._id);
+    user.password = undefined;
+    sendAppResponse({ res, statusCode: 200, status: 'success', token, data: user });
   } catch (error) {
     next(error);
   }

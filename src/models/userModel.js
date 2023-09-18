@@ -66,10 +66,10 @@ userSchema.methods.isValidPassword = async function (password) {
   return await bcrypt.compare(password, this.password);
 };
 
-userSchema.pre(/^find/, function (next) {
-  this.find({isActive :{$ne:false}})
-  next()
-});
+// userSchema.pre(/^find/, function (next) {
+//   this.find({isActive :{$ne:false}})
+//   next()
+// });
 
 // Token generation method
 userSchema.methods.generateToken = function () {
