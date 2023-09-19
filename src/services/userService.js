@@ -51,7 +51,6 @@ const UserService = {
 
   async sendVerificationCode(phoneNumber) {
     try {
-      console.log("API Call.!! ", phoneNumber);
       const verificationCode = Math.floor(Math.random() * 900000) + 100000;  // Generate a 6-digit code
   
       // Perform the Twilio API call
@@ -60,9 +59,7 @@ const UserService = {
         to: phoneNumber,
         from: TWILIO_PHONE_NUMBER
       });
-  
       if (response.status === "queued" || response.status === "sent") {
-        console.log("Verification code sent successfully.");
         return verificationCode;
       } else {
         console.error("Failed to send verification code:", response.status);
@@ -83,9 +80,7 @@ const UserService = {
   },
 
   async findUserById(id) {
-    console.log("User id => ", id);
     const resp = await User.findById(id); //.select('+password');
-    console.log("User resp is : ", resp);
     return resp;
   },
 

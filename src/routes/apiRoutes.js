@@ -5,7 +5,6 @@ const { authenticate } = require('../middlewares/auth');
 const router = express.Router();
 
 router.post('/sample-route', (req, res) => {
-    console.log("🚀 ~ file: apiRoutes.js:16 ~ router.post ~ req.body:", req.body)
     res.status(200).json({ message: "congratulations, data transmitted successfully!", data: "success" })
 });
 

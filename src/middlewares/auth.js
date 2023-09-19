@@ -8,9 +8,6 @@ const authenticate = async (req, res, next) => {
   try {
     const token = req.header('Authorization').replace('Bearer ', '');
     const decodedToken = jwt.verify(token, JWT_SECRET);
-    console.log("Token is ==> ", token);
-
-    console.log(JWT_SECRET, "decodedToken ", decodedToken);
 
     if (!decodedToken) {
       throw new AppError('Not authorized', 401);

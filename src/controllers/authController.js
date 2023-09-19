@@ -6,7 +6,7 @@ const { validationResult } = require('express-validator');
 const { JWT_SECRET, JWT_COOKIE_EXPIRE_IN, NODE_ENV } = require('../../config/vars');
 const sendAppResponse = require("../utils/helper/appResponse");
 
-const signUpToken = (id) => {
+const generateToken = (id) => {
   return jwt.sign({ id }, JWT_SECRET, {
     expiresIn: '2d',
   });
@@ -16,7 +16,7 @@ const createSendToken = (user, statusCode, res, msg = '') => {
   console.log("createSendToken func call!", user)
   if (!user) throw new AppError('Something went wrong', 500);
 
-  const token = signUpToken(user?._id);
+  const token = generateToken(user?._id);
   const cookieOptions = {
     expiresIn: new Date(
       Date.now() + JWT_COOKIE_EXPIRE_IN * 24 * 60 * 60 * 1000
@@ -44,7 +44,6 @@ exports.sendTokenToClient = async (req, res, next) => {
 exports.signUp = async (req, res, next) => {
   try {
     const errors = validationResult(req);
-    console.log("errors ", errors);
     if (!errors.isEmpty()) {
       throw new AppError('Validation failed', 400);
     }
@@ -84,7 +83,7 @@ exports.verifyCode = async (req, res, next) => {
   }
 }
 
-exports.loginUser = async (req, res, next) => {
+exports.login = async (req, res, next) => {
   try {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
@@ -98,7 +97,7 @@ exports.loginUser = async (req, res, next) => {
       throw new AppError('Invalid credentials', 401);
     }
 
-    const token = signUpToken(user?._id);
+    const token = generateToken(user?._id);
     user.password = undefined;
     sendAppResponse({ res, statusCode: 200, status: 'success', token, data: user });
   } catch (error) {
