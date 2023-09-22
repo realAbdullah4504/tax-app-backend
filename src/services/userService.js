@@ -6,7 +6,7 @@ const { JWT_SECRET, ACCOUNT_SID, AUTH_TOKEN, TWILIO_PHONE_NUMBER } = require('..
 const AppError = require('../errors/AppError');
 
 
-const client = new twilio(ACCOUNT_SID, AUTH_TOKEN);
+
 
 const filterObj = (obj = {}, allowedFields = []) => {
   const newObj = {};
@@ -51,20 +51,10 @@ const UserService = {
 
   async sendVerificationCode(phoneNumber) {
     try {
-      const verificationCode = Math.floor(Math.random() * 900000) + 100000;  // Generate a 6-digit code
-  
-      // Perform the Twilio API call
-      const response = await client.messages.create({
-        body: `Your verification code is: ${verificationCode}`,
-        to: phoneNumber,
-        from: TWILIO_PHONE_NUMBER
-      });
-      if (response.status === "queued" || response.status === "sent") {
-        return verificationCode;
-      } else {
-        console.error("Failed to send verification code:", response.status);
-        throw new Error("Failed to send verification code.");
-      }
+      const client = new twilio(ACCOUNT_SID, AUTH_TOKEN);
+     const verification = await client.verify.v2
+      .services("VAeac7d28abd2938940f158d04ba189843")
+      .verifications.create({ to: phoneNumber, channel: "sms" })
     } catch (error) {
       console.error("Error sending verification code:", error.message);
       throw new Error("Failed to send verification code.");

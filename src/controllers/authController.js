@@ -52,10 +52,7 @@ exports.signUp = async (req, res, next) => {
     if (existUser) sendAppResponse({ res, statusCode: 200, status: 'success', message: 'User already register.' })
     const userData = await UserService.registerUser(req.body);
     // Send SMS code to mobile number and save reg record into db
-    const verificationCode = await UserService.sendVerificationCode(phoneNumber);
-    if (!verificationCode) throw new AppError('Something went wrong to generate verification code', 500);
-    userData.verificationCode = verificationCode;
-    await userData.save();
+    await UserService.sendVerificationCode(phoneNumber);
 
     const respMsg = 'Registration is successful! Please activate your account using the verification code sent to your registered phone number';
     createSendToken(userData, 200, res, respMsg);
