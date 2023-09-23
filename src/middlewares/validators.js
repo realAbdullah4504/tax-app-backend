@@ -13,15 +13,12 @@ const createUserValidator = [
 ];
 
 const verifyCodeValidator = [
-  body('phoneNumber').notEmpty().withMessage('Phone Number is required')
-  .matches(/^(?:\+92|0092|0)?(?:3[0-5][0-9]{8})$/)
-  .withMessage('Invalid Pakistani phone number'),
   body('code').isLength({ min: 6, max: 6 }).withMessage('Verification code must be 6 characters long'),
 ];
 
 const loginUserValidator = [
   body('email').isEmail().withMessage('Invalid email address'),
-  body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long'),
+  body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters long'),
 ];
 
 module.exports = {

@@ -1,12 +1,9 @@
 const User = require('../models/userModel');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
 const twilio = require('twilio');
-const { JWT_SECRET, ACCOUNT_SID, AUTH_TOKEN, TWILIO_PHONE_NUMBER } = require('../../config/vars');
+const { ACCOUNT_SID, AUTH_TOKEN,VERIFY_SID } = require('../../config/vars');
 const AppError = require('../errors/AppError');
 
-
-
+const client = new twilio(ACCOUNT_SID, AUTH_TOKEN);
 
 const filterObj = (obj = {}, allowedFields = []) => {
   const newObj = {};
@@ -51,13 +48,27 @@ const UserService = {
 
   async sendVerificationCode(phoneNumber) {
     try {
-      const client = new twilio(ACCOUNT_SID, AUTH_TOKEN);
      const verification = await client.verify.v2
-      .services("VAeac7d28abd2938940f158d04ba189843")
-      .verifications.create({ to: phoneNumber, channel: "sms" })
+     .services(VERIFY_SID)
+     .verifications.create({ to: phoneNumber, channel: "sms" })
     } catch (error) {
       console.error("Error sending verification code:", error.message);
-      throw new Error("Failed to send verification code.");
+      throw new AppError('Failed to send verification code.', 400);
+    }
+  },
+ 
+
+  async VerifyUserCode(phoneNumber, code) {
+    try {
+     const verification = await client.verify.v2
+     .services(VERIFY_SID)
+     .verificationChecks.create({ to: phoneNumber, code: code });
+     if(!verification?.valid  ||  verification.status === 'pending'){
+      throw new AppError('Your code is invalid', 400);
+     }
+    } catch (error) {
+      console.error("Error sending verification code:", error.message);
+      throw new AppError('Your code is invalid', 400);
     }
   },
 
