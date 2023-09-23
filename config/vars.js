@@ -11,6 +11,6 @@ module.exports = {
   ACCOUNT_SID: process.env.ACCOUNT_SID,
   AUTH_TOKEN: process.env.AUTH_TOKEN,
   TWILIO_PHONE_NUMBER: process.env.TWILIO_PHONE_NUMBER,
-
+  VERIFY_SID: process.env.VERIFY_SID,
   // Add more variables as needed
 };

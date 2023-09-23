@@ -13,7 +13,6 @@ const generateToken = (id) => {
 };
 
 const createSendToken = (user, statusCode, res, msg = '') => {
-  console.log("createSendToken func call!", user)
   if (!user) throw new AppError('Something went wrong', 500);
 
   const token = generateToken(user?._id);
@@ -52,10 +51,7 @@ exports.signUp = async (req, res, next) => {
     if (existUser) sendAppResponse({ res, statusCode: 200, status: 'success', message: 'User already register.' })
     const userData = await UserService.registerUser(req.body);
     // Send SMS code to mobile number and save reg record into db
-    const verificationCode = await UserService.sendVerificationCode(phoneNumber);
-    if (!verificationCode) throw new AppError('Something went wrong to generate verification code', 500);
-    userData.verificationCode = verificationCode;
-    await userData.save();
+     await UserService.sendVerificationCode(phoneNumber);
 
     const respMsg = 'Registration is successful! Please activate your account using the verification code sent to your registered phone number';
     createSendToken(userData, 200, res, respMsg);
@@ -69,9 +65,10 @@ exports.verifyCode = async (req, res, next) => {
     const { code } = req.body;
     const user = req.user;
     const userData = await UserService.findUserById(user._id);
-    const isValid = userData?.verificationCode === parseInt(code);
-    if (!isValid) throw new AppError('Your code is invalid', 500);
-    const updateData = { verificationCode: null, active: true };
+    if (!userData) throw new AppError('Your token is invalid or expired', 500);
+    await UserService.VerifyUserCode(userData?.phoneNumber, code);
+    
+    const updateData = { verificationCode: null, isActive: true };
     // update the current user data
     await User.findByIdAndUpdate(userData?.id, updateData, {
       new: false,
@@ -91,12 +88,9 @@ exports.login = async (req, res, next) => {
     }
 
     const { email, password } = req.body;
-
     const user = await UserService.loginUser(email, password);
-    if (!user) {
-      throw new AppError('Invalid credentials', 401);
-    }
-
+    if (!user) throw new AppError('Invalid credentials', 401);
+    if (!user?.isActive) throw new AppError('Your account is not active', 401);
     const token = generateToken(user?._id);
     user.password = undefined;
     sendAppResponse({ res, statusCode: 200, status: 'success', token, data: user });

@@ -1,50 +1,36 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const validator = require("validator");
 const { JWT_SECRET } = require('../../config/vars');
 
 const userSchema = new mongoose.Schema({
   firstName: {
     type: String,
-    // required: [true, "please provide your first name."],
   },
   surName: {
     type: String,
-    // required: [true, "please provide your surname."],
   },
   email: {
     type: String,
     unique: true,
-    // required: [true, "please provide your email."],
     lowercase: true,
-    // validate: [validator.isEmail, "please provide a valid email."],
   },
   phoneNumber: {
     type: String,
-    // required: [true, "please provide your phone."],
   },
   password: {
     type: String,
-    // required: [true, 'Password is required'],
-    minlength: [6, 'Password must be at least 6 characters long'],
+    minlength: [8, 'Password must be at least 8 characters long'],
     select: false,
-  },
-  verificationCode: {
-    type: Number,
-    default: null,
   },
   tob:{
     type: Boolean,
-    // required: [true, "please provide tob"],
   },
   taxAgent:{
     type: Boolean,
-    // required: [true, "please provide tob"],
   },
   isActive: {
     type: Boolean,
-    required: [true, '2FA with SMS is required'],
     default: false
   },
 });

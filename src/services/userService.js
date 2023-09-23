@@ -1,10 +1,7 @@
 const User = require('../models/userModel');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
 const twilio = require('twilio');
-const { JWT_SECRET, ACCOUNT_SID, AUTH_TOKEN, TWILIO_PHONE_NUMBER } = require('../../config/vars');
+const { ACCOUNT_SID, AUTH_TOKEN,VERIFY_SID } = require('../../config/vars');
 const AppError = require('../errors/AppError');
-
 
 const client = new twilio(ACCOUNT_SID, AUTH_TOKEN);
 
@@ -51,23 +48,27 @@ const UserService = {
 
   async sendVerificationCode(phoneNumber) {
     try {
-      const verificationCode = Math.floor(Math.random() * 900000) + 100000;  // Generate a 6-digit code
-  
-      // Perform the Twilio API call
-      const response = await client.messages.create({
-        body: `Your verification code is: ${verificationCode}`,
-        to: phoneNumber,
-        from: TWILIO_PHONE_NUMBER
-      });
-      if (response.status === "queued" || response.status === "sent") {
-        return verificationCode;
-      } else {
-        console.error("Failed to send verification code:", response.status);
-        throw new Error("Failed to send verification code.");
-      }
+     const verification = await client.verify.v2
+     .services(VERIFY_SID)
+     .verifications.create({ to: phoneNumber, channel: "sms" })
     } catch (error) {
       console.error("Error sending verification code:", error.message);
-      throw new Error("Failed to send verification code.");
+      throw new AppError('Failed to send verification code.', 400);
+    }
+  },
+ 
+
+  async VerifyUserCode(phoneNumber, code) {
+    try {
+     const verification = await client.verify.v2
+     .services(VERIFY_SID)
+     .verificationChecks.create({ to: phoneNumber, code: code });
+     if(!verification?.valid  ||  verification.status === 'pending'){
+      throw new AppError('Your code is invalid', 400);
+     }
+    } catch (error) {
+      console.error("Error sending verification code:", error.message);
+      throw new AppError('Your code is invalid', 400);
     }
   },
 
