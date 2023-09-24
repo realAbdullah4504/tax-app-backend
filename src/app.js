@@ -33,7 +33,7 @@ app.use("/api", async (req, res, next) => {
     const clientPublicKey = req.headers["agency-tax-number"];
 
     if (req.body && clientPublicKey) {
-      cryptoService.setSharedSecret(clientPublicKey);
+       cryptoService.setSharedSecret(clientPublicKey);
     }
 
     if (req.body && req.body.encryptedData && req.body.iv) {
@@ -43,7 +43,7 @@ app.use("/api", async (req, res, next) => {
           req.body.iv,
           clientPublicKey
         );
-        req.body = decryptedData;
+        req.body = JSON.parse(decryptedData);
       } catch (error) {
         console.error("Decryption error:", error);
         return res.status(400).json({ error: "Decryption error" });
