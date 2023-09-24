@@ -13,7 +13,7 @@ router.post('/login', loginUserValidator, login);
 
 // User
 router.get('/detail', authenticate, getUserDetail);
-router.post('/', authenticate, updateUserDetail);
+router.post('/update', authenticate, updateUserDetail);
 // Protected route using the authenticate middleware
 
 module.exports = router;
