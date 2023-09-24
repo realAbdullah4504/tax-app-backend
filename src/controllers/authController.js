@@ -48,7 +48,7 @@ exports.signUp = async (req, res, next) => {
     }
     const { email, phoneNumber } = req.body;
     const existUser = await UserService.userExists({ email, phoneNumber });
-    if (existUser) sendAppResponse({ res, statusCode: 200, status: 'success', message: 'User already register.' })
+    if (existUser) sendAppResponse({ res, statusCode: 400, status: 'fail', message: 'User already register.' })
     const userData = await UserService.registerUser(req.body);
     // Send SMS code to mobile number and save reg record into db
      await UserService.sendVerificationCode(phoneNumber);
@@ -90,7 +90,6 @@ exports.login = async (req, res, next) => {
     const { email, password } = req.body;
     const user = await UserService.loginUser(email, password);
     if (!user) throw new AppError('Invalid credentials', 401);
-    if (!user?.isActive) throw new AppError('Your account is not active', 401);
     const token = generateToken(user?._id);
     user.password = undefined;
     sendAppResponse({ res, statusCode: 200, status: 'success', token, data: user });

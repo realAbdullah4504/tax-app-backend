@@ -1,7 +1,13 @@
-const User = require('../models/userModel');
 const twilio = require('twilio');
-const { ACCOUNT_SID, AUTH_TOKEN,VERIFY_SID } = require('../../config/vars');
+const User = require('../models/userModel');
+const FamilyDetails = require("../models/familyDetailsModel");
+const HealthDetails = require("../models/healthDetailsModel");
+const HomeDetails = require("../models/homeDetailsModel");
+const OtherDetails = require("../models/otherDetailsModel");
+const PersonalInfo = require("../models/personalDetailsModel");
 const AppError = require('../errors/AppError');
+
+const { ACCOUNT_SID, AUTH_TOKEN,VERIFY_SID } = require('../../config/vars');
 
 const client = new twilio(ACCOUNT_SID, AUTH_TOKEN);
 
@@ -12,7 +18,22 @@ const filterObj = (obj = {}, allowedFields = []) => {
   });
   return newObj;
 };
-
+const getSchemaByType = (type) => {
+  switch (type) {
+    case "personalInfo":
+      return PersonalInfo;
+    case "homeDetails":
+      return HomeDetails;
+    case "healthDetails":
+      return HealthDetails;
+    case "familyDetails":
+      return FamilyDetails;
+    case "otherDetails":
+      return OtherDetails;
+    default:
+      throw new Error("Invalid type");
+  }
+};
 const UserService = {
   async registerUser(userData) {
     try {
@@ -109,6 +130,44 @@ const UserService = {
       throw error;
     }
   },
+  async getCurrentUserDetail (id) {
+    try {
+      const UserInfo = await User.findOne({ _id: id});
+      const personalInfo = await PersonalInfo.findOne({ userId: id});
+      const homeDetails = await HomeDetails.findOne({ userId: id});
+      const healthDetails = await HealthDetails.findOne({ userId: id});
+      const familyDetails = await FamilyDetails.findOne({ userId: id});
+      const otherDetails = await OtherDetails.findOne({ userId: id});
+      const userDetail = {
+        user: UserInfo || {},
+        personalInfo: personalInfo || {},
+        homeDetails: homeDetails || {},
+        healthDetails: healthDetails || {},
+        familyDetails: familyDetails || {},
+        otherDetails: otherDetails || {},
+      };
+      return userDetail;
+    } catch (error) {
+      throw error;
+    }
+  },
+  async updateCurrentUser (id, type, payload) {
+    try {
+      const Model = getSchemaByType(type);
+      const updatedUser = await Model.findOneAndUpdate(
+        { userId: id },
+        payload,
+        {
+          upsert: true,
+          new: true,
+        }
+      );
+      return updatedUser;
+    } catch (error) {
+      throw error;
+    }
+  }
+  
 };
 
 module.exports = UserService;
