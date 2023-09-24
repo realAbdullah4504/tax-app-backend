@@ -10,6 +10,5 @@ router.post('/sample-route', (req, res) => {
 
 
 // Protected route using the authenticate middleware
-router.get('/protected', authenticate, UserController.protectedRoute);
 
 module.exports = router;
