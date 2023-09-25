@@ -17,12 +17,24 @@ const personalDetailsSchema = new mongoose.Schema({
     spouseOccupation: String,
     spouseHasIncomeOutsidePyeOrSocialWelfare: Boolean,
   },
+  address: {
+    addressLine: String,
+    city: String,
+    eirCode: String,
+    country: String,
+  },
+  residentIreland: Boolean,
+  domicileIreland: Boolean,
   taxAssessmentMethod: String,
   nominatedSpouseToFileTax: Boolean,
   maritalStatus: String,
+  fileTaxesAs: String,
   marriageDate: Date,
   spousePassDate: Date,
-  taxReviewYears: [Number],
+  
 });
-const PersonalDetails = mongoose.model("PersonalDetails", personalDetailsSchema);
+const PersonalDetails = mongoose.model(
+  "PersonalDetails",
+  personalDetailsSchema
+);
 module.exports = PersonalDetails;
