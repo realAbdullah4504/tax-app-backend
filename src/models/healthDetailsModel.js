@@ -7,20 +7,25 @@ const healthSchema = new mongoose.Schema({
   fullGpMedicalCard: Boolean,
   spouseFullGpMedicalCard: Boolean,
   incurHealthExpenses: [String],
-  incurHealthExpensesDetail: [{
-    gpHospConsultant: Number,
-    prescriptions: Number,
-    nonRoutineDental: Number,
-    careHomeCarer: Number,
-    other: Number,
-    med2FormLink: String,
-    year: Number,
-  }],
-  
+  incurHealthExpensesDetail: [
+    {
+      year: String,
+      gpHospConsultant: Number,
+      prescriptions: Number,
+      careHomeCarer: Number,
+      other: String,
+      otherAmount: Number,
+    },
+  ],
   spouseEmployerPays: Boolean,
-  EmployerPaymentAmount: Number,
-  adultsCovered: Number,
-  childrenCovered: Number,
+  employerPaysDetails: [
+    {
+      year: String,
+      amount: Number,
+      adultsCovered: Number,
+      childrenCovered: Number,
+    },
+  ],
 });
 const HealthDetails = mongoose.model("HealthDetails", healthSchema);
 module.exports = HealthDetails;

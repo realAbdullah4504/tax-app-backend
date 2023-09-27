@@ -1,30 +1,36 @@
 const mongoose = require("mongoose");
 
 const childrenDetail = {
-    name: String,
-    dateOfBirth: Date,
-    ppsn: String,
-  };
-  const studentDetail = {
-    name: String,
-    fullTime: Boolean,
-    fees: Number,
-  };
+  name: String,
+  dateOfBirth: Date,
+  ppsn: String,
+};
+const studentDetail = {
+  years: [Number],
+  name: String,
+  fullTimeCourse: String,
+  fees: Number,
+};
+const elderlyRelativeDetail = {
+  name: String,
+  ppsn: String,
+  annualIncome: Number,
+  yearsOfCare: [String],
+};
 
 const familySchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.ObjectId,
     ref: "User",
   },
-  dependantChildren: Number,
+  taxReviewYears: [String],
+  dependantChildren:Boolean,
   children: [childrenDetail],
-  incapacitatedChildren: Number,
+  incapacitatedChildren: Boolean,
   incapacitatedChildrenDetails: [childrenDetail],
   elderlyRelativeCare: Boolean,
-  elderlyRelativeName: String,
-  elderlyRelativePpsn: String,
-  elderlyRelativeIncome: Number,
-  tuitionCredit: Boolean,
+  elderlyRelative: [elderlyRelativeDetail],
+  tuitionFeesCredit: Boolean,
   students: [studentDetail],
 });
 const FamilyDetails = mongoose.model("FamilyDetails", familySchema);
