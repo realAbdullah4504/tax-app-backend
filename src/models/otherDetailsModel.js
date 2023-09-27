@@ -4,8 +4,9 @@ const otherSchema = new mongoose.Schema({
         type: mongoose.Schema.ObjectId,
         ref: "User",
     },
-    pensionContributions: Number,
-    incomeProtectionContributions: Number,
+    pensionContributions: Boolean,
+    pension:Number,
+    incomeProtection: Number,
   });
 const OtherDetails = mongoose.model("OtherDetails", otherSchema);
 module.exports = OtherDetails;

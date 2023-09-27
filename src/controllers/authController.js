@@ -97,4 +97,13 @@ exports.login = async (req, res, next) => {
     next(error);
   }
 };
+exports.resendCode = async (req, res, next) => {
+  try {
+    const user = req.user;
+    console.log('=============', user)
+    sendAppResponse({ res, statusCode: 200, status: 'success', data: user });
+  } catch (error) {
+    next(error);
+  }
+};
 

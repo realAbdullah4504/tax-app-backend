@@ -23,7 +23,7 @@ const familySchema = new mongoose.Schema({
     type: mongoose.Schema.ObjectId,
     ref: "User",
   },
-  taxReviewYears: [Number],
+  taxReviewYears: [String],
   dependantChildren: Number,
   children: [childrenDetail],
   incapacitatedChildren: Boolean,
