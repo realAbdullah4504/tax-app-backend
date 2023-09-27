@@ -64,13 +64,12 @@ exports.verifyCode = async (req, res, next) => {
   try {
     const { code } = req.body;
     const user = req.user;
-    const userData = await UserService.findUserById(user._id);
-    if (!userData) throw new AppError('Your token is invalid or expired', 500);
-    await UserService.VerifyUserCode(userData?.phoneNumber, code);
+    if (!user) throw new AppError('Your token is invalid or expired', 500);
+    await UserService.VerifyUserCode(user?.phoneNumber, code);
     
-    const updateData = { verificationCode: null, isActive: true };
+    const updateData = { isActive: true };
     // update the current user data
-    await User.findByIdAndUpdate(userData?.id, updateData, {
+    await User.findByIdAndUpdate(user?.id, updateData, {
       new: false,
       runValidator: true,
     });
@@ -97,11 +96,12 @@ exports.login = async (req, res, next) => {
     next(error);
   }
 };
+
 exports.resendCode = async (req, res, next) => {
   try {
     const user = req.user;
-    console.log('=============', user)
-    sendAppResponse({ res, statusCode: 200, status: 'success', data: user });
+    if (user) await UserService.sendVerificationCode(user?.phoneNumber);
+    sendAppResponse({ res, statusCode: 200, status: "success", message: "New code has been sent" });
   } catch (error) {
     next(error);
   }

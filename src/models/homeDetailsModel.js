@@ -1,28 +1,28 @@
 const mongoose = require("mongoose");
 const propertyDetail = {
+  year: String,
+  type: String,
   rtbNumber: String,
   rentPaid: Number,
   receivedRentSupport: Boolean,
   eircode: String,
   leaseStartDate: Date,
-  type:String,
-  year:Number,
 };
 const workFromHomeDetail = {
-    daysWorkedFromHome: Number,
-    totalCostOfLightingAndHeat: Number,
-    costOfBroadband: Number,
-    year:Number,
-  };
+  year: String,
+  daysWorkedFromHome: Number,
+  totalCostOfLightingAndHeat: Number,
+  costOfBroadband: Number,
+};
 const homeSchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.ObjectId,
     ref: "User",
   },
-  payRentYears:[Number],
+  payRentYears: [String],
   payRentDetails: [propertyDetail],
-  workFromHomeYears:[Number],
-  workFromHomeDetails:[workFromHomeDetail],
+  workFromHomeYears: [String],
+  workFromHomeDetails: [workFromHomeDetail],
 });
 const HomeDetails = mongoose.model("HomeDetails", homeSchema);
 module.exports = HomeDetails;

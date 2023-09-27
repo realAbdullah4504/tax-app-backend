@@ -6,16 +6,16 @@ const childrenDetail = {
   ppsn: String,
 };
 const studentDetail = {
-  name: String,
-  fullTimeCourse: Boolean,
   years: [Number],
+  name: String,
+  fullTimeCourse: String,
   fees: Number,
 };
 const elderlyRelativeDetail = {
   name: String,
   ppsn: String,
   annualIncome: Number,
-  yearsOfCare: [Number],
+  yearsOfCare: [String],
 };
 
 const familySchema = new mongoose.Schema({
@@ -24,13 +24,13 @@ const familySchema = new mongoose.Schema({
     ref: "User",
   },
   taxReviewYears: [String],
-  dependantChildren: Number,
+  dependantChildren:Boolean,
   children: [childrenDetail],
   incapacitatedChildren: Boolean,
   incapacitatedChildrenDetails: [childrenDetail],
   elderlyRelativeCare: Boolean,
   elderlyRelative: [elderlyRelativeDetail],
-  tuitionCredit: Boolean,
+  tuitionFeesCredit: Boolean,
   students: [studentDetail],
 });
 const FamilyDetails = mongoose.model("FamilyDetails", familySchema);

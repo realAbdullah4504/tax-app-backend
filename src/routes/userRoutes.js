@@ -9,12 +9,12 @@ const router = express.Router();
 
 router.post('/register', createUserValidator, signUp);
 router.post('/verify-code', [authenticate, verifyCodeValidator], verifyCode);
+router.post('/resend-code', authenticate, resendCode);
 router.post('/login', loginUserValidator, login);
 
 // User
 router.get('/detail', authenticate, getUserDetail);
 router.post('/update', authenticate, updateUserDetail);
-router.post('/resend-code', authenticate, resendCode);
 // Protected route using the authenticate middleware
 
 module.exports = router;

@@ -7,17 +7,20 @@ const healthSchema = new mongoose.Schema({
   fullGpMedicalCard: Boolean,
   spouseFullGpMedicalCard: Boolean,
   incurHealthExpenses: [String],
-  incurHealthExpensesDetail: [{
+  incurHealthExpensesDetail: [
+    {
+      year: String,
       gpHospConsultant: Number,
       prescriptions: Number,
-      nonRoutineDental: Number,
       careHomeCarer: Number,
       other: String,
       otherAmount: Number,
-      year: String,
-    }],
+    },
+  ],
   spouseEmployerPays: Boolean,
-  employerPaysDetails: [{
+  employerPaysDetails: [
+    {
+      year: String,
       amount: Number,
       adultsCovered: Number,
       childrenCovered: Number,
