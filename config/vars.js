@@ -1,4 +1,4 @@
-require('dotenv').config(); // Load environment variables from .env file
+require("dotenv").config(); // Load environment variables from .env file
 
 module.exports = {
   PORT: process.env.PORT || 3000,
@@ -12,5 +12,11 @@ module.exports = {
   AUTH_TOKEN: process.env.AUTH_TOKEN,
   TWILIO_PHONE_NUMBER: process.env.TWILIO_PHONE_NUMBER,
   VERIFY_SID: process.env.VERIFY_SID,
+
+  //PDF Parser credentials
+  PDF_PARSER: process.env.PDF_PARSER,
+  PDF_API_EMP: process.env.PDF_API_EMP,
+  PDF_ACC: process.env.PDF_ACC,
+
   // Add more variables as needed
 };
