@@ -32,7 +32,8 @@ const personalDetailsSchema = new mongoose.Schema({
   fileTaxesAs: String,
   marriageDate: Date,
   spousePassDate: Date,
-  
+  currentStep:Number,
+  isComplete:Boolean
 });
 const PersonalDetails = mongoose.model(
   "PersonalDetails",

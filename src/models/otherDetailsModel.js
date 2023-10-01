@@ -6,12 +6,16 @@ const otherSchema = new mongoose.Schema({
   },
   pensionContributions: Boolean,
   contributionDetails: [
-    { year:String,
-      type:String,
+    {
+      id: Number,
+      year: Number,
+      type: String,
       pension: Number,
       incomeProtection: Number,
     },
   ],
+  currentStep:Number,
+  isComplete:Boolean
 });
 const OtherDetails = mongoose.model("OtherDetails", otherSchema);
 module.exports = OtherDetails;

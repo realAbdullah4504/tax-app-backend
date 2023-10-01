@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const propertyDetail = {
-  year: String,
+  id: Number,
+  year: Number,
   type: String,
   rtbNumber: String,
   rentPaid: Number,
@@ -9,7 +10,8 @@ const propertyDetail = {
   leaseStartDate: Date,
 };
 const workFromHomeDetail = {
-  year: String,
+  id: Number,
+  year: Number,
   daysWorkedFromHome: Number,
   totalCostOfLightingAndHeat: Number,
   costOfBroadband: Number,
@@ -19,10 +21,12 @@ const homeSchema = new mongoose.Schema({
     type: mongoose.Schema.ObjectId,
     ref: "User",
   },
-  payRentYears: [String],
+  payRentYears: [Number],
   payRentDetails: [propertyDetail],
-  workFromHomeYears: [String],
+  workFromHomeYears: [Number],
   workFromHomeDetails: [workFromHomeDetail],
+  currentStep:Number,
+  isComplete:Boolean
 });
 const HomeDetails = mongoose.model("HomeDetails", homeSchema);
 module.exports = HomeDetails;
