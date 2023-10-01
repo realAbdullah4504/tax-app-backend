@@ -4,6 +4,7 @@ const childrenDetail = {
   name: String,
   dateOfBirth: Date,
   ppsn: String,
+  id: Number,
 };
 const studentDetail = {
   years: [Number],
@@ -23,7 +24,7 @@ const familySchema = new mongoose.Schema({
     type: mongoose.Schema.ObjectId,
     ref: "User",
   },
-  taxReviewYears: [String],
+  taxReviewYears: [Number],
   dependantChildren:Boolean,
   children: [childrenDetail],
   incapacitatedChildren: Boolean,
