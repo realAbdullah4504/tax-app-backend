@@ -9,7 +9,8 @@ const healthSchema = new mongoose.Schema({
   incurHealthExpenses: [String],
   incurHealthExpensesDetail: [
     {
-      year: String,
+      id: Number,
+      year: Number,
       gpHospConsultant: Number,
       prescriptions: Number,
       careHomeCarer: Number,
@@ -20,12 +21,15 @@ const healthSchema = new mongoose.Schema({
   spouseEmployerPays: Boolean,
   employerPaysDetails: [
     {
-      year: String,
+      id: Number,
+      year: Number,
       amount: Number,
       adultsCovered: Number,
       childrenCovered: Number,
     },
   ],
+  currentStep:Number,
+  isComplete:Boolean
 });
 const HealthDetails = mongoose.model("HealthDetails", healthSchema);
 module.exports = HealthDetails;
