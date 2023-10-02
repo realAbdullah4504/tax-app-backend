@@ -7,7 +7,9 @@ const uploadDi = "src/uploads";
 
 exports.pdfParser = async (req, res, next) => {
   try {
-    let data = {};
+    let data = [];
+    let year;
+    let tempArray = {};
     let fileString;
     const { docType } = req.params;
 
@@ -33,16 +35,25 @@ exports.pdfParser = async (req, res, next) => {
       const endPoint = await pdfParserService.pdfEndPoints(docType);
       const source = await pdfParserService.inputSource(fileString, docType);
       const pdfData = await pdfParserService.parsePDF(source, endPoint);
-      const pdfFields = pdfData?.document?.inference?.prediction?.fields;
-      pdfFields.forEach((element, key) => {
-        data[key] = element.values.join(" ");
+      const pdfPages = pdfData?.document?.inference?.pages;
+      pdfPages.forEach((element, key) => {
+        const pdfFields = element?.prediction?.fields;
+        pdfFields.forEach((element, key) => {
+          if (key === "year") {
+            year = element?.values.join(" ");
+          }
+          tempArray[key] = element?.values.join(" ");
+        });
+        data.push({
+          [year]: tempArray,
+        });
       });
       sendAppResponse({
         res,
         data,
         statusCode: 200,
         status: "success",
-        message: "PDF parser executed.",
+        message: "PDF Data Extracted successfully",
       });
     });
 
