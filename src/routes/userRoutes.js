@@ -1,6 +1,6 @@
 const express = require("express");
 const UserController = require("../controllers/userController");
-const pdfParserController = require("../controllers/pdfPaserController");
+const pdfParserController = require("../controllers/pdfParserController");
 const AuthController = require("../controllers/authController");
 const { authenticate } = require("../middlewares/auth");
 const { signUp, verifyCode, login } = AuthController;
