@@ -8,7 +8,7 @@ const uploadDi = "src/uploads";
 exports.pdfParser = async (req, res, next) => {
   try {
     let data = [];
-    let year;
+    // let year;
     let tempArray = {};
     let fileString;
     const { docType } = req.params;
@@ -39,14 +39,12 @@ exports.pdfParser = async (req, res, next) => {
       pdfPages.forEach((element, key) => {
         const pdfFields = element?.prediction?.fields;
         pdfFields.forEach((element, key) => {
-          if (key === "year") {
-            year = element?.values.join(" ");
-          }
+          // if (key === "year") {
+          //   year = element?.values.join(" ");
+          // }
           tempArray[key] = element?.values.join(" ");
         });
-        data.push({
-          [year]: tempArray,
-        });
+        data.push(tempArray);
       });
       sendAppResponse({
         res,
