@@ -1,4 +1,3 @@
-const AppError = require("../errors/AppError");
 const logger = require('winston');
 const { NODE_ENV } = require('../../config/vars');
 
@@ -11,6 +10,9 @@ const errorHandler = (err, req, res, next) => {
 
   if (NODE_ENV === "development") {
     // In development mode, send detailed error information
+    if (err.name === 'TokenExpiredError') {
+      return res.status(401).json({ message: 'Token expired' });
+    }
     res.status(err.statusCode).json({
       status: err.status,
       message: err.message,

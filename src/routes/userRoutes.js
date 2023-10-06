@@ -1,9 +1,11 @@
 const express = require('express');
 const UserController = require('../controllers/userController');
 const AuthController = require('../controllers/authController');
+const PdfParserController = require('../controllers/pdfParserController');
 const { authenticate } = require('../middlewares/auth');
 const { signUp, verifyCode, login, resendCode } = AuthController;
-const { getUserDetail, updateUserDetail, } = UserController;
+const { getUserDetail, updateUserDetail } = UserController;
+const { pdfParser } = PdfParserController;
 const { createUserValidator, verifyCodeValidator, loginUserValidator } = require('../middlewares/validators');
 const router = express.Router();
 
@@ -13,8 +15,9 @@ router.post('/resend-code', authenticate, resendCode);
 router.post('/login', loginUserValidator, login);
 
 // User
-router.get('/detail', authenticate, getUserDetail);
-router.post('/update', authenticate, updateUserDetail);
+router.get("/detail", authenticate, getUserDetail);
+router.post("/pdf/:docType", authenticate, pdfParser);
+router.post("/update", authenticate, updateUserDetail);
 // Protected route using the authenticate middleware
 
 module.exports = router;
