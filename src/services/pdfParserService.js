@@ -1,4 +1,3 @@
-const AppError = require("../errors/AppError");
 const mindee = require("mindee");
 const { PDF_PARSER, PDF_API_EMP, PDF_ACC } = require("../../config/vars");
 const mindeeClient = new mindee.Client({ apiKey: PDF_PARSER });

@@ -2,12 +2,11 @@ const mongoose = require("mongoose");
 const propertyDetail = {
   id: Number,
   year: Number,
-  type: String,
+  propertyType: String,
   rtbNumber: String,
   rentPaid: Number,
   receivedRentSupport: Boolean,
-  eircode: String,
-  leaseStartDate: Date,
+  eircode: String
 };
 const workFromHomeDetail = {
   id: Number,

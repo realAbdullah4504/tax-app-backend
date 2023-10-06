@@ -1,3 +1,4 @@
+const EmploymentSummary = require("../models/employmentSummary");
 const pdfParserService = require("../services/pdfParserService");
 const sendAppResponse = require("../utils/helper/appResponse");
 const formidable = require("formidable");
@@ -7,6 +8,7 @@ const uploadDi = "src/uploads";
 
 exports.pdfParser = async (req, res, next) => {
   try {
+    let userId = '';
     let data = [];
     // let year;
     let tempArray = {};
@@ -20,6 +22,7 @@ exports.pdfParser = async (req, res, next) => {
     form.maxFieldsSize = 10 * 1024 * 1024;
 
     form.parse(req, async (_err, fields, files) => {
+      userId = fields?.userId?.[0] || "";
       if (_err)
         sendAppResponse({
           res,
@@ -46,13 +49,19 @@ exports.pdfParser = async (req, res, next) => {
         });
         data.push(tempArray);
       });
-      sendAppResponse({
-        res,
-        data,
-        statusCode: 200,
-        status: "success",
-        message: "PDF Data Extracted successfully",
-      });
+      if (data) {
+        const employmentSummary = new EmploymentSummary();
+        const resp = await employmentSummary.save({ userId, ...data });
+        if (resp) {
+          sendAppResponse({
+            res,
+            data,
+            statusCode: 200,
+            status: "success",
+            message: "PDF Data Extracted successfully",
+          });
+        }
+      }
     });
 
     // const { fileString, docType } = req.body;
