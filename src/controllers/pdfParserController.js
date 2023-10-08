@@ -4,6 +4,7 @@ const sendAppResponse = require("../utils/helper/appResponse");
 const formidable = require("formidable");
 const path = require("path");
 const fs = require("fs");
+const { stringToNumber } = require("../utils/helper/common");
 const uploadDi = "src/uploads";
 
 exports.pdfParser = async (req, res, next) => {
@@ -50,8 +51,12 @@ exports.pdfParser = async (req, res, next) => {
         data.push(tempArray);
       });
       if (data) {
-        const employmentSummary = new EmploymentSummary();
-        const resp = await employmentSummary.save({ userId, ...data });
+        const payload =  data.map(item => {
+          const updatedObj = stringToNumber(item);
+          return updatedObj;
+        });
+        const employmentSummary = new EmploymentSummary({userId, summaryDetails:payload});
+        const resp = await employmentSummary.save();
         if (resp) {
           sendAppResponse({
             res,
