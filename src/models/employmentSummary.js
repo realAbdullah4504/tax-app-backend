@@ -1,6 +1,6 @@
 const mongoose = require("mongoose");
 const summary = {
-  date_of_leaving: Date,
+  date_of_leaving: Date || null,
   employee_prsi_paid: Number,
   employer_pension_provider_name: String,
   employer_pension_provider_no: String,
