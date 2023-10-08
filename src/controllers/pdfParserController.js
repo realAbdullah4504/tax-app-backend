@@ -60,7 +60,6 @@ exports.pdfParser = async (req, res, next) => {
         if (resp) {
           sendAppResponse({
             res,
-            data,
             statusCode: 200,
             status: "success",
             message: "PDF Data Extracted successfully",
