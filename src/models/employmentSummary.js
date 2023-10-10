@@ -12,6 +12,7 @@ const summary = {
   pay_for_income_tax: Number,
   pay_for_usc: Number,
   ppsn: String,
+  spouse: String,
   start_date: Date,
   taxable_benefits: Number,
   usc_paid: Number,
@@ -24,8 +25,5 @@ const employmentSummary = new mongoose.Schema({
   },
   summaryDetails: [summary],
 });
-const EmploymentSummary = mongoose.model(
-  "EmploymentSummary",
-  employmentSummary
-);
+const EmploymentSummary = mongoose.model("EmploymentSummary", employmentSummary);
 module.exports = EmploymentSummary;

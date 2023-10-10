@@ -59,7 +59,7 @@ exports.pdfParser = async (req, res, next) => {
         // [year].push(
         //   [year]: tempArray,
         // );
-        console.log("data:", { [year]: data });
+        // console.log("data:", { [year]: data });
       });
       if (data) {
         const payload = data.map((item) => {
@@ -71,6 +71,7 @@ exports.pdfParser = async (req, res, next) => {
         if (resp) {
           sendAppResponse({
             res,
+            resp,
             statusCode: 200,
             status: "success",
             message: "PDF Data Extracted successfully",
