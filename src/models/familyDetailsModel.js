@@ -5,7 +5,6 @@ const childrenDetail = {
   name: String,
   dateOfBirth: Date,
   ppsn: String,
-  id: Number,
 };
 const studentDetail = {
   id: Number,

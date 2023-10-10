@@ -13,6 +13,7 @@ const healthSchema = new mongoose.Schema({
       year: Number,
       gpHospConsultant: Number,
       prescriptions: Number,
+      nonRoutineDental: Number,
       careHomeCarer: Number,
       other: String,
       otherAmount: Number,

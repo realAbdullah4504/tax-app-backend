@@ -9,13 +9,13 @@ const otherSchema = new mongoose.Schema({
     {
       id: Number,
       year: Number,
-      type: String,
+      typeDetails: String,
       pension: Number,
       incomeProtection: Number,
-    },
+    }
   ],
   currentStep:Number,
-  isComplete:Boolean
+  isComplete:Boolean,
 });
 const OtherDetails = mongoose.model("OtherDetails", otherSchema);
 module.exports = OtherDetails;
