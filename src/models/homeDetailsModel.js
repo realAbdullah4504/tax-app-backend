@@ -6,7 +6,8 @@ const propertyDetail = {
   rtbNumber: String,
   rentPaid: Number,
   receivedRentSupport: Boolean,
-  eircode: String
+  eircode: String,
+  leaseStartDate: Date,
 };
 const workFromHomeDetail = {
   id: Number,

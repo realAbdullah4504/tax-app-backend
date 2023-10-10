@@ -1,11 +1,13 @@
 const express = require('express');
 const UserController = require('../controllers/userController');
 const AuthController = require('../controllers/authController');
+const taxRatesController = require("../controllers/taxRatesController");
 const PdfParserController = require('../controllers/pdfParserController');
 const { authenticate } = require('../middlewares/auth');
+const { pdfParser } = PdfParserController;
 const { signUp, verifyCode, login, resendCode } = AuthController;
 const { getUserDetail, updateUserDetail } = UserController;
-const { pdfParser } = PdfParserController;
+const { taxRates, taxCalculations } = taxRatesController;
 const { createUserValidator, verifyCodeValidator, loginUserValidator } = require('../middlewares/validators');
 const router = express.Router();
 
@@ -18,6 +20,8 @@ router.post('/login', loginUserValidator, login);
 router.get("/detail", authenticate, getUserDetail);
 router.post("/pdf/:docType", authenticate, pdfParser);
 router.post("/update", authenticate, updateUserDetail);
+router.post("/taxRates", taxRates);
+router.post("/calculateTax",authenticate, taxCalculations);
 // Protected route using the authenticate middleware
 
 module.exports = router;
