@@ -9,9 +9,11 @@ const uploadDi = "src/uploads";
 
 exports.pdfParser = async (req, res, next) => {
   try {
-    let userId = '';
+    let userId = "";
     let data = [];
-    // let year;
+    let rep;
+    let year;
+    let spouse;
     let tempArray = {};
     let fileString;
     const { docType } = req.params;
@@ -43,19 +45,28 @@ exports.pdfParser = async (req, res, next) => {
       pdfPages.forEach((element, key) => {
         const pdfFields = element?.prediction?.fields;
         pdfFields.forEach((element, key) => {
-          // if (key === "year") {
-          //   year = element?.values.join(" ");
-          // }
-          tempArray[key] = element?.values.join(" ");
+          if (key === "year") {
+            year = element?.values.join(" ");
+          }
+          if (key === "spouse") {
+            spouse = element?.values.join(" ");
+          }
+          tempArray[key] =
+            key === "spouse" && spouse === "MISS" ? "Self" : element?.values.join(" ");
         });
-        data.push(tempArray);
+        data.push({ ...tempArray });
+        // data.push(tempArray);
+        // [year].push(
+        //   [year]: tempArray,
+        // );
+        console.log("data:", { [year]: data });
       });
       if (data) {
-        const payload =  data.map(item => {
+        const payload = data.map((item) => {
           const updatedObj = stringToNumber(item);
           return updatedObj;
         });
-        const employmentSummary = new EmploymentSummary({userId, summaryDetails:payload});
+        const employmentSummary = new EmploymentSummary({ userId, summaryDetails: payload });
         const resp = await employmentSummary.save();
         if (resp) {
           sendAppResponse({
