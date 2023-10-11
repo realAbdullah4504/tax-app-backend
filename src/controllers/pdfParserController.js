@@ -10,9 +10,9 @@ const uploadDi = "src/uploads";
 exports.pdfParser = async (req, res, next) => {
   try {
     let userId = "";
+    let year = 0;
     let data = [];
     let rep;
-    let year;
     let spouse;
     let tempArray = {};
     let fileString;
@@ -26,6 +26,7 @@ exports.pdfParser = async (req, res, next) => {
 
     form.parse(req, async (_err, fields, files) => {
       userId = fields?.userId?.[0] || "";
+      year = fields?.year?.[0] || "";
       if (_err)
         sendAppResponse({
           res,
@@ -66,8 +67,15 @@ exports.pdfParser = async (req, res, next) => {
           const updatedObj = stringToNumber(item);
           return updatedObj;
         });
-        const employmentSummary = new EmploymentSummary({ userId, summaryDetails: payload });
-        const resp = await employmentSummary.save();
+        const resp = await EmploymentSummary.findOneAndUpdate(
+          { userId: userId, year: year },
+          { $addToSet: { summaryDetails: { $each: payload } } },
+          
+          {
+            upsert: true,
+            new: true,
+          }
+        );
         if (resp) {
           sendAppResponse({
             res,
