@@ -5,7 +5,7 @@ const mindeeClient = new mindee.Client({ apiKey: PDF_PARSER });
 const getApiEndPoint = (type) => {
   switch (type) {
     case "employment-summery":
-      return "eds";
+      return "eds_v2";
     default:
       throw new Error("Invalid type");
   }

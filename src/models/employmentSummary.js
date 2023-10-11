@@ -12,7 +12,7 @@ const summary = {
   pay_for_income_tax: Number,
   pay_for_usc: Number,
   ppsn: String,
-  spouse: String,
+  summary_type: String,
   start_date: Date,
   taxable_benefits: Number,
   usc_paid: Number,

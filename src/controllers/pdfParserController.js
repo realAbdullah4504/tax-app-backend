@@ -48,11 +48,11 @@ exports.pdfParser = async (req, res, next) => {
           if (key === "year") {
             year = element?.values.join(" ");
           }
-          if (key === "spouse") {
+          if (key === "summary_type") {
             spouse = element?.values.join(" ");
           }
           tempArray[key] =
-            key === "spouse" && spouse === "MISS" ? "Self" : element?.values.join(" ");
+            key === "summary_type" && spouse === "" ? "Self" : element?.values.join(" ");
         });
         data.push({ ...tempArray });
         // data.push(tempArray);
