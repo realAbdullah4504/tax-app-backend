@@ -9,14 +9,8 @@ const taxRatesSchema = {
 const taxBandsSchema = {
   single: Number,
   singleParent: Number,
-  married1Income: {
-    self: Number,
-    spouse: Number,
-  },
-  married2Incomes: {
-    self: Number,
-    spouse: Number,
-  },
+  married1Income: Number,
+  married2Incomes: Number
 };
 
 const exemptionLimitsSchema = {
@@ -26,15 +20,11 @@ const exemptionLimitsSchema = {
 
 const taxCreditsSchema = {
   personalSingle: Number,
-  married: {
-    self: Number,
-    spouse: Number,
-  },
+  married: Number,
   paye: Number,
   singleParent: Number,
   widowNoDependants: Number,
-  widowCredityears: Number,
-  widowTrail: Number,
+  widowCreditYearly: Number,
   ageCreditSingle: Number,
   ageCreditMarried: Number,
   homeCarer: Number,

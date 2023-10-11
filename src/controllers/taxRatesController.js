@@ -6,9 +6,39 @@ const OtherDetails = require("../models/otherDetailsModel");
 const HomeDetails = require("../models/homeDetailsModel");
 const FamilyDetails = require("../models/familyDetailsModel");
 const HealthDetails = require("../models/healthDetailsModel");
+const EmploymentSummary = require("../models/employmentSummary");
 
 const calculate = async (year, userId, type) => {
   //get the tax values and age
+
+  const { summaryDetails } =
+    (await EmploymentSummary.findOne({
+      userId,
+      year,
+    })) || {};
+
+  let grossIncomeUsc = 0;
+  let grossTaxableIncome = 0;
+  let taxPaid = 0;
+  let uscPaid = 0;
+
+  summaryDetails.forEach((item) => {
+    grossIncomeUsc += item.gross_pay;
+    grossTaxableIncome += item.pay_for_income_tax;
+    taxPaid += item.income_tax_paid;
+    uscPaid += item.usc_paid;
+  });
+  console.log(
+    "grossIncomeUsc",
+    grossIncomeUsc,
+    "grossTaxableIncome",
+    grossTaxableIncome,
+    "taxPaid",
+    taxPaid,
+    "uscPaid",
+    uscPaid
+  );
+  // console.log("taxSummary", taxSummary);
 
   const {
     exemptionLimitsOver65,
@@ -22,7 +52,6 @@ const calculate = async (year, userId, type) => {
       personalSingle,
       widowNoDependants,
       widowCredityears,
-      widowTrail,
       married,
       paye,
       singleParent,
@@ -91,10 +120,10 @@ const calculate = async (year, userId, type) => {
   const age = currentYear - birthYear;
 
   //for single
-  const grossIncomeUsc = 100000;
-  const grossTaxableIncome = 100000;
-  const taxPaid = 25240;
-  const uscPaid = 4839;
+  // const grossIncomeUsc = 100000;
+  // const grossTaxableIncome = 100000;
+  // const taxPaid = 25240;
+  // const uscPaid = 4839;
 
   //for single parent
   // const grossIncomeUsc = 100000;
@@ -168,9 +197,7 @@ const calculate = async (year, userId, type) => {
   //***********************************SECTION 2 *************************************************** */
   //Standard Credits
   // console.log(spousePassDate);
-  totalYearsPassedSpouse = year - spousePassDate.getUTCFullYear();
-  const widow =
-    widowNoDependants + widowCredityears - (totalYearsPassedSpouse - 1) * 450;
+  
   // console.log(
 
   //   spousePassDate.getUTCFullYear(),
@@ -178,12 +205,12 @@ const calculate = async (year, userId, type) => {
   //   totalYearsPassedSpouse,
   //   widow
   // );
-  console.log("widow", widow);
+  console.log("widow", widowNoDependants);
 
   let personal =
     type === "single" || type === "singleParent"
       ? maritalStatus === "Widowed"
-        ? widow
+        ? widowNoDependants
         : personalSingle
       : married["self"] + married["spouse"]; //=IF('Questions for App'!E15="Widowed",'Questions for App'!F120,'Questions for App'!F116)
 
@@ -200,10 +227,14 @@ const calculate = async (year, userId, type) => {
   //Additional Credits
   //age cresit is not defined
   // console.log(widowTrail);
+  totalYearsPassedSpouse = year - spousePassDate.getUTCFullYear();
+  const widow = widowCredityears - (totalYearsPassedSpouse - 1) * 450;
+
   let widowTrail1 =
     (type === "single" || type === "singleParent") &&
     maritalStatus === "Widowed" &&
-    widowTrail; //formula should be understand from questions app
+    widow; //formula should be understand from questions app
+    
   let incapacitatedChild =
     incapacitatedChildren &&
     incapacitated * incapacitatedChildrenDetails.length; //years should be mentioned
@@ -411,12 +442,13 @@ exports.taxRates = async (req, res, next) => {
 exports.taxCalculations = async (req, res, next) => {
   //   console.log("tax calculated", );
 
-  const { year, type } = req.body;
-  const userId = req.user?._id;
+  const { year, userId } = req.body;
+
+  // const userId = req.user?._id;
   // console.log(year);
 
   // console.log(age);
-  calculate(year, userId, type);
+  calculate(year, userId, "single");
 
   // const {}
 

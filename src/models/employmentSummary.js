@@ -22,6 +22,7 @@ const employmentSummary = new mongoose.Schema({
     type: mongoose.Schema.ObjectId,
     ref: "User",
   },
+  year:Number,
   summaryDetails: [summary],
 });
 const EmploymentSummary = mongoose.model(
