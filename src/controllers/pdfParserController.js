@@ -12,7 +12,8 @@ exports.pdfParser = async (req, res, next) => {
     let userId = "";
     let year = 0;
     let data = [];
-    // let year;
+    let rep;
+    let spouse;
     let tempArray = {};
     let fileString;
     const { docType } = req.params;
@@ -45,12 +46,21 @@ exports.pdfParser = async (req, res, next) => {
       pdfPages.forEach((element, key) => {
         const pdfFields = element?.prediction?.fields;
         pdfFields.forEach((element, key) => {
-          // if (key === "year") {
-          //   year = element?.values.join(" ");
-          // }
-          tempArray[key] = element?.values.join(" ");
+          if (key === "year") {
+            year = element?.values.join(" ");
+          }
+          if (key === "summary_type") {
+            spouse = element?.values.join(" ");
+          }
+          tempArray[key] =
+            key === "summary_type" && spouse === "" ? "Self" : element?.values.join(" ");
         });
-        data.push(tempArray);
+        data.push({ ...tempArray });
+        // data.push(tempArray);
+        // [year].push(
+        //   [year]: tempArray,
+        // );
+        // console.log("data:", { [year]: data });
       });
       if (data) {
         const payload = data.map((item) => {
@@ -69,6 +79,7 @@ exports.pdfParser = async (req, res, next) => {
         if (resp) {
           sendAppResponse({
             res,
+            resp,
             statusCode: 200,
             status: "success",
             message: "PDF Data Extracted successfully",
