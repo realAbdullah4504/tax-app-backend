@@ -8,7 +8,7 @@ const FamilyDetails = require("../models/familyDetailsModel");
 const HealthDetails = require("../models/healthDetailsModel");
 const EmploymentSummary = require("../models/employmentSummary");
 
-const calculate = async (year, userId, type) => {
+const calculate = async (year, userId) => {
   //get the tax values and age
 
   const { summaryDetails } =
@@ -87,6 +87,8 @@ const calculate = async (year, userId, type) => {
   const {
     incapacitatedChildren,
     incapacitatedChildrenDetails,
+    dependentChildren,
+
     elderlyRelativeCare,
     elderlyRelative,
 
@@ -100,6 +102,25 @@ const calculate = async (year, userId, type) => {
     employerPaysDetails,
     fullGpMedicalCard,
   } = await HealthDetails.findOne({ userId });
+
+  let type = "";
+  let marriedType = summaryDetails.some(({summary_type}) => summary_type==='spouse');
+  console.log("marriedType", marriedType);
+
+  // const result = marriedType.some((item) => item.spouse === "spouse");
+
+  console.log("maritalstatus", maritalStatus);
+  if (maritalStatus === "single" && (!incapacitated || !dependentChildren)) {
+    type = "single";
+  } else if (
+    maritalStatus === "Widowed" &&
+    (incapacitated || dependentChildren)
+  ) {
+    type = "singleParent";
+  } else if (maritalStatus === "Married") {
+    type = marriedType ? "married2Income" : "married1Income";
+  }
+  console.log("type", type);
 
   //calculations for pension related to year and the personal and spouse
   const selectedPension = contributionDetails.filter(
@@ -197,7 +218,7 @@ const calculate = async (year, userId, type) => {
   //***********************************SECTION 2 *************************************************** */
   //Standard Credits
   // console.log(spousePassDate);
-  
+
   // console.log(
 
   //   spousePassDate.getUTCFullYear(),
@@ -448,7 +469,7 @@ exports.taxCalculations = async (req, res, next) => {
   // console.log(year);
 
   // console.log(age);
-  calculate(year, userId, "single");
+  calculate(year, userId);
 
   // const {}
 
