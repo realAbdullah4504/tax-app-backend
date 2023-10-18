@@ -1,13 +1,14 @@
-const twilio = require('twilio');
-const User = require('../models/userModel');
+const twilio = require("twilio");
+const crypto = require("crypto");
+const User = require("../models/userModel");
 const FamilyDetails = require("../models/familyDetailsModel");
 const HealthDetails = require("../models/healthDetailsModel");
 const HomeDetails = require("../models/homeDetailsModel");
 const OtherDetails = require("../models/otherDetailsModel");
 const PersonalInfo = require("../models/personalDetailsModel");
-const AppError = require('../errors/AppError');
+const AppError = require("../errors/AppError");
 
-const { ACCOUNT_SID, AUTH_TOKEN,VERIFY_SID } = require('../../config/vars');
+const { ACCOUNT_SID, AUTH_TOKEN, VERIFY_SID } = require("../../config/vars");
 
 const client = new twilio(ACCOUNT_SID, AUTH_TOKEN);
 
@@ -37,8 +38,8 @@ const getSchemaByType = (type) => {
 const UserService = {
   async registerUser(userData) {
     try {
-    const user = new User(userData);
-    const resp = await user.save();
+      const user = new User(userData);
+      const resp = await user.save();
       return resp;
     } catch (error) {
       throw error;
@@ -59,42 +60,37 @@ const UserService = {
   async userExists({ email, phoneNumber }) {
     // Function to check if a user exists by email or phone number:
     const count = await User.countDocuments({
-      $or: [
-        { email: email },
-        { phoneNumber: phoneNumber }
-      ]
+      $or: [{ email: email }, { phoneNumber: phoneNumber }],
     });
     return count > 0;
   },
 
   async sendVerificationCode(phoneNumber) {
     try {
-     const verification = await client.verify.v2
-     .services(VERIFY_SID)
-     .verifications.create({ to: phoneNumber, channel: "sms" })
+      const verification = await client.verify.v2
+        .services(VERIFY_SID)
+        .verifications.create({ to: phoneNumber, channel: "sms" });
     } catch (error) {
       console.error("Error sending verification code:", error.message);
-      throw new AppError('Failed to send verification code.', 400);
+      throw new AppError("Failed to send verification code.", 400);
     }
   },
- 
-
   async VerifyUserCode(phoneNumber, code) {
     try {
-     const verification = await client.verify.v2
-     .services(VERIFY_SID)
-     .verificationChecks.create({ to: phoneNumber, code: code });
-     if(!verification?.valid  ||  verification.status === 'pending'){
-      throw new AppError('Your code is invalid', 400);
-     }
+      const verification = await client.verify.v2
+        .services(VERIFY_SID)
+        .verificationChecks.create({ to: phoneNumber, code: code });
+      if (!verification?.valid || verification.status === "pending") {
+        throw new AppError("Your code is invalid", 400);
+      }
     } catch (error) {
       console.error("Error sending verification code:", error.message);
-      throw new AppError('Your code is invalid', 400);
+      throw new AppError("Your code is invalid", 400);
     }
   },
 
   async findUserByEmail(email) {
-    return User.findOne({ email }).select('+password');
+    return User.findOne({ email }).select("+password");
   },
 
   async findUserByPhone(phoneNumber) {
@@ -130,14 +126,14 @@ const UserService = {
       throw error;
     }
   },
-  async getCurrentUserDetail (id) {
+  async getCurrentUserDetail(id) {
     try {
-      const UserInfo = await User.findOne({ _id: id});
-      const personalInfo = await PersonalInfo.findOne({ userId: id});
-      const homeDetails = await HomeDetails.findOne({ userId: id});
-      const healthDetails = await HealthDetails.findOne({ userId: id});
-      const familyDetails = await FamilyDetails.findOne({ userId: id});
-      const otherDetails = await OtherDetails.findOne({ userId: id});
+      const UserInfo = await User.findOne({ _id: id });
+      const personalInfo = await PersonalInfo.findOne({ userId: id });
+      const homeDetails = await HomeDetails.findOne({ userId: id });
+      const healthDetails = await HealthDetails.findOne({ userId: id });
+      const familyDetails = await FamilyDetails.findOne({ userId: id });
+      const otherDetails = await OtherDetails.findOne({ userId: id });
       const userDetail = {
         user: UserInfo || {},
         personalInfo: personalInfo || {},
@@ -151,7 +147,7 @@ const UserService = {
       throw error;
     }
   },
-  async updateCurrentUser (id, type, payload) {
+  async updateCurrentUser(id, type, payload) {
     try {
       const Model = getSchemaByType(type);
       const updatedUser = await Model.findOneAndUpdate(
@@ -166,8 +162,45 @@ const UserService = {
     } catch (error) {
       throw error;
     }
-  }
-  
+  },
+  async forgotPasswordUser(email, baseUrl) {
+    try {
+      const user = await User.findOne({ email });
+      if (!user) {
+        throw new AppError("There is no user with the email address.", 404);
+      }
+      const resetToken = user.createPasswordResetToken();
+      await user.save({ validateBeforeSave: false });
+      const resetUrl = `${baseUrl}/${resetToken}`;
+      return resetUrl;
+    } catch (error) {
+      throw error;
+    }
+  },
+  async resetPasswordUser(token, password, confirmPassword) {
+    if(password !== confirmPassword){
+      throw new AppError("password and confirm password.", 400);
+    }
+    // 1 Get user based on the token
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(token)
+      .digest("hex");
+    const user = await User.findOne({
+      passwordResetToken: hashedToken,
+      passwordResetExpiry: { $gt: Date.now() },
+    });
+    // 2 if token is not expired, there is a user, set new password
+    if (!user) {
+      throw new AppError("Token is invalid or expired.", 400);
+    }
+    // 3 update the changePasswordAt property for the user
+    user.password = password;
+    user.passwordResetToken = undefined;
+    user.passwordResetExpiry = undefined;
+    const resp = await user.save();
+    return resp;
+  },
 };
 
 module.exports = UserService;
