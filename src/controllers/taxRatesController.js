@@ -28,6 +28,8 @@ const calculate = async (year, userId) => {
     taxPaid += item.income_tax_paid;
     uscPaid += item.usc_paid;
   });
+  const taxPaidTotal = taxPaid + uscPaid; //=SUM(D10:D11)
+
   console.log(
     "grossIncomeUsc",
     grossIncomeUsc,
@@ -51,7 +53,7 @@ const calculate = async (year, userId) => {
     taxCredits: {
       personalSingle,
       widowNoDependants,
-      widowCredityears,
+      widowCreditYearly,
       married,
       paye,
       singleParent,
@@ -113,106 +115,73 @@ const calculate = async (year, userId) => {
   if (maritalStatus === "single" && (!incapacitated || !dependentChildren)) {
     type = "single";
   } else if (
-    maritalStatus === "Widowed" &&
+    maritalStatus === "widowed" &&
     (incapacitated || dependentChildren)
   ) {
     type = "singleParent";
   } else if (maritalStatus === "Married") {
     type = marriedType ? "married2Income" : "married1Income";
   }
-  console.log("type", type);
-
-  //calculations for pension related to year and the personal and spouse
-  const selectedPension = contributionDetails.filter(
-    (item) => item.year === year
-  );
-  const totalPension = selectedPension.reduce((a, b) => a + b.pension, 0);
-  const totalIncomeProtection = selectedPension.reduce(
-    (a, b) => a + b.incomeProtection,
-    0
-  );
-  //calculation for work from home related to year
-  const { daysWorkedFromHome, totalCostOfLightingAndHeat, costOfBroadband } =
-    workFromHomeDetails.find((item) => item.year === year);
+//   console.log("type", type);
 
   // Get the year of birth from the date
   const birthYear = dateOfBirth.getUTCFullYear();
   const currentYear = new Date().getUTCFullYear();
   const age = currentYear - birthYear;
 
-  //for single
-  // const grossIncomeUsc = 100000;
-  // const grossTaxableIncome = 100000;
-  // const taxPaid = 25240;
-  // const uscPaid = 4839;
-
-  //for single parent
-  // const grossIncomeUsc = 100000;
-  // const grossTaxableIncome = 90000;
-  // const taxPaid = 22790;
-  // const uscPaid = 4839;
-
-  //for Married 1 Incomes
-  // const grossIncomeUsc = 100000+50000;
-  // const grossTaxableIncome = 90000 + 45000;
-  // const taxPaid = 32480;
-  // const uscPaid = 6152;
-
   let over65Exemption = 0;
   let standardRateBand = 0;
-  let over65Percent = 0;
+  let grossIncomePercent = 0;
 
   //***********************************SECTION 1 *************************************************** */
+  console.log("=========== age ==============", age );
 
   if (age > 65) {
     const exemption =
       type === "single" || type === "singleParent"
         ? exemptionLimitsOver65[type]
         : exemptionLimitsOver65["married"];
+        // console.log("=========== exemption ==============",grossTaxableIncome, exemption );
     over65Exemption = Math.min(grossTaxableIncome, exemption);
-    over65Percent = over65ExemptionRatePercent / 100; //=IF(A15=">65",0,'Questions for App'!F105)
-    console.log("exemption", exemption);
+    grossIncomePercent = over65ExemptionRatePercent ? over65ExemptionRatePercent / 100 : 0; //=IF(A15=">65",0,'Questions for App'!F105)
   } else {
     const band =
-      type === "single" || type === "singleParent"
-        ? taxBands[type]
-        : taxBands["self"] + taxBands[type]["spouse"];
+      type = taxBands[type];
     // console.log(taxBands[type]);
     standardRateBand = band;
-    over65Percent = lowerRatePercent / 100;
+    grossIncomePercent = lowerRatePercent / 100;
     console.log("band", band);
   }
 
-  // console.log(standardRateBand, over65Exemption);
-  // console.log(totalPension, totalIncomeProtection);
-  // console.log(totalPriceWorkedFromHome);
-  // console.log(over65Percent,marginalRatePercent);
+   //calculations for pension related to year and the personal and spouse (Question App G85)
+   const PensionAndIncomeProtection = contributionDetails.filter(item => item.year === year);
+  const totalPension = PensionAndIncomeProtection.reduce((a, b) => a + b.pension, 0);
+  const totalIncomeProtection = PensionAndIncomeProtection.reduce((a, b) => a + b.incomeProtection, 0);
+  //calculation for work from home related to year
+  const { daysWorkedFromHome, totalCostOfLightingAndHeat, costOfBroadband } =
+    workFromHomeDetails.find((item) => item.year === year);
+    const totalPriceWorkedFromHome =
+    (daysWorkedFromHome / 365) * (totalCostOfLightingAndHeat + costOfBroadband); // (E70 / 365* Sum(E71:E72))
+  
+//   console.log('============ Pension Area ==============')
+//   console.log(standardRateBand, over65Exemption);
+//   console.log(totalPension, totalIncomeProtection);
+//   console.log(totalPriceWorkedFromHome);
+//   console.log(grossIncomePercent,marginalRatePercent);
 
-  const taxPaidTotal = taxPaid + uscPaid; //=SUM(D10:D11)
 
   //=IF(A15=">65",MIN('Questions for App'!F113,'Calculations for App'!D9),0) + =IF(A15=">65",0,'Questions for App'!F108) +
   // ='Questions for App'!G85  + ='Questions for App'!G86 + ='Questions for App'!G70
 
-  const totalPriceWorkedFromHome =
-    (daysWorkedFromHome / 365) * (totalCostOfLightingAndHeat + costOfBroadband);
+  
   console.log("totalPriceWorkedFromHome", totalPriceWorkedFromHome);
 
-  const adjustedBand =
-    over65Exemption +
-    standardRateBand +
-    totalPension +
-    totalIncomeProtection +
-    totalPriceWorkedFromHome; //=SUM(D15:D19)
+  const adjustedBand = over65Exemption + standardRateBand + totalPension + totalIncomeProtection + totalPriceWorkedFromHome; //=SUM(D15:D19)
   console.log("adjustedBand", adjustedBand);
 
-  const grossIncome1 =
-    Math.min(grossTaxableIncome, adjustedBand) * over65Percent; //=MIN(D20,D9)
-  let grossIncome2 = 0;
-  if (grossTaxableIncome - adjustedBand > 0) {
-    grossIncome2 =
-      (grossTaxableIncome - adjustedBand) * (marginalRatePercent / 100); //=IF(D9-D21>0,D9-D21,0)
-  }
-  const totalGrossIncome = grossIncome1 + grossIncome2; //=(D21*C21)+(D22*C22)
+  const grossIncome1 = Math.min(grossTaxableIncome, adjustedBand); //=MIN(D20,D9)
+  let grossIncome2 =  (grossTaxableIncome - adjustedBand > 0) ?  (grossTaxableIncome - adjustedBand) : 0 //=IF(D9-D21>0,D9-D21,0)
+  const totalGrossIncome = (grossIncome1 * grossIncomePercent)  + (grossIncome2 * (marginalRatePercent / 100)); //=(D21*C21)+(D22*C22)
   console.log("totalGrossIncome", totalGrossIncome);
 
   //***********************************SECTION 2 *************************************************** */
@@ -228,46 +197,42 @@ const calculate = async (year, userId) => {
   // );
   console.log("widow", widowNoDependants);
 
-  let personal =
-    type === "single" || type === "singleParent"
-      ? maritalStatus === "Widowed"
-        ? widowNoDependants
-        : personalSingle
-      : married["self"] + married["spouse"]; //=IF('Questions for App'!E15="Widowed",'Questions for App'!F120,'Questions for App'!F116)
+  let personal = (type === "single" || type === "singleParent") ? personalSingle 
+    : maritalStatus === "widowed" ? widowNoDependants
+    : married; //=IF('Questions for App'!E15="widowed",'Questions for App'!F120,'Questions for App'!F116)
 
   console.log("personal", personal);
 
-  const totalPaye = type !== "married1Income" ? paye : paye + paye;
+  const totalPaye = type === "married2Income" ?  (paye + paye) : paye;
   console.log("totalPaye", totalPaye);
-
-  const standardCredits =
-    personal + totalPaye + (type === "singleParent" && singleParent); //we have taken paye for one only
+  const singleParentFullTimeCourse = students.find(item => item.year === year && item?.fullTimeCourse === "fullTime");
+  const singleParentStandardCredits = (type === "singleParent" && singleParentFullTimeCourse) ? singleParent : 0; 
+  
+  
+  const standardCredits = personal + totalPaye + singleParentStandardCredits; //we have taken paye for one only
   console.log("standardCredits", standardCredits);
 
   //***********************************SECTION 3 *************************************************** */
   //Additional Credits
   //age cresit is not defined
   // console.log(widowTrail);
-  totalYearsPassedSpouse = year - spousePassDate.getUTCFullYear();
-  const widow = widowCredityears - (totalYearsPassedSpouse - 1) * 450;
+  totalYearsPassedSpouse = maritalStatus === "widowed" && year - spousePassDate.getUTCFullYear();
+  const widow = (totalYearsPassedSpouse > 0) ?  widowCreditYearly - (totalYearsPassedSpouse -1) * 450 : 0;
 
-  let widowTrail1 =
-    (type === "single" || type === "singleParent") &&
-    maritalStatus === "Widowed" &&
-    widow; //formula should be understand from questions app
-    
-  let incapacitatedChild =
-    incapacitatedChildren &&
-    incapacitated * incapacitatedChildrenDetails.length; //years should be mentioned
+  let widowTrail = maritalStatus === "widowed" ? widow : 0; //formula should be understand from questions app
+ // Carer Missed for married (Question app M37) 
+ // =IF(AND(E37>0,E128-((N2-E129)/2)>0),E128-((N2-E129)/2),0)
+  let incapacitatedChild = incapacitatedChildrenDetails.length ? incapacitated : 0;
 
-  console.log("widowTrail1", widowTrail1);
+  console.log("widowTrail", widowTrail);
   console.log("incapacitatedChild", incapacitatedChild);
   // console.log(incapacitatedChild);
+
 
   let totalElderlyRelativeCredit = 0; //years should be mentioned
   if (elderlyRelativeCare) {
     elderlyRelative.forEach(({ annualIncome }) => {
-      if (annualIncome <= dependantRelativeLimits) {
+      if (annualIncome <= dependantRelativeLimits) { // either compare with individual annualIncome or with sum of all relative ??
         totalElderlyRelativeCredit += dependentRelative;
       } else totalElderlyRelativeCredit += 0;
     });
@@ -277,14 +242,14 @@ const calculate = async (year, userId) => {
   //TOTAL FEE FOR ALL COURSES FORMULA
   let totalFeesCourses = 0;
   //=((MIN(F140,E55)-F139 +MIN(E59,F140)-F139)*F141
-  //if(E52=Yes,=((MIN(F140,E55)-F139)+(MIN(E59,F140)-F138))*F141,0)
+  //if(E52=Yes,=((MIN(F140,E55)-F139)+(MIN(E59,F140)-F138))*F141,0) individual or total??
   let totalFeesCoursesFullTime = 0;
   let totalFeesCoursesPartTime = 0;
   if (tuitionFeesCredit) {
     students.forEach(({ fullTimeCourse, fees }) => {
-      if (fullTimeCourse === "Full Time")
+      if (fullTimeCourse === "fullTime")
         totalFeesCoursesFullTime += Math.min(fees, courseMaximum);
-      if (fullTimeCourse === "Part Time")
+      if (fullTimeCourse === "partTime")
         totalFeesCoursesPartTime += Math.min(fees, courseMaximum);
     });
     totalFeesCoursesFullTime -= fullTimeCourseDisregardedAmount;
@@ -298,9 +263,10 @@ const calculate = async (year, userId) => {
   console.log("totalFeesCourses", totalFeesCourses);
 
   //RENT CALCULATIONS
+  //=IF(E62="Yes",MIN(F134,F136*E65),0)
   let totalRent = 0;
-  payRentDetails.forEach(({ propertyType, rentPaid, year: year1 }) => {
-    if (year === year1) {
+  payRentDetails.forEach(({ propertyType, rentPaid, year: rentYear }) => {
+    if (year === rentYear) {
       if (propertyType === "primary") {
         totalRent +=
           type === "single" || type === "singleParent"
@@ -320,18 +286,19 @@ const calculate = async (year, userId) => {
   console.log("miscWorkFromHome", miscWorkFromHome);
 
   //Health Expenses
+// G76 * 20%  ==> G76 --> =SUM(E76:E80)*F143
   let totalHealthExpenses = 0;
   incurHealthExpensesDetail.forEach(
     ({
       gpHospConsultant,
       prescriptions,
       nonRoutineDental,
-      year: year1,
+      year: healthYear,
       careHomeCarer,
       otherAmount,
     }) => {
-      if (year1 === year) {
-        totalHealthExpenses =
+      if (healthYear === year) {
+        totalHealthExpenses +=
           ((gpHospConsultant +
             prescriptions +
             nonRoutineDental +
@@ -348,12 +315,14 @@ const calculate = async (year, userId) => {
   //
 
   //Medical Insurance
+// G81 * 20%  ==> G81 --> MIN(E82,(E83*F145)+(E84*F146))
+
   let medicalInsurance = 0;
   if (spouseEmployerPays) {
     employerPaysDetails.forEach(
-      ({ amount, adultsCovered, childrenCovered, year: year1 }) => {
-        if (year === year1) {
-          medicalInsurance = Math.min(
+      ({ amount, adultsCovered, childrenCovered, year: employerPaysYear }) => {
+        if (year === employerPaysYear) {
+          medicalInsurance += Math.min(
             amount,
             adultsCovered * maxPerAdult + childrenCovered * maxPerChild
           );
@@ -377,7 +346,7 @@ const calculate = async (year, userId) => {
 
   const totalTaxCredit =
     standardCredits +
-    widowTrail1 +
+    widowTrail +
     incapacitatedChild +
     totalElderlyRelativeCredit +
     totalFeesCourses +
@@ -406,12 +375,12 @@ const calculate = async (year, userId) => {
   console.log("usc2", usc2);
 
   const usc3 =
-    (Math.min(grossIncomeUsc - uscBands[0] - uscBands[1], uscBands[2]) *
+    (Math.min(grossIncomeUsc - (usc1 + usc2), uscBands[2]) *
       uscRatesPercentage[2]) /
     100;
   console.log("usc3", usc3);
   const usc4 =
-    ((grossIncomeUsc - uscBands[0] - uscBands[1] - uscBands[2]) *
+    ((grossIncomeUsc - (usc1 + usc2 + usc3)) *
       (fullGpMedicalCard
         ? medicalCardExemptionTopRate
         : uscRatesPercentage[3])) /
@@ -422,14 +391,15 @@ const calculate = async (year, userId) => {
   //add total
   const totalUsc = usc1 + usc2 + usc3 + usc4;
   console.log("totalUsc", totalUsc);
-
+  // =D48+D63
   const netTaxDue = netIncomeTaxDue + totalUsc;
   console.log("netTaxDue", netTaxDue);
-
+// =D13-D65
   const taxResult = taxPaidTotal - netTaxDue;
   console.log("taxResult", taxResult);
 
-  const priorRebates = 450;
+  const priorRebates = 450;  // will get from the document
+  //=D67-D69
   const finalFigureForCustomer = taxResult - priorRebates;
   console.log("finalFigureForCustomer", finalFigureForCustomer);
 };
