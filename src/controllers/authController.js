@@ -106,4 +106,24 @@ exports.resendCode = async (req, res, next) => {
     next(error);
   }
 };
+exports.forgetPassword = async (req, res, next) => {
+  try {
+    const baseUrl = `${req.protocol}://${req.get("host" )}/api/v1/users/resetPassword`;
+    const resetTokenUrl = await UserService.forgotPasswordUser(req?.body?.email, baseUrl);
+    res.status(200).json({ status: "success", resetTokenUrl });
+  } catch (error) {
+    next(error);
+  }
+};
+exports.resetPassword = async (req, res, next) => {
+  try {
+    const token = req.params.token;
+    const {password, confirmPassword} = req.body;
+    const resp = await UserService.resetPasswordUser(token, password, confirmPassword);
 
+    // 4 log the user in, send jwt
+    createSendToken(resp, 201, res);
+  } catch (error) {
+    next(error);
+  }
+};

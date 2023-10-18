@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const crypto = require("crypto");
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = require('../../config/vars');
@@ -33,6 +34,8 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  passwordResetToken: String,
+  passwordResetExpiry: Date,
 });
 
 // Password hashing pre hook
@@ -61,7 +64,15 @@ userSchema.methods.isValidPassword = async function (password) {
 userSchema.methods.generateToken = function () {
   return jwt.sign({ _id: this._id.toString() }, JWT_SECRET, { expiresIn: '1h' });
 };
-
+userSchema.methods.createPasswordResetToken = function () {
+  const resetToken = crypto.randomBytes(32).toString("hex");
+  this.passwordResetToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
+  this.passwordResetExpiry = Date.now() + 10 * 60 * 1000;
+  return resetToken;
+};
 const User = mongoose.model('User', userSchema);
 
 module.exports = User;
