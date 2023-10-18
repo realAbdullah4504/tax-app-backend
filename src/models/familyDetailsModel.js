@@ -8,7 +8,7 @@ const childrenDetail = {
 };
 const studentDetail = {
   id: Number,
-  years: [Number],
+  years: Number,
   name: String,
   fullTimeCourse: String,
   fees: Number,
