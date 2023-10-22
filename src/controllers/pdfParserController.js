@@ -53,7 +53,9 @@ exports.pdfParser = async (req, res, next) => {
             spouse = element?.values.join(" ");
           }
           tempArray[key] =
-            key === "summary_type" && spouse === "" ? "Self" : element?.values.join(" ");
+            key === "summary_type" && spouse === ""
+              ? "Self"
+              : element?.values.join(" ");
         });
         data.push({ ...tempArray });
         // data.push(tempArray);
@@ -100,4 +102,30 @@ exports.pdfParser = async (req, res, next) => {
   } catch (error) {
     next(error);
   }
+};
+
+exports.fileUpload = async (req, res, next) => {
+await pdfParserService.userUploadDocument(req, res)
+};
+
+exports.getDocuments = async (req, res, next) => {
+  try {
+    const resp = await pdfParserService.getUserFiles(req.user._id);
+    sendAppResponse({
+      res,
+      data:resp,
+      statusCode: 200,
+      status: "success",
+    });
+  } catch (error) {
+    console.error(error);
+    return res
+      .status(500)
+      .json({ error: "Error retrieving user file information" });
+  }
+};
+
+exports.downloadFile = async (req, res, next) => {
+  const filename = req.params.filename;
+  await pdfParserService.getUserFileByName(res, filename)
 };
