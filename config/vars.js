@@ -17,6 +17,11 @@ module.exports = {
   PDF_PARSER: process.env.PDF_PARSER,
   PDF_API_EMP: process.env.PDF_API_EMP,
   PDF_ACC: process.env.PDF_ACC,
+  // AWS
+  BUCKET_NAME: process.env.BUCKET_NAME,
+  DIRECTORY_NAME: process.env.DIRECTORY_NAME,
+  BUCKET_NAME: process.env.BUCKET_NAME,
+  DIRECTORY_NAME: process.env.DIRECTORY_NAME,
 
   // Add more variables as needed
 };

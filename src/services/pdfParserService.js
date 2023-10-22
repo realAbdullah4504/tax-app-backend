@@ -1,7 +1,23 @@
 const mindee = require("mindee");
-const { PDF_PARSER, PDF_API_EMP, PDF_ACC } = require("../../config/vars");
+const UserDocuments = require("../models/userDocumentsModel");
+const AWS = require("aws-sdk");
+const {
+  PDF_PARSER,
+  PDF_API_EMP,
+  PDF_ACC,
+  BUCKET_NAME,
+  DIRECTORY_NAME,
+  AWS_ACCESS_KEY_ID,
+  AWS_SECRET_ACCESS_KEY,
+  AWS_REGION,
+} = require("../../config/vars");
 const mindeeClient = new mindee.Client({ apiKey: PDF_PARSER });
-
+AWS.config.update({
+  accessKeyId: AWS_ACCESS_KEY_ID,
+  secretAccessKey: AWS_SECRET_ACCESS_KEY,
+  region: AWS_REGION,
+});
+const s3 = new AWS.S3();
 const getApiEndPoint = (type) => {
   switch (type) {
     case "employment-summery":
@@ -33,11 +49,88 @@ const pdfParserService = {
 
   async parsePDF(inputSource, customEndpoint) {
     try {
-      const apiResponse = mindeeClient.parse(mindee.product.CustomV1, inputSource, {
-        endpoint: customEndpoint,
-        cropper: true,
-      });
+      const apiResponse = mindeeClient.parse(
+        mindee.product.CustomV1,
+        inputSource,
+        {
+          endpoint: customEndpoint,
+          cropper: true,
+        }
+      );
       return apiResponse;
+    } catch (error) {
+      throw error;
+    }
+  },
+  async userUploadDocument (req, res) {
+   const params = {
+    Bucket: `${BUCKET_NAME}/${DIRECTORY_NAME}`,
+    Key: req.file.originalname,
+    Body: req.file.buffer,
+  };
+  const payload = {name: req.file.originalname, description:req.body.description};
+  const userDocuments = await UserDocuments.findOneAndUpdate(
+    { userId: req.user._id },
+    { $addToSet: { filesDetail: { $each: [payload] } } }, // Use an array with a single element
+    { new: true, upsert: true }
+  );
+
+  s3.upload(params, (err, data) => {
+    if (err) {
+      console.error(err);
+      return res.status(500).send("Error uploading file");
+    }
+    // res.send('File uploaded successfully');
+    res.status(200).json({stateCode:200, message:"File uploaded successfully"});
+  }); 
+},
+  async getUserFileByName(res, filename) {
+    try {
+      const params = { Bucket: BUCKET_NAME, Key: `${DIRECTORY_NAME}/` + filename };
+      s3.getObject(params)
+        .createReadStream()
+        .on("error", (err) => {
+          console.error("Error downloading file from S3:", err);
+          res.status(500).send("Error downloading file");
+        })
+        .pipe(res);
+    } catch (error) {
+      throw error;
+    }
+  },
+  async getUserFiles(userId) {
+    try {
+      const userDocuments = await UserDocuments.findOne({ userId });
+      if (!userDocuments) {
+        return res.status(404).json({ error: "User file not found" });
+      }
+          // Get the list of filenames from the user's document
+    // const fileNames = userFile.fileName;
+    // const objectKeys = fileNames.map((item) => `${prefix}${item?.name}`);
+    // console.log(objectKeys);
+
+    // const params = {
+    //   Bucket: bucketName,
+    //   Prefix: prefix,
+    // };
+
+    // s3.listObjects(params, function (err, data) {
+    //   if (err) {
+    //     return res
+    //       .status(500)
+    //       .json({ error: "Error listing objects in S3 bucket" });
+    //   } else {
+    //     console.log(data.Contents);
+    //     const objectURLs = data.Contents.filter((obj) =>
+    //       objectKeys.includes(obj.Key)
+    //     ).map((obj) => {
+    //       const s3URL = `https://${bucketName}.s3.amazonaws.com/${obj.Key}`;
+    //       return s3URL;
+    //     });
+    //     // res.status(200).json({ userId: req.user._id, objectURLs });
+    //   }
+    // });
+    return userDocuments?.filesDetail || [];
     } catch (error) {
       throw error;
     }
