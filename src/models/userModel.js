@@ -34,6 +34,10 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  is2FA: {
+    type: Boolean,
+    default: false
+  },
   passwordResetToken: String,
   passwordResetExpiry: Date,
 });
