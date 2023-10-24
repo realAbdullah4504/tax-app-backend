@@ -1,3 +1,4 @@
+const User = require("../models/userModel");
 const UserService = require("../services/userService");
 const sendAppResponse = require("../utils/helper/appResponse");
 
@@ -30,6 +31,24 @@ exports.updateUserDetail = async (req, res, next) => {
       }
     }
     const updatedUser = await UserService.updateCurrentUser(id, type, payload);
+    sendAppResponse({
+      res,
+      updatedUser,
+      statusCode: 200,
+      status: "success",
+      message: "User updated successfully.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+exports.update2FA = async (req, res, next) => {
+  try {
+    const id = req?.user?.id;
+    const updatedUser = await User.findByIdAndUpdate(id, req.body, {
+      new: false,
+      runValidator: true,
+    });
     sendAppResponse({
       res,
       updatedUser,

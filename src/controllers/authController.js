@@ -91,7 +91,9 @@ exports.login = async (req, res, next) => {
     if (!user) throw new AppError('Invalid credentials', 401);
     const token = generateToken(user?._id);
     user.password = undefined;
-    sendAppResponse({ res, statusCode: 200, status: 'success', token, data: user });
+    if(user?.is2FA)  await UserService.sendVerificationCode(user?.phoneNumber);
+    const message = user?.is2FA ? 'code has been sent to your phone number to log in': '';
+    sendAppResponse({ res, statusCode: 200, status: 'success', token, data: user, message });
   } catch (error) {
     next(error);
   }
