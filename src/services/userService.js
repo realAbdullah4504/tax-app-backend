@@ -62,7 +62,7 @@ const UserService = {
     const count = await User.countDocuments({
       $or: [{ email: email }, { phoneNumber: phoneNumber }],
     });
-    return count > 0;
+    return count;
   },
 
   async sendVerificationCode(phoneNumber) {
