@@ -88,7 +88,7 @@ exports.login = async (req, res, next) => {
 
     const { email, password } = req.body;
     const user = await UserService.loginUser(email, password);
-    if (!user) throw new AppError('Invalid credentials', 401);
+    if (!user) throw new AppError('Invalid credentials', 400);
     const token = generateToken(user?._id);
     user.password = undefined;
     if(user?.is2FA)  await UserService.sendVerificationCode(user?.phoneNumber);
