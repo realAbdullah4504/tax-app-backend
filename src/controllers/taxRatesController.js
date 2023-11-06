@@ -242,7 +242,7 @@ const calculate = async (year, userId) => {
 
   //***********************************SECTION 3 *************************************************** */
   //Additional Credits
-  //age cresit is not defined
+  //age credit is not defined (need to work on it)
   // console.log(widowTrail);
   totalYearsPassedSpouse =
     maritalStatus === "widowed" && year - spousePassDate.getUTCFullYear();
