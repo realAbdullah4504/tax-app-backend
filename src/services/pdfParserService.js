@@ -169,11 +169,11 @@ const pdfParserService = {
       throw error;
     }
   },
-  async deleteFile(res, objectKey) {
+  async deleteFile(res, objectKey,  userId) {
     try {
       const params = {
         Bucket: BUCKET_NAME,
-        Key: `${DIRECTORY_NAME}/` + objectKey,
+        Key: `${DIRECTORY_NAME}${userId}/${objectKey}`,
       };
       s3.deleteObject(params, (err, data) => {
         if (err) {

@@ -31,6 +31,8 @@ const getSchemaByType = (type) => {
       return FamilyDetails;
     case "otherDetails":
       return OtherDetails;
+      case "user":
+      return User;
     default:
       throw new Error("Invalid type");
   }
@@ -150,8 +152,9 @@ const UserService = {
   async updateCurrentUser(id, type, payload) {
     try {
       const Model = getSchemaByType(type);
+      const condition = type === 'user' ? {_id:id} : {userId:id}
       const updatedUser = await Model.findOneAndUpdate(
-        { userId: id },
+        condition,
         payload,
         {
           upsert: true,

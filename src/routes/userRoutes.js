@@ -45,7 +45,7 @@ const upload = multer({
 router.post("/fileUpload", authenticate, upload.array("files", 5), fileUpload);
 router.get("/getDocuments", authenticate, getDocuments);
 router.get("/downloadFile/:filename", downloadFile);
-router.delete("/deleteFile/:filename", deleteFile);
+router.delete("/deleteFile/:filename",authenticate, deleteFile);
 // Protected route using the authenticate middleware
 
 module.exports = router;
