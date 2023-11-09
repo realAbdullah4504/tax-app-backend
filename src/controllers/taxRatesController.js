@@ -7,6 +7,7 @@ const HomeDetails = require("../models/homeDetailsModel");
 const FamilyDetails = require("../models/familyDetailsModel");
 const HealthDetails = require("../models/healthDetailsModel");
 const EmploymentSummary = require("../models/employmentSummary");
+const CalculationDetail = require("../models/calculationDetailsModel");
 
 const calculate = async (year, userId) => {
   //get the tax values and age
@@ -54,6 +55,10 @@ const calculate = async (year, userId) => {
       personalSingle,
       widowNoDependants,
       widowCreditYearly,
+
+      ageCreditSingle,
+      ageCreditMarried,
+
       married,
       paye,
       singleParent,
@@ -191,10 +196,10 @@ const calculate = async (year, userId) => {
 
   const adjustedBand =
     over65Exemption +
-    standardRateBand +
-    totalPension +
-    totalIncomeProtection +
-    totalPriceWorkedFromHome; //=SUM(D15:D19)
+      standardRateBand +
+      totalPension +
+      totalIncomeProtection +
+      totalPriceWorkedFromHome || 0; //=SUM(D15:D19)
   console.log("adjustedBand", adjustedBand);
 
   const grossIncome1 = Math.min(grossTaxableIncome, adjustedBand); //=MIN(D20,D9)
@@ -243,6 +248,13 @@ const calculate = async (year, userId) => {
   //***********************************SECTION 3 *************************************************** */
   //Additional Credits
   //age credit is not defined (need to work on it)
+  const ageCredit =
+    age >= 65
+      ? maritalStatus === "single"
+        ? ageCreditSingle
+        : ageCreditMarried
+      : 0;
+
   // console.log(widowTrail);
   totalYearsPassedSpouse =
     maritalStatus === "widowed" && year - spousePassDate.getUTCFullYear();
@@ -343,7 +355,7 @@ const calculate = async (year, userId) => {
   console.log("miscWorkFromHome", miscWorkFromHome);
 
   //Health Expenses
-// G76 * 20%  ==> G76 --> =SUM(E76:E80)*F143
+  // G76 * 20%  ==> G76 --> =SUM(E76:E80)*F143
   let totalHealthExpenses = 0;
   incurHealthExpensesDetail.forEach(
     ({
@@ -372,7 +384,7 @@ const calculate = async (year, userId) => {
   //
 
   //Medical Insurance
-// G81 * 20%  ==> G81 --> MIN(E82,(E83*F145)+(E84*F146))
+  // G81 * 20%  ==> G81 --> MIN(E82,(E83*F145)+(E84*F146))
 
   let medicalInsurance = 0;
   if (spouseEmployerPays) {
@@ -403,6 +415,7 @@ const calculate = async (year, userId) => {
 
   const totalTaxCredit =
     standardCredits +
+    ageCredit +
     widowTrail +
     incapacitatedChild +
     totalElderlyRelativeCredit +
@@ -416,7 +429,7 @@ const calculate = async (year, userId) => {
 
   console.log("totalTaxCredit", totalTaxCredit);
 
-  const netIncomeTaxDue = totalGrossIncome - totalTaxCredit;
+  const netIncomeTaxDue = totalGrossIncome - totalTaxCredit || 0;
   console.log("netIncomeTaxDue", netIncomeTaxDue);
 
   ////***********************************SECTION 4 *************************************************** */
@@ -451,7 +464,7 @@ const calculate = async (year, userId) => {
   // =D48+D63
   const netTaxDue = netIncomeTaxDue + totalUsc;
   console.log("netTaxDue", netTaxDue);
-// =D13-D65
+  // =D13-D65
   const taxResult = taxPaidTotal - netTaxDue;
   console.log("taxResult", taxResult);
 
@@ -459,6 +472,49 @@ const calculate = async (year, userId) => {
   //=D67-D69
   const finalFigureForCustomer = taxResult - priorRebates;
   console.log("finalFigureForCustomer", finalFigureForCustomer);
+
+  const payload = {
+    year,
+    grossIncomeUsc,
+    grossTaxableIncome,
+    taxPaid,
+    uscPaid,
+    taxPaidTotal,
+    over65Exemption,
+    pension: totalPension, // totalPension
+    incomeProtection: totalIncomeProtection, // totalIncomeProtection
+    workFromHome: totalPriceWorkedFromHome, // totalPriceWorkedFromHome
+    adjustedBand,
+    grossIncomeDue: netIncomeTaxDue, // netIncomeTaxDue
+    personal,
+    paye: totalPaye, //totalPaye
+    singleParent: singleParentStandardCredits, // singleParentStandardCredits
+    flatRateExpense: "TBD", //TBD is a default value
+    ageCredit, // please set a hard code value for now
+    widowTrail,
+    carer: carerCredit, // carerCredit
+    Incapacitation: incapacitatedChild, //incapacitatedChild
+    elderlyRelative: totalElderlyRelativeCredit, // totalElderlyRelativeCredit
+    tuition: totalFeesCourses, //totalFeesCourses
+    rent: totalRent, //totalRent
+    workFromHomePer: miscWorkFromHome, //miscWorkFromHome
+    healthExpense: totalHealthExpenses, //totalHealthExpenses
+    medicalInsurance: medicalInsurance, //medicalInsurance
+    pensionCredits: pensionAdditionalCredits, // pensionAdditionalCredits
+    incomeProtectionCredits: incomeProtectionAdditionalCredits, //incomeProtectionAdditionalCredits
+    totalTaxCredit,
+    netIncomeTaxDue,
+    usc1,
+    usc2,
+    usc3,
+    usc4,
+    totalUsc,
+    netTaxDue,
+    taxResult,
+    priorRebates,
+    finalResult: finalFigureForCustomer, //finalFigureForCustomer
+  };
+  return payload;
 };
 
 exports.taxRates = async (req, res, next) => {
@@ -496,15 +552,42 @@ exports.taxCalculations = async (req, res, next) => {
   // console.log(year);
 
   // console.log(age);
-  calculate(year, userId);
-
-  // const {}
+  const calculation = await calculate(year, userId);
+  // console.log("###################", calculation);
+  const saveCalculations = await CalculationDetail.findByIdAndUpdate(
+    userId,
+    calculation,
+    {
+      upsert: true,
+      new: true,
+    }
+  );
+  if (!saveCalculations) throw new AppError("Calculations not saved", 404);
 
   sendAppResponse({
     res,
-    // taxCalculations,
+    saveCalculations,
     statusCode: 200,
     status: "success",
     message: "Tax Calculations successfully fetched.",
   });
+};
+exports.getCalculations = async (req, res, next) => {
+  try {
+    const { _id } = req.user;
+    const { year } = req.query;
+    // console.log("userId", _id);
+    const calculations = await CalculationDetail.find({ year, _id });
+    if (!calculations.length) throw new AppError("Calculations not found", 404);
+
+    sendAppResponse({
+      res,
+      calculations,
+      statusCode: 200,
+      status: "success",
+      message: "Calculations successfully fetched.",
+    });
+  } catch (error) {
+    next(error);
+  }
 };

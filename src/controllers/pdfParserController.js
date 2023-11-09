@@ -129,3 +129,8 @@ exports.downloadFile = async (req, res, next) => {
   const filename = req.params.filename;
   await pdfParserService.getUserFileByName(res, filename)
 };
+
+exports.deleteFile= async (req, res, next) => {
+  const objectKey = req.params.filename;
+  await pdfParserService.deleteFile(res,objectKey);
+}
