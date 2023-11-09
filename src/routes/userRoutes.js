@@ -4,11 +4,11 @@ const AuthController = require("../controllers/authController");
 const taxRatesController = require("../controllers/taxRatesController");
 const PdfParserController = require("../controllers/pdfParserController");
 const { authenticate } = require("../middlewares/auth");
-const { pdfParser, fileUpload, getDocuments, downloadFile } = PdfParserController;
+const { pdfParser, fileUpload, getDocuments, downloadFile, deleteFile } = PdfParserController;
 const { signUp, verifyCode, login, resendCode, forgetPassword, resetPassword } =
   AuthController;
 const { getUserDetail, updateUserDetail, update2FA } = UserController;
-const { taxRates, taxCalculations } = taxRatesController;
+const { taxRates, taxCalculations, getCalculations } = taxRatesController;
 const {
   createUserValidator,
   verifyCodeValidator,
@@ -32,6 +32,7 @@ router.post("/update", authenticate, updateUserDetail);
 router.post("/2FA", authenticate, update2FA);
 router.post("/taxRates", taxRates);
 router.post("/calculateTax", authenticate, taxCalculations);
+router.post("/getCalculationDetails", authenticate, getCalculations);
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -40,9 +41,11 @@ const upload = multer({
   },
 });
 
-router.post("/fileUpload", authenticate, upload.single("file"), fileUpload);
+// Update the route to use `upload.array` for handling multiple files
+router.post("/fileUpload", authenticate, upload.array("files", 5), fileUpload);
 router.get("/getDocuments", authenticate, getDocuments);
 router.get("/downloadFile/:filename", downloadFile);
+router.delete("/deleteFile/:filename", deleteFile);
 // Protected route using the authenticate middleware
 
 module.exports = router;
