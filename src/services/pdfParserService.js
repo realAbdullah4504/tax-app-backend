@@ -1,6 +1,6 @@
-const mindee = require("mindee");
-const UserDocuments = require("../models/userDocumentsModel");
-const AWS = require("aws-sdk");
+const mindee = require('mindee');
+const UserDocuments = require('../models/userDocumentsModel');
+const AWS = require('aws-sdk');
 const {
   PDF_PARSER,
   PDF_API_EMP,
@@ -10,7 +10,7 @@ const {
   AWS_ACCESS_KEY_ID,
   AWS_SECRET_ACCESS_KEY,
   AWS_REGION,
-} = require("../../config/vars");
+} = require('../../config/vars');
 const mindeeClient = new mindee.Client({ apiKey: PDF_PARSER });
 AWS.config.update({
   accessKeyId: AWS_ACCESS_KEY_ID,
@@ -20,10 +20,12 @@ AWS.config.update({
 const s3 = new AWS.S3();
 const getApiEndPoint = (type) => {
   switch (type) {
-    case "employment-summery":
-      return "eds_v2";
+    case 'employment-summery':
+      return 'eds_v2';
+    case 'p21':
+      return 'p_21';
     default:
-      throw new Error("Invalid type");
+      throw new Error('Invalid type');
   }
 };
 
@@ -49,14 +51,10 @@ const pdfParserService = {
 
   async parsePDF(inputSource, customEndpoint) {
     try {
-      const apiResponse = mindeeClient.parse(
-        mindee.product.CustomV1,
-        inputSource,
-        {
-          endpoint: customEndpoint,
-          cropper: true,
-        }
-      );
+      const apiResponse = mindeeClient.parse(mindee.product.CustomV1, inputSource, {
+        endpoint: customEndpoint,
+        cropper: true,
+      });
       return apiResponse;
     } catch (error) {
       throw error;
@@ -65,10 +63,10 @@ const pdfParserService = {
   async userUploadDocument(req, res) {
     const files = req.files;
     if (!files || files.length === 0) {
-      return res.status(400).json({ message: "No files uploaded." });
+      return res.status(400).json({ message: 'No files uploaded.' });
     }
 
-    const uploadPromises = files.map((file,index) => {
+    const uploadPromises = files.map((file, index) => {
       const params = {
         Bucket: `${BUCKET_NAME}/${DIRECTORY_NAME}${req?.user?._id}`,
         Key: file.originalname,
@@ -105,14 +103,10 @@ const pdfParserService = {
 
     Promise.all(uploadPromises)
       .then(() => {
-        res
-          .status(200)
-          .json({ stateCode: 200, message: "Files uploaded successfully" });
+        res.status(200).json({ stateCode: 200, message: 'Files uploaded successfully' });
       })
       .catch((err) => {
-        res
-          .status(500)
-          .json({ stateCode: 500, message: "Error uploading files" });
+        res.status(500).json({ stateCode: 500, message: 'Error uploading files' });
       });
   },
   async getUserFileByName(res, filename) {
@@ -123,9 +117,9 @@ const pdfParserService = {
       };
       s3.getObject(params)
         .createReadStream()
-        .on("error", (err) => {
-          console.error("Error downloading file from S3:", err);
-          res.status(500).send("Error downloading file");
+        .on('error', (err) => {
+          console.error('Error downloading file from S3:', err);
+          res.status(500).send('Error downloading file');
         })
         .pipe(res);
     } catch (error) {
@@ -136,7 +130,7 @@ const pdfParserService = {
     try {
       const userDocuments = await UserDocuments.findOne({ userId });
       if (!userDocuments) {
-        return res.status(404).json({ error: "User file not found" });
+        return res.status(404).json({ error: 'User file not found' });
       }
       // Get the list of filenames from the user's document
       // const fileNames = userFile.fileName;
@@ -169,7 +163,7 @@ const pdfParserService = {
       throw error;
     }
   },
-  async deleteFile(res, objectKey,  userId) {
+  async deleteFile(res, objectKey, userId) {
     try {
       const params = {
         Bucket: BUCKET_NAME,
@@ -178,11 +172,9 @@ const pdfParserService = {
       s3.deleteObject(params, (err, data) => {
         if (err) {
           console.error(err);
-          return res.status(500).send("Error deleting file");
+          return res.status(500).send('Error deleting file');
         }
-        res
-          .status(200)
-          .json({ stateCode: 200, message: "File deleted successfully" });
+        res.status(200).json({ stateCode: 200, message: 'File deleted successfully' });
       });
     } catch (error) {
       throw error;
