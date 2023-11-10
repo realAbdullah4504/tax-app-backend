@@ -3,8 +3,11 @@ const UserController = require("../controllers/userController");
 const AuthController = require("../controllers/authController");
 const taxRatesController = require("../controllers/taxRatesController");
 const PdfParserController = require("../controllers/pdfParserController");
+const userDocumentService = require("../controllers/userDocuments");
 const { authenticate } = require("../middlewares/auth");
-const { pdfParser, fileUpload, getDocuments, downloadFile, deleteFile } = PdfParserController;
+const { pdfParser } = PdfParserController;
+const { fileUpload, getDocuments, downloadFile, deleteFile } = userDocumentService;
+
 const { signUp, verifyCode, login, resendCode, forgetPassword, resetPassword } =
   AuthController;
 const { getUserDetail, updateUserDetail, update2FA } = UserController;
