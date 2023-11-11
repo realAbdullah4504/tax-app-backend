@@ -42,21 +42,3 @@ exports.updateUserDetail = async (req, res, next) => {
     next(error);
   }
 };
-exports.update2FA = async (req, res, next) => {
-  try {
-    const id = req?.user?.id;
-    const updatedUser = await User.findByIdAndUpdate(id, req.body, {
-      new: false,
-      runValidator: true,
-    });
-    sendAppResponse({
-      res,
-      updatedUser,
-      statusCode: 200,
-      status: "success",
-      message: "User updated successfully.",
-    });
-  } catch (error) {
-    next(error);
-  }
-};

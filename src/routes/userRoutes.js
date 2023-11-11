@@ -10,7 +10,7 @@ const { fileUpload, getDocuments, downloadFile, deleteFile } = userDocumentServi
 
 const { signUp, verifyCode, login, resendCode, forgetPassword, resetPassword } =
   AuthController;
-const { getUserDetail, updateUserDetail, update2FA } = UserController;
+const { getUserDetail, updateUserDetail } = UserController;
 const { taxRates, taxCalculations, getCalculations } = taxRatesController;
 const {
   createUserValidator,
@@ -32,7 +32,6 @@ router.patch("/resetPassword/:token", resetPassword);
 router.get("/detail", authenticate, getUserDetail);
 router.post("/pdf/:docType", authenticate, pdfParser);
 router.post("/update", authenticate, updateUserDetail);
-router.post("/2FA", authenticate, update2FA);
 router.post("/taxRates", taxRates);
 router.post("/calculateTax", authenticate, taxCalculations);
 router.post("/getCalculationDetails", authenticate, getCalculations);

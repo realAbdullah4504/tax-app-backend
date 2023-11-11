@@ -1,3 +1,5 @@
+const mongoose = require('mongoose');
+const { ObjectId } = mongoose.Types;
 const UserDocuments = require('../models/userDocumentsModel');
 const AWS = require('aws-sdk');
 const {
@@ -120,16 +122,14 @@ const userDocumentService = {
     }
   },
   async deleteFile(res, objectKey, userId) {
-    try {
-      const params = {
-        Bucket: BUCKET_NAME,
-        Key: `${DIRECTORY_NAME}${userId}/${objectKey}`,
-      };
+    try {   
+      const params = { Bucket: BUCKET_NAME,  Key: `${DIRECTORY_NAME}${userId}/${objectKey}`};
       s3.deleteObject(params, async(err, data) => {
         if (err) {
           console.error(err);
           return res.status(500).send('Error deleting file');
         }
+        await UserDocuments.findOneAndUpdate({userId}, {$pull: {"filesDetail": { name: objectKey }}});
         res.status(200).json({ stateCode: 200, message: 'File deleted successfully' });
       });
     } catch (error) {
