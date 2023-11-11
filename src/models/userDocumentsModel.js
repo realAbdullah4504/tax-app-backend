@@ -7,6 +7,9 @@ userId: {
     ref: "User",
 },
 filesDetail: [{name:String, description:String}],
+},
+{
+  timestamps: true,
 });
 
 const UserDocuments = mongoose.model("UserDocuments", userDocumentsSchema);

@@ -34,6 +34,9 @@ const personalDetailsSchema = new mongoose.Schema({
   spousePassDate: Date,
   currentStep:Number,
   isComplete:Boolean
+},
+{
+  timestamps: true,
 });
 const PersonalDetails = mongoose.model(
   "PersonalDetails",

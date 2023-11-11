@@ -37,6 +37,9 @@ const familySchema = new mongoose.Schema({
   students: [studentDetail],
   currentStep:Number,
   isComplete:Boolean
+},
+{
+  timestamps: true,
 });
 const FamilyDetails = mongoose.model("FamilyDetails", familySchema);
 module.exports = FamilyDetails;
