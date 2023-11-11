@@ -67,11 +67,11 @@ const userDocumentService = {
         res.status(500).json({ stateCode: 500, message: 'Error uploading files' });
       });
   },
-  async getUserFileByName(res, filename) {
+  async getUserFileByName(res, filename, userId) {
     try {
       const params = {
         Bucket: BUCKET_NAME,
-        Key: `${DIRECTORY_NAME}/` + filename,
+        Key: `${DIRECTORY_NAME}${userId}/${filename}`,
       };
       s3.getObject(params)
         .createReadStream()
@@ -136,6 +136,22 @@ const userDocumentService = {
       throw error;
     }
   },
+  async userUploadA2Document (req, res) {
+    const userId = req?.user?._id || "";
+    const params = {
+      Bucket: `${BUCKET_NAME}/${DIRECTORY_NAME}${userId}`,
+      Key: `A2-${userId}`,
+      Body: req.file.buffer,
+    };
+   s3.upload(params, (err, data) => {
+     if (err) {
+       console.error(err);
+       return res.status(500).send("Error uploading file");
+     }
+     // res.send('File uploaded successfully');
+     res.status(200).json({stateCode:200, message:"File uploaded successfully"});
+   }); 
+ },
 };
 
 module.exports = userDocumentService;
