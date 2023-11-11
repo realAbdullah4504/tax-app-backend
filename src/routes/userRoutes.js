@@ -6,7 +6,7 @@ const PdfParserController = require("../controllers/pdfParserController");
 const userDocumentService = require("../controllers/userDocuments");
 const { authenticate } = require("../middlewares/auth");
 const { pdfParser } = PdfParserController;
-const { fileUpload, getDocuments, downloadFile, deleteFile } = userDocumentService;
+const { fileUpload, fileUploadA2, getA2File, getDocuments, downloadFile, deleteFile } = userDocumentService;
 
 const { signUp, verifyCode, login, resendCode, forgetPassword, resetPassword } =
   AuthController;
@@ -42,11 +42,12 @@ const upload = multer({
     fileSize: 5 * 1024 * 1024, // limit file size to 5MB
   },
 });
-
+router.get("/A2File", authenticate, getA2File);
+router.post("/upload/A2File", authenticate, upload.single("file"), fileUploadA2);
 // Update the route to use `upload.array` for handling multiple files
 router.post("/fileUpload", authenticate, upload.array("files", 5), fileUpload);
 router.get("/getDocuments", authenticate, getDocuments);
-router.get("/downloadFile/:filename", downloadFile);
+router.get("/downloadFile/:filename",authenticate, downloadFile);
 router.delete("/deleteFile/:filename",authenticate, deleteFile);
 // Protected route using the authenticate middleware
 
