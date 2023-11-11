@@ -27,6 +27,9 @@ const homeSchema = new mongoose.Schema({
   workFromHomeDetails: [workFromHomeDetail],
   currentStep:Number,
   isComplete:Boolean
+},
+{
+  timestamps: true,
 });
 const HomeDetails = mongoose.model("HomeDetails", homeSchema);
 module.exports = HomeDetails;

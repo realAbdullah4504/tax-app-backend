@@ -41,6 +41,9 @@ const employmentSummary = new mongoose.Schema({
   year: Number,
   summaryDetails: [summary],
   p21Details: p21,
+},
+{
+  timestamps: true,
 });
 const EmploymentSummary = mongoose.model("EmploymentSummary", employmentSummary);
 module.exports = EmploymentSummary;

@@ -44,8 +44,10 @@ const calculationDetail = new mongoose.Schema({
   taxResult:Number,
   priorRebates:Number,
   finalResult:Number //finalFigureForCustomer
-
-
-});
+},
+{
+    timestamps: true,
+}
+);
 const CalculationDetail = mongoose.model("calculationDetail", calculationDetail);
 module.exports = CalculationDetail;

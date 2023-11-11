@@ -31,6 +31,9 @@ const healthSchema = new mongoose.Schema({
   ],
   currentStep:Number,
   isComplete:Boolean
+},
+{
+  timestamps: true,
 });
 const HealthDetails = mongoose.model("HealthDetails", healthSchema);
 module.exports = HealthDetails;

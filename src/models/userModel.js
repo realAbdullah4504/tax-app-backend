@@ -40,6 +40,8 @@ const userSchema = new mongoose.Schema({
   },
   passwordResetToken: String,
   passwordResetExpiry: Date,
+},{
+  timestamps: true,
 });
 
 // Password hashing pre hook

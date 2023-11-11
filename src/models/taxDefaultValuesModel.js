@@ -65,6 +65,9 @@ const taxSchema = new mongoose.Schema({
   exemptionLimitsOver65: exemptionLimitsSchema,
   taxCredits: taxCreditsSchema,
   uscRatesBands: uscRatesSchema,
+},
+{
+  timestamps: true,
 });
 
 const TaxDefaultValues = mongoose.model("TaxDefaultValues", taxSchema);

@@ -16,6 +16,9 @@ const otherSchema = new mongoose.Schema({
   ],
   currentStep:Number,
   isComplete:Boolean,
+},
+{
+  timestamps: true,
 });
 const OtherDetails = mongoose.model("OtherDetails", otherSchema);
 module.exports = OtherDetails;
