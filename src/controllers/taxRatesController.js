@@ -1,5 +1,5 @@
 const sendAppResponse = require("../utils/helper/appResponse");
-// const AppError = require('../errors/AppError');
+const AppError = require('../errors/AppError');
 const TaxDefaultValues = require("../models/taxDefaultValuesModel");
 const PersonalInfo = require("../models/personalDetailsModel");
 const OtherDetails = require("../models/otherDetailsModel");
@@ -481,7 +481,7 @@ const calculate = async (year, userId) => {
     uscPaid,
     taxPaidTotal,
     over65Exemption,
-    pension: totalPension, // totalPension
+    pension: totalPension || 0, // totalPension
     incomeProtection: totalIncomeProtection, // totalIncomeProtection
     workFromHome: totalPriceWorkedFromHome, // totalPriceWorkedFromHome
     adjustedBand,
@@ -498,11 +498,11 @@ const calculate = async (year, userId) => {
     tuition: totalFeesCourses, //totalFeesCourses
     rent: totalRent, //totalRent
     workFromHomePer: miscWorkFromHome, //miscWorkFromHome
-    healthExpense: totalHealthExpenses, //totalHealthExpenses
+    healthExpense: totalHealthExpenses  || 0, //totalHealthExpenses
     medicalInsurance: medicalInsurance, //medicalInsurance
     pensionCredits: pensionAdditionalCredits, // pensionAdditionalCredits
     incomeProtectionCredits: incomeProtectionAdditionalCredits, //incomeProtectionAdditionalCredits
-    totalTaxCredit,
+    totalTaxCredit: totalTaxCredit || 0,
     netIncomeTaxDue,
     usc1,
     usc2,
@@ -574,10 +574,8 @@ exports.taxCalculations = async (req, res, next) => {
 };
 exports.getCalculations = async (req, res, next) => {
   try {
-    const { _id } = req.user;
-    const { year } = req.query;
-    // console.log("userId", _id);
-    const calculations = await CalculationDetail.find({ year, _id });
+    const { userId } = req?.body || {};
+    const calculations = await CalculationDetail.find({ _id:userId });
     if (!calculations.length) throw new AppError("Calculations not found", 404);
 
     sendAppResponse({
