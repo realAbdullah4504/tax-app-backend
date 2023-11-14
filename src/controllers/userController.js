@@ -2,7 +2,7 @@ const User = require("../models/userModel");
 const UserService = require("../services/userService");
 const sendAppResponse = require("../utils/helper/appResponse");
 
-exports.getUserDetail = async (req, res, next) => {
+exports.getUserProfile = async (req, res, next) => {
   try {
     const user = req.user;
     const userDetail = await UserService.getCurrentUserDetail(user?._id);
@@ -37,6 +37,52 @@ exports.updateUserDetail = async (req, res, next) => {
       statusCode: 200,
       status: "success",
       message: "User updated successfully.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @GET
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ * Get registered users list
+ */
+
+exports.getUsersList = async (req, res, next) => {
+  try {
+    const {type}=req.query;
+    const users = await UserService.fetchUsersList(type);
+    sendAppResponse({
+      res,
+      data:users,
+      statusCode: 200,
+      status: "success",
+      message: "Users list",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * Get user detail
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ */
+exports.getUserDetail = async (req, res, next) => {
+  try {
+    const {id}=req.params;
+    const user = await UserService.fetchUserDetail(id);
+    sendAppResponse({
+      res,
+      data:user,
+      statusCode: 200,
+      status: "success",
+      message: "User details",
     });
   } catch (error) {
     next(error);

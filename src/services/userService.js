@@ -204,6 +204,28 @@ const UserService = {
     const resp = await user.save();
     return resp;
   },
+
+  /**
+   * Fetch users list
+   * @param {*} type 
+   */
+ async fetchUsersList(type){
+    const query = {
+      ...(type&& {userType:type})
+    }
+    return await User.find(query);
+ },
+
+  /**
+   * Fetch users list
+   * @param {*} id
+   */
+  async fetchUserDetail(id){
+    return await User.findById(id);
+ },
+
 };
+
+
 
 module.exports = UserService;

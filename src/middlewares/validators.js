@@ -4,6 +4,7 @@ const createUserValidator = [
   body('firstName').notEmpty().withMessage('First Name is required'),
   body('surName').notEmpty().withMessage('Sur Name is required'),
   body('email').isEmail().withMessage('Invalid email address'),
+  body('userType').notEmpty().withMessage('user type is required'),
   body('phoneNumber').notEmpty().withMessage('Phone Number is required')
   .matches(/^(?:\+92|0092|0)?(?:3[0-5][0-9]{8})$/)
   .withMessage('Invalid Pakistani phone number'),

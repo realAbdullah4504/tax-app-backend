@@ -24,6 +24,15 @@ const userSchema = new mongoose.Schema({
     minlength: [8, 'Password must be at least 8 characters long'],
     select: false,
   },
+  userType: {
+    type: String,
+    enum: ['registered', 'customer'],
+    required: true
+  },
+  status:{
+    type:Number,
+    default:0
+  },
   tob:{
     type: Boolean,
   },
@@ -41,7 +50,7 @@ const userSchema = new mongoose.Schema({
   passwordResetToken: String,
   passwordResetExpiry: Date,
 },{
-  timestamps: true,
+   timestamps: true
 });
 
 // Password hashing pre hook

@@ -43,6 +43,7 @@ exports.sendTokenToClient = async (req, res, next) => {
 exports.signUp = async (req, res, next) => {
   try {
     const errors = validationResult(req);
+    console.log(errors)
     if (!errors.isEmpty()) {
       throw new AppError('Validation failed', 400);
     }
