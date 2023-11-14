@@ -4,6 +4,7 @@ const AuthController = require("../controllers/authController");
 const taxRatesController = require("../controllers/taxRatesController");
 const PdfParserController = require("../controllers/pdfParserController");
 const userDocumentService = require("../controllers/userDocuments");
+const familyDetailController = require("../controllers/familyDetailController");
 const { authenticate } = require("../middlewares/auth");
 const { pdfParser } = PdfParserController;
 const { fileUpload, fileUploadA2, getA2File, getDocuments, downloadFile, deleteFile } = userDocumentService;
@@ -12,6 +13,7 @@ const { signUp, verifyCode, login, resendCode, forgetPassword, resetPassword } =
   AuthController;
 const { getUserProfile,getUserDetail, updateUserDetail,getUsersList } = UserController;
 const { taxRates, taxCalculations, getCalculations } = taxRatesController;
+const {getUserFamilyDetail} = familyDetailController;
 const {
   createUserValidator,
   verifyCodeValidator,
@@ -29,9 +31,10 @@ router.post("/forgetPassword", forgetPassword);
 router.patch("/resetPassword/:token", resetPassword);
 
 // User
-router.get("/",getUsersList);
-router.get("/:id",getUserDetail);
+router.get("/",authenticate,getUsersList);
+router.get("/:id",authenticate,getUserDetail);
 router.get("/detail", authenticate, getUserProfile);
+router.get("/:userId/familyDetail", getUserFamilyDetail);
 router.post("/pdf/:docType", authenticate, pdfParser);
 router.post("/update", authenticate, updateUserDetail);
 router.post("/taxRates", taxRates);
