@@ -10,11 +10,13 @@ const createUserValidator = [
   .withMessage('Invalid Pakistani phone number'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long'),
   body('tob').notEmpty().isBoolean().withMessage('Term & conditions are required to check'),
-  body('taxAgent').notEmpty().isBoolean().withMessage('Tax Agent is required')
+  body('taxAgent').notEmpty().isBoolean().withMessage('Tax Agent is required'),
 ];
 
 const verifyCodeValidator = [
-  body('code').isLength({ min: 6, max: 6 }).withMessage('Verification code must be 6 characters long'),
+  body('code')
+    .isLength({ min: 6, max: 6 })
+    .withMessage('Verification code must be 6 characters long'),
 ];
 
 const loginUserValidator = [
@@ -25,5 +27,5 @@ const loginUserValidator = [
 module.exports = {
   createUserValidator,
   verifyCodeValidator,
-  loginUserValidator
+  loginUserValidator,
 };
