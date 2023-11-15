@@ -32,7 +32,6 @@ router.patch("/resetPassword/:token", resetPassword);
 
 // User
 router.get("/",authenticate,getUsersList);
-router.get("/:id",authenticate,getUserDetail);
 router.get("/detail", authenticate, getUserProfile);
 router.get("/:userId/familyDetail", getUserFamilyDetail);
 router.post("/pdf/:docType", authenticate, pdfParser);
@@ -40,6 +39,7 @@ router.post("/update", authenticate, updateUserDetail);
 router.post("/taxRates", taxRates);
 router.post("/calculateTax", authenticate, taxCalculations);
 router.post("/getCalculationDetails", authenticate, getCalculations);
+router.get("/:id",authenticate,getUserDetail);
 
 const upload = multer({
   storage: multer.memoryStorage(),
