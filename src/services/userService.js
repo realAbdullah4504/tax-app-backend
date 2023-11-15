@@ -224,9 +224,11 @@ const UserService = {
     return await User.findById(id);
  },
 
-   /**
+  /**
    * Fetch user question detail
-   * @param {*} id
+   * @param {*} type 
+   * @param {*} userId 
+   * @returns 
    */
    async fetchUserQuestionsDetail(type,userId){
     const Model=getSchemaByType(type);
