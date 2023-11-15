@@ -217,11 +217,20 @@ const UserService = {
  },
 
   /**
-   * Fetch users list
+   * Fetch user detail
    * @param {*} id
    */
   async fetchUserDetail(id){
     return await User.findById(id);
+ },
+
+   /**
+   * Fetch user question detail
+   * @param {*} id
+   */
+   async fetchUserQuestionsDetail(type,userId){
+    const Model=getSchemaByType(type);
+    return await Model.findOne({userId});
  },
 
 };

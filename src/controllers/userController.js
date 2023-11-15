@@ -88,3 +88,32 @@ exports.getUserDetail = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * @GET
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ * 
+ * controller function to get user detail home|health|family
+ */
+exports.getUserQuestionsDetail = async (req, res, next) => {
+  try {
+    const {type}=req.query;
+    const {userId}=req.params;
+    const detail = await UserService.fetchUserQuestionsDetail(type,userId);
+    sendAppResponse({
+      res,
+      data:detail,
+      statusCode: 200,
+      status: "success",
+      message: "User details",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+
+
