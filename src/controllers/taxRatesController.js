@@ -1,4 +1,5 @@
 const sendAppResponse = require("../utils/helper/appResponse");
+const {ObjectId} = require('mongodb');
 const AppError = require('../errors/AppError');
 const TaxDefaultValues = require("../models/taxDefaultValuesModel");
 const PersonalInfo = require("../models/personalDetailsModel");
@@ -23,7 +24,7 @@ const calculate = async (year, userId) => {
   let taxPaid = 0;
   let uscPaid = 0;
 
-  summaryDetails.forEach((item) => {
+  summaryDetails?.forEach((item) => {
     grossIncomeUsc += item.gross_pay;
     grossTaxableIncome += item.pay_for_income_tax;
     taxPaid += item.income_tax_paid;
@@ -90,9 +91,9 @@ const calculate = async (year, userId) => {
   } = await TaxDefaultValues.findOne({ year });
   const { dateOfBirth, maritalStatus, spousePassDate } =
     await PersonalInfo.findOne({ userId });
-  const { contributionDetails } = await OtherDetails.findOne({ userId });
+  const { contributionDetails } = await OtherDetails.findOne({ userId })|| {};
   const { workFromHomeDetails, payRentDetails } = await HomeDetails.findOne({
-    userId,
+    userId
   });
   const {
     incapacitatedChildren,
@@ -105,17 +106,17 @@ const calculate = async (year, userId) => {
 
     tuitionFeesCredit,
     students,
-  } = await FamilyDetails.findOne({ userId });
+  } = await FamilyDetails.findOne({ userId }) || {};
 
   const {
     incurHealthExpensesDetail,
     spouseEmployerPays,
     employerPaysDetails,
     fullGpMedicalCard,
-  } = await HealthDetails.findOne({ userId });
+  } = await HealthDetails.findOne({ userId }) || {};
 
   let type = "";
-  let marriedType = summaryDetails.some(
+  let marriedType = summaryDetails?.some(
     ({ summary_type }) => summary_type === "spouse"
   );
   console.log("marriedType", marriedType);
@@ -136,7 +137,7 @@ const calculate = async (year, userId) => {
   //   console.log("type", type);
 
   // Get the year of birth from the date
-  const birthYear = dateOfBirth.getUTCFullYear();
+  const birthYear = dateOfBirth?.getUTCFullYear();
   const currentYear = new Date().getUTCFullYear();
   const age = currentYear - birthYear;
 
@@ -166,22 +167,22 @@ const calculate = async (year, userId) => {
   }
 
   //calculations for pension related to year and the personal and spouse (Question App G85)
-  const PensionAndIncomeProtection = contributionDetails.filter(
+  const PensionAndIncomeProtection = contributionDetails?.filter(
     (item) => item.year === year
   );
-  const totalPension = PensionAndIncomeProtection.reduce(
+  const totalPension = PensionAndIncomeProtection?.reduce(
     (a, b) => a + b.pension,
     0
-  );
-  const totalIncomeProtection = PensionAndIncomeProtection.reduce(
+  ) || 0;
+  const totalIncomeProtection = PensionAndIncomeProtection?.reduce(
     (a, b) => a + b.incomeProtection,
     0
-  );
+  ) || 0;
   //calculation for work from home related to year
   const { daysWorkedFromHome, totalCostOfLightingAndHeat, costOfBroadband } =
-    workFromHomeDetails.find((item) => item.year === year);
+    workFromHomeDetails?.find((item) => item.year === year) || {};
   const totalPriceWorkedFromHome =
-    (daysWorkedFromHome / 365) * (totalCostOfLightingAndHeat + costOfBroadband); // (E70 / 365* Sum(E71:E72))
+    ((daysWorkedFromHome / 365) * (totalCostOfLightingAndHeat + costOfBroadband)) || 0; // (E70 / 365* Sum(E71:E72))
 
   //   console.log('============ Pension Area ==============')
   //   console.log(standardRateBand, over65Exemption);
@@ -236,7 +237,7 @@ const calculate = async (year, userId) => {
 
   const totalPaye = type === "married2Income" ? paye + paye : paye;
   console.log("totalPaye", totalPaye);
-  const singleParentFullTimeCourse = students.find(
+  const singleParentFullTimeCourse = students?.find(
     (item) => item.year === year && item?.fullTimeCourse === "fullTime"
   );
   const singleParentStandardCredits =
@@ -274,7 +275,7 @@ const calculate = async (year, userId) => {
       : 0;
   console.log("carerCredit", carerCredit);
 
-  let incapacitatedChild = incapacitatedChildrenDetails.length
+  let incapacitatedChild = incapacitatedChildrenDetails?.length
     ? incapacitated
     : 0;
 
@@ -284,8 +285,8 @@ const calculate = async (year, userId) => {
 
   let totalElderlyRelativeCredit = 0; //years should be mentioned
   if (elderlyRelativeCare) {
-    elderlyRelative.forEach(({ annualIncome, yearsOfCare }) => {
-      if (yearsOfCare.includes(year)) {
+    elderlyRelative?.forEach(({ annualIncome, yearsOfCare }) => {
+      if (yearsOfCare?.includes(year)) {
         if (annualIncome <= dependantRelativeLimits) {
           // either compare with individual annualIncome or with sum of all relative ??
           totalElderlyRelativeCredit += dependentRelative;
@@ -305,7 +306,7 @@ const calculate = async (year, userId) => {
   let hasPartTimeCourse = false; // Track if there are part-time courses
 
   if (tuitionFeesCredit) {
-    students.forEach(({ fullTimeCourse, fees }) => {
+    students?.forEach(({ fullTimeCourse, fees }) => {
       if (fullTimeCourse === "fullTime") {
         totalFeesCoursesFullTime += Math.min(fees, courseMaximum);
         hasFullTimeCourse = true;
@@ -351,13 +352,13 @@ const calculate = async (year, userId) => {
   console.log("totalRent", totalRent, rentPerPerson);
 
   //MISC CALCULATIONS
-  const miscWorkFromHome = (totalPriceWorkedFromHome * 20) / 100;
+  const miscWorkFromHome = ((totalPriceWorkedFromHome * 20) / 100) ||0;
   console.log("miscWorkFromHome", miscWorkFromHome);
 
   //Health Expenses
   // G76 * 20%  ==> G76 --> =SUM(E76:E80)*F143
   let totalHealthExpenses = 0;
-  incurHealthExpensesDetail.forEach(
+  incurHealthExpensesDetail?.forEach(
     ({
       gpHospConsultant,
       prescriptions,
@@ -388,7 +389,7 @@ const calculate = async (year, userId) => {
 
   let medicalInsurance = 0;
   if (spouseEmployerPays) {
-    employerPaysDetails.forEach(
+    employerPaysDetails?.forEach(
       ({ amount, adultsCovered, childrenCovered, year: employerPaysYear }) => {
         if (year === employerPaysYear) {
           medicalInsurance += Math.min(
@@ -403,7 +404,7 @@ const calculate = async (year, userId) => {
   console.log("medicalInsurance", medicalInsurance);
 
   //pension
-  const pensionAdditionalCredits = (totalPension * 20) / 100;
+  const pensionAdditionalCredits = (totalPension * 20) / 100 ;
   const incomeProtectionAdditionalCredits = (totalIncomeProtection * 20) / 100;
 
   console.log(
@@ -554,9 +555,9 @@ exports.taxCalculations = async (req, res, next) => {
   // console.log(age);
   const calculation = await calculate(year, userId);
   // console.log("###################", calculation);
-  const saveCalculations = await CalculationDetail.findByIdAndUpdate(
-    userId,
-    calculation,
+  const saveCalculations = await CalculationDetail.findOneAndUpdate(
+    {year,userId:new ObjectId(userId)},
+    {...calculation,userId:new ObjectId(userId)},
     {
       upsert: true,
       new: true,
@@ -575,7 +576,7 @@ exports.taxCalculations = async (req, res, next) => {
 exports.getCalculations = async (req, res, next) => {
   try {
     const { userId } = req?.body || {};
-    const calculations = await CalculationDetail.find({ _id:userId });
+    const calculations = await CalculationDetail.find({userId });
     if (!calculations.length) throw new AppError("Calculations not found", 404);
 
     sendAppResponse({
