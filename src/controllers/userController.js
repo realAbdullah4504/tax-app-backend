@@ -24,12 +24,14 @@ exports.updateUserDetail = async (req, res, next) => {
     //check should be made whether subtype is number or string it fails to update the result when we post the number but it treated as string
     const payload = {};
     for (const key in restPayload) {
-      if (!isNaN(restPayload[key])) {
-        payload[key] = +restPayload[key];
+      const value = restPayload[key];
+      if (!isNaN(value) && !Array.isArray(value) && typeof value!=="boolean") {
+        payload[key] = +value;
       } else {
-        payload[key] = restPayload[key];
+        payload[key] = value;
       }
     }
+  
     const updatedUser = await UserService.updateCurrentUser(id, type, payload);
     sendAppResponse({
       res,
