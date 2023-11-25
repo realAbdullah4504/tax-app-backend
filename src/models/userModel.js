@@ -26,12 +26,15 @@ const userSchema = new mongoose.Schema({
   },
   userType: {
     type: String,
-    enum: ['registered', 'customer'],
+    enum: ['member', 'customer'],
     required: true
   },
-  status:{
-    type:Number,
-    default:0
+  stage:{
+    type:String,
+    default:""
+  },
+  role:{
+    type:String
   },
   tob:{
     type: Boolean,

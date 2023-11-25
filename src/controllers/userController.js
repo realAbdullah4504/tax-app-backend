@@ -116,6 +116,30 @@ exports.getUserQuestionsDetail = async (req, res, next) => {
   }
 };
 
+/**
+ * @Delete
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ * delete user by id
+ */
+
+exports.deleteUser = async (req, res, next) => {
+  try {
+    const {id}=req.params;
+     await UserService.deleteUser(id);
+    sendAppResponse({
+      res,
+      data:{},
+      statusCode: 200,
+      status: "success",
+      message: "User Deleted successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 
 
 

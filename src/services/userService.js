@@ -236,6 +236,16 @@ const UserService = {
     return await Model.findOne({userId});
  },
 
+ /**
+  * 
+  * @param {*} userId 
+  * @returns 
+  * service function to delete user by id
+  */
+ async deleteUser(userId){
+  return await User.deleteOne({_id:userId});
+},
+
 };
 
 
