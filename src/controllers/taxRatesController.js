@@ -23,6 +23,7 @@ const calculate = async (year, userId) => {
   let taxPaid = 0;
   let uscPaid = 0;
 
+
   summaryDetails.forEach((item) => {
     grossIncomeUsc += item.gross_pay;
     grossTaxableIncome += item.pay_for_income_tax;
@@ -39,7 +40,8 @@ const calculate = async (year, userId) => {
     "taxPaid",
     taxPaid,
     "uscPaid",
-    uscPaid
+    uscPaid,
+    'taxPaidTotal',taxPaidTotal
   );
   // console.log("taxSummary", taxSummary);
 
