@@ -56,7 +56,7 @@ exports.updateUserDetail = async (req, res, next) => {
 exports.getUsersList = async (req, res, next) => {
   try {
     const {type}=req.query;
-    const users = await UserService.fetchUsersList(type);
+    const users = await UserService.fetchUsersList(type,req.query);
     sendAppResponse({
       res,
       data:users,
