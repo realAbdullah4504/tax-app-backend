@@ -36,6 +36,10 @@ const userSchema = new mongoose.Schema({
   role:{
     type:String
   },
+  leadMember:{
+    type: mongoose.Schema.ObjectId,
+    ref: "User",
+  },
   tob:{
     type: Boolean,
   },

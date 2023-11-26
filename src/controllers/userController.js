@@ -116,6 +116,42 @@ exports.getUserQuestionsDetail = async (req, res, next) => {
   }
 };
 
+
+
+/**
+ * 
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ */
+exports.updateUserProfile = async (req, res, next) => {
+  try {
+    const id = req.params.id;
+    //check should be made whether subtype is number or string it fails to update the result when we post the number but it treated as string
+    const payload = {};
+    const data=req.body;
+    for (const key in data) {
+      const value = data[key];
+      if (!isNaN(value) && !Array.isArray(value) && typeof value!=="boolean") {
+        payload[key] = +value;
+      } else {
+        payload[key] = value;
+      }
+    }
+  
+    const updatedUser = await UserService.updatedUser({id,data:payload});
+    sendAppResponse({
+      res,
+      updatedUser,
+      statusCode: 200,
+      status: "success",
+      message: "User updated successfully.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
 /**
  * @Delete
  * @param {*} req 

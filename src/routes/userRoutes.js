@@ -10,7 +10,7 @@ const { fileUpload, fileUploadA2, getA2File, getDocuments, downloadFile, deleteF
 
 const { signUp, verifyCode, login, resendCode, forgetPassword, resetPassword } =
   AuthController;
-const { getUserProfile,getUserDetail, updateUserDetail,getUsersList,getUserQuestionsDetail,deleteUser } = UserController;
+const { getUserProfile,getUserDetail, updateUserDetail,getUsersList,getUserQuestionsDetail,deleteUser,updateUserProfile } = UserController;
 const { taxRates, taxCalculations, getCalculations } = taxRatesController;
 const {
   createUserValidator,
@@ -30,10 +30,10 @@ router.patch("/resetPassword/:token", resetPassword);
 
 // User
 router.get("/detail", authenticate, getUserProfile);
-router.get("/:userId/questions",getUserQuestionsDetail);
+router.get("/:userId/questions",authenticate,getUserQuestionsDetail);
 router.post("/pdf/:docType", authenticate, pdfParser);
 router.post("/update", authenticate, updateUserDetail);
-router.post("/taxRates", taxRates);
+router.post("/taxRates",authenticate, taxRates);
 router.post("/calculateTax", authenticate, taxCalculations);
 router.post("/getCalculationDetails", authenticate, getCalculations);
 
@@ -51,6 +51,7 @@ router.get("/getDocuments", authenticate, getDocuments);
 router.get("/downloadFile/:filename",authenticate, downloadFile);
 router.delete("/deleteFile/:filename",authenticate, deleteFile);
 router.get("/:id",authenticate,getUserDetail);
+router.put("/:id",authenticate,updateUserProfile);
 router.delete("/:id",authenticate,deleteUser);
 router.get("/",authenticate,getUsersList);
 // Protected route using the authenticate middleware
