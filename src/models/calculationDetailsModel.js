@@ -12,6 +12,7 @@ const calculationDetail = new mongoose.Schema({
   uscPaid:Number,
   taxPaidTotal:Number,
   exemptionLimitsOver65:Number,
+  standardRateBand:Number,
   pension:Number, // totalPension
   incomeProtection:Number, // totalIncomeProtection
   workFromHome:Number, // totalPriceWorkedFromHome

@@ -482,6 +482,7 @@ const calculate = async (year, userId) => {
     uscPaid,
     taxPaidTotal,
     over65Exemption,
+    standardRateBand,
     pension: totalPension || 0, // totalPension
     incomeProtection: totalIncomeProtection, // totalIncomeProtection
     workFromHome: totalPriceWorkedFromHome, // totalPriceWorkedFromHome
