@@ -18,7 +18,7 @@ const calculationDetail = new mongoose.Schema(
     incomeProtection: Number, // totalIncomeProtection
     workFromHome: Number, // totalPriceWorkedFromHome
     adjustedBand: Number,
-    adjustedBankOne: Number,
+    adjustedBandOne: Number,
     adjustedBandTwo: Number,
     grossIncomeDue: Number, // netIncomeTaxDue
     personal: String,
