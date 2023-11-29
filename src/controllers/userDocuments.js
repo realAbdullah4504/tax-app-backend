@@ -18,7 +18,9 @@ exports.fileUpload = async (req, res, next) => {
   };
   exports.getDocuments = async (req, res, next) => {
     try {
-      const resp = await userDocumentService.getUserFiles(req.user._id);
+      const {user}=req.query;
+      const userId=user ||req.user._id;
+      const resp = await userDocumentService.getUserFiles(userId);
       sendAppResponse({
         res,
         data: resp,
@@ -48,3 +50,6 @@ exports.fileUpload = async (req, res, next) => {
     const userId = req?.user?._id;
     await userDocumentService.deleteFile(res,objectKey,userId);
   }
+
+
+  

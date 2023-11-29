@@ -11,7 +11,6 @@ const authenticate = async (req, res, next) => {
     if (!decodedToken) {
       throw new AppError('Not authorized', 401);
     }
-
     const user = await UserService.findUserById(decodedToken.id);
     if (!user) {
       throw new AppError('User not found', 404);

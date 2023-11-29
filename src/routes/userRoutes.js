@@ -36,8 +36,6 @@ router.post("/update", authenticate, updateUserDetail);
 router.post("/taxRates", taxRates);
 router.post("/calculateTax", authenticate, taxCalculations);
 router.post("/getCalculationDetails", authenticate, getCalculations);
-router.get("/:id",authenticate,getUserDetail);
-router.get("/",authenticate,getUsersList);
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -45,13 +43,15 @@ const upload = multer({
     fileSize: 5 * 1024 * 1024, // limit file size to 5MB
   },
 });
-router.get("/A2File", authenticate, getA2File);
+router.get("/A2File",authenticate, getA2File);
 router.post("/upload/A2File", authenticate, upload.single("file"), fileUploadA2);
 // Update the route to use `upload.array` for handling multiple files
 router.post("/fileUpload", authenticate, upload.array("files", 5), fileUpload);
 router.get("/getDocuments", authenticate, getDocuments);
 router.get("/downloadFile/:filename",authenticate, downloadFile);
 router.delete("/deleteFile/:filename",authenticate, deleteFile);
+router.get("/:id",authenticate,getUserDetail);
+router.get("/",authenticate,getUsersList);
 // Protected route using the authenticate middleware
 
 module.exports = router;

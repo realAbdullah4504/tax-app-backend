@@ -1,4 +1,5 @@
 const sendAppResponse = require("../utils/helper/appResponse");
+const { ObjectId } = require('mongodb');
 const AppError = require('../errors/AppError');
 const TaxDefaultValues = require("../models/taxDefaultValuesModel");
 const PersonalInfo = require("../models/personalDetailsModel");
@@ -23,8 +24,7 @@ const calculate = async (year, userId) => {
   let taxPaid = 0;
   let uscPaid = 0;
 
-
-  summaryDetails.forEach((item) => {
+  summaryDetails?.forEach((item) => {
     grossIncomeUsc += item.gross_pay;
     grossTaxableIncome += item.pay_for_income_tax;
     taxPaid += item.income_tax_paid;
@@ -41,7 +41,7 @@ const calculate = async (year, userId) => {
     taxPaid,
     "uscPaid",
     uscPaid,
-    'taxPaidTotal',taxPaidTotal
+    'taxPaidTotal', taxPaidTotal
   );
   // console.log("taxSummary", taxSummary);
 
@@ -92,9 +92,9 @@ const calculate = async (year, userId) => {
   } = await TaxDefaultValues.findOne({ year });
   const { dateOfBirth, maritalStatus, spousePassDate } =
     await PersonalInfo.findOne({ userId });
-  const { contributionDetails } = await OtherDetails.findOne({ userId });
+  const { contributionDetails } = await OtherDetails.findOne({ userId }) || {};
   const { workFromHomeDetails, payRentDetails } = await HomeDetails.findOne({
-    userId,
+    userId
   });
   const {
     incapacitatedChildren,
@@ -107,17 +107,17 @@ const calculate = async (year, userId) => {
 
     tuitionFeesCredit,
     students,
-  } = await FamilyDetails.findOne({ userId });
+  } = await FamilyDetails.findOne({ userId }) || {};
 
   const {
     incurHealthExpensesDetail,
     spouseEmployerPays,
     employerPaysDetails,
     fullGpMedicalCard,
-  } = await HealthDetails.findOne({ userId });
+  } = await HealthDetails.findOne({ userId }) || {};
 
   let type = "";
-  let marriedType = summaryDetails.some(
+  let marriedType = summaryDetails?.some(
     ({ summary_type }) => summary_type === "spouse"
   );
   console.log("marriedType", marriedType);
@@ -128,17 +128,17 @@ const calculate = async (year, userId) => {
   if (maritalStatus === "single" && (!incapacitated || !dependentChildren)) {
     type = "single";
   } else if (
-    maritalStatus === "widowed" &&
+    maritalStatus === "Widowed" &&
     (incapacitated || dependentChildren)
   ) {
     type = "singleParent";
   } else if (maritalStatus === "Married") {
     type = marriedType ? "married2Income" : "married1Income";
   }
-  //   console.log("type", type);
+    console.log("type", type);
 
   // Get the year of birth from the date
-  const birthYear = dateOfBirth.getUTCFullYear();
+  const birthYear = dateOfBirth?.getUTCFullYear();
   const currentYear = new Date().getUTCFullYear();
   const age = currentYear - birthYear;
 
@@ -160,30 +160,32 @@ const calculate = async (year, userId) => {
       ? over65ExemptionRatePercent / 100
       : 0; //=IF(A15=">65",0,'Questions for App'!F105)
   } else {
+    // console.log('taxBands[type]', type);
     const band = (type = taxBands[type]);
     // console.log(taxBands[type]);
     standardRateBand = band;
     grossIncomePercent = lowerRatePercent / 100;
     console.log("band", band);
   }
+  console.log('exemption over 65',over65Exemption);
 
   //calculations for pension related to year and the personal and spouse (Question App G85)
-  const PensionAndIncomeProtection = contributionDetails.filter(
+  const PensionAndIncomeProtection = contributionDetails?.filter(
     (item) => item.year === year
   );
-  const totalPension = PensionAndIncomeProtection.reduce(
+  const totalPension = PensionAndIncomeProtection?.reduce(
     (a, b) => a + b.pension,
     0
-  );
-  const totalIncomeProtection = PensionAndIncomeProtection.reduce(
+  ) || 0;
+  const totalIncomeProtection = PensionAndIncomeProtection?.reduce(
     (a, b) => a + b.incomeProtection,
     0
-  );
+  ) || 0;
   //calculation for work from home related to year
   const { daysWorkedFromHome, totalCostOfLightingAndHeat, costOfBroadband } =
-    workFromHomeDetails.find((item) => item.year === year);
+    workFromHomeDetails?.find((item) => item.year === year) || {};
   const totalPriceWorkedFromHome =
-    (daysWorkedFromHome / 365) * (totalCostOfLightingAndHeat + costOfBroadband); // (E70 / 365* Sum(E71:E72))
+    ((daysWorkedFromHome / 365) * (totalCostOfLightingAndHeat + costOfBroadband)) || 0; // (E70 / 365* Sum(E71:E72))
 
   //   console.log('============ Pension Area ==============')
   //   console.log(standardRateBand, over65Exemption);
@@ -198,10 +200,10 @@ const calculate = async (year, userId) => {
 
   const adjustedBand =
     over65Exemption +
-      standardRateBand +
-      totalPension +
-      totalIncomeProtection +
-      totalPriceWorkedFromHome || 0; //=SUM(D15:D19)
+    standardRateBand +
+    totalPension +
+    totalIncomeProtection +
+    totalPriceWorkedFromHome || 0; //=SUM(D15:D19)
   console.log("adjustedBand", adjustedBand);
 
   const grossIncome1 = Math.min(grossTaxableIncome, adjustedBand); //=MIN(D20,D9)
@@ -230,19 +232,22 @@ const calculate = async (year, userId) => {
   let personal =
     type === "single" || type === "singleParent"
       ? personalSingle
-      : maritalStatus === "widowed"
-      ? widowNoDependants
-      : married; //=IF('Questions for App'!E15="widowed",'Questions for App'!F120,'Questions for App'!F116)
+      : maritalStatus === "Widowed"
+        ? widowNoDependants
+        : married; //=IF('Questions for App'!E15="widowed",'Questions for App'!F120,'Questions for App'!F116)
 
   console.log("personal", personal);
 
   const totalPaye = type === "married2Income" ? paye + paye : paye;
   console.log("totalPaye", totalPaye);
-  const singleParentFullTimeCourse = students.find(
-    (item) => item.year === year && item?.fullTimeCourse === "fullTime"
+  
+  const singleParentFullTimeCourse = students?.filter(
+    (item) => item.years === year && item?.fullTimeCourse === "Full time"
   );
   const singleParentStandardCredits =
     type === "singleParent" && singleParentFullTimeCourse ? singleParent : 0;
+
+    console.log('single parent standard', singleParentFullTimeCourse);
 
   const standardCredits = personal + totalPaye + singleParentStandardCredits; //we have taken paye for one only
   console.log("standardCredits", standardCredits);
@@ -259,13 +264,13 @@ const calculate = async (year, userId) => {
 
   // console.log(widowTrail);
   totalYearsPassedSpouse =
-    maritalStatus === "widowed" && year - spousePassDate.getUTCFullYear();
+    maritalStatus === "Widowed" && year - spousePassDate.getUTCFullYear();
   const widow =
     totalYearsPassedSpouse > 0
       ? widowCreditYearly - (totalYearsPassedSpouse - 1) * 450
       : 0;
 
-  let widowTrail = maritalStatus === "widowed" ? widow : 0; //formula should be understand from questions app
+  let widowTrail = maritalStatus === "Widowed" ? widow : 0; //formula should be understand from questions app
   // Carer Missed for married (Question app M37)
   // =IF(AND(E37>0,E128-((N2-E129)/2)>0),E128-((N2-E129)/2),0)
 
@@ -276,7 +281,7 @@ const calculate = async (year, userId) => {
       : 0;
   console.log("carerCredit", carerCredit);
 
-  let incapacitatedChild = incapacitatedChildrenDetails.length
+  let incapacitatedChild = incapacitatedChildrenDetails?.length
     ? incapacitated
     : 0;
 
@@ -286,8 +291,8 @@ const calculate = async (year, userId) => {
 
   let totalElderlyRelativeCredit = 0; //years should be mentioned
   if (elderlyRelativeCare) {
-    elderlyRelative.forEach(({ annualIncome, yearsOfCare }) => {
-      if (yearsOfCare.includes(year)) {
+    elderlyRelative?.forEach(({ annualIncome, yearsOfCare }) => {
+      if (yearsOfCare?.includes(year)) {
         if (annualIncome <= dependantRelativeLimits) {
           // either compare with individual annualIncome or with sum of all relative ??
           totalElderlyRelativeCredit += dependentRelative;
@@ -307,7 +312,7 @@ const calculate = async (year, userId) => {
   let hasPartTimeCourse = false; // Track if there are part-time courses
 
   if (tuitionFeesCredit) {
-    students.forEach(({ fullTimeCourse, fees }) => {
+    students?.forEach(({ fullTimeCourse, fees }) => {
       if (fullTimeCourse === "fullTime") {
         totalFeesCoursesFullTime += Math.min(fees, courseMaximum);
         hasFullTimeCourse = true;
@@ -353,13 +358,13 @@ const calculate = async (year, userId) => {
   console.log("totalRent", totalRent, rentPerPerson);
 
   //MISC CALCULATIONS
-  const miscWorkFromHome = (totalPriceWorkedFromHome * 20) / 100;
+  const miscWorkFromHome = ((totalPriceWorkedFromHome * 20) / 100) || 0;
   console.log("miscWorkFromHome", miscWorkFromHome);
 
   //Health Expenses
   // G76 * 20%  ==> G76 --> =SUM(E76:E80)*F143
   let totalHealthExpenses = 0;
-  incurHealthExpensesDetail.forEach(
+  incurHealthExpensesDetail?.forEach(
     ({
       gpHospConsultant,
       prescriptions,
@@ -390,7 +395,7 @@ const calculate = async (year, userId) => {
 
   let medicalInsurance = 0;
   if (spouseEmployerPays) {
-    employerPaysDetails.forEach(
+    employerPaysDetails?.forEach(
       ({ amount, adultsCovered, childrenCovered, year: employerPaysYear }) => {
         if (year === employerPaysYear) {
           medicalInsurance += Math.min(
@@ -500,7 +505,7 @@ const calculate = async (year, userId) => {
     tuition: totalFeesCourses, //totalFeesCourses
     rent: totalRent, //totalRent
     workFromHomePer: miscWorkFromHome, //miscWorkFromHome
-    healthExpense: totalHealthExpenses  || 0, //totalHealthExpenses
+    healthExpense: totalHealthExpenses || 0, //totalHealthExpenses
     medicalInsurance: medicalInsurance, //medicalInsurance
     pensionCredits: pensionAdditionalCredits, // pensionAdditionalCredits
     incomeProtectionCredits: incomeProtectionAdditionalCredits, //incomeProtectionAdditionalCredits
@@ -556,9 +561,9 @@ exports.taxCalculations = async (req, res, next) => {
   // console.log(age);
   const calculation = await calculate(year, userId);
   // console.log("###################", calculation);
-  const saveCalculations = await CalculationDetail.findByIdAndUpdate(
-    userId,
-    calculation,
+  const saveCalculations = await CalculationDetail.findOneAndUpdate(
+    { year, userId: new ObjectId(userId) },
+    { ...calculation, userId: new ObjectId(userId) },
     {
       upsert: true,
       new: true,
@@ -577,7 +582,7 @@ exports.taxCalculations = async (req, res, next) => {
 exports.getCalculations = async (req, res, next) => {
   try {
     const { userId } = req?.body || {};
-    const calculations = await CalculationDetail.find({ _id:userId });
+    const calculations = await CalculationDetail.find({ userId });
     if (!calculations.length) throw new AppError("Calculations not found", 404);
 
     sendAppResponse({
