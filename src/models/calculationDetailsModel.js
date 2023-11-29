@@ -20,6 +20,8 @@ const calculationDetail = new mongoose.Schema(
     adjustedBand: Number,
     adjustedBandOne: Number,
     adjustedBandTwo: Number,
+    adjustedBandOnePercentage: Number,
+    adjustedBandTwoPercentage: Number,
     grossIncomeDue: Number, // netIncomeTaxDue
     personal: String,
     paye: Number, //totalPaye
