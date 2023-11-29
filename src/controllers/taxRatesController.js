@@ -79,6 +79,7 @@ const calculate = async (year, userId) => {
       allowableHealthExpenses,
       medicalInsurance: { maxPerAdult, maxPerChild },
     },
+    flatRateExpense,
     uscRatesBands: { uscRatesPercentage, uscBands, medicalCardExemptionTopRate },
   } = await TaxDefaultValues.findOne({ year });
   const { dateOfBirth, maritalStatus, spousePassDate } = await PersonalInfo.findOne({ userId });
@@ -108,7 +109,6 @@ const calculate = async (year, userId) => {
 
   // const result = marriedType.some((item) => item.spouse === "spouse");
 
-  console.log('maritalstatus', maritalStatus);
   if (maritalStatus === 'single' && (!incapacitated || !dependentChildren)) {
     type = 'single';
   } else if (maritalStatus === 'widowed' && (incapacitated || dependentChildren)) {
@@ -139,7 +139,7 @@ const calculate = async (year, userId) => {
     over65Exemption = Math.min(grossTaxableIncome, exemption);
     grossIncomePercent = over65ExemptionRatePercent ? over65ExemptionRatePercent / 100 : 0; //=IF(A15=">65",0,'Questions for App'!F105)
   } else {
-    const band = (type = taxBands[type]);
+    const band = taxBands[type];
     // console.log(taxBands[type]);
     standardRateBand = band;
     grossIncomePercent = lowerRatePercent / 100;
@@ -173,7 +173,8 @@ const calculate = async (year, userId) => {
       standardRateBand +
       totalPension +
       totalIncomeProtection +
-      totalPriceWorkedFromHome || 0; //=SUM(D15:D19)
+      (flatRateExpense || 100) +
+      (totalPriceWorkedFromHome || 0); //=SUM(D15:D19)
   console.log('adjustedBand', adjustedBand);
 
   const grossIncome1 = Math.min(grossTaxableIncome, adjustedBand); //=MIN(D20,D9)
@@ -193,13 +194,12 @@ const calculate = async (year, userId) => {
   //   totalYearsPassedSpouse,
   //   widow
   // );
-  console.log('widow', widowNoDependants);
+  console.log('widowNoDependants', widowNoDependants);
 
-  let personal =
+  let personal = maritalStatus === 'widowed'
+  ? widowNoDependants :
     type === 'single' || type === 'singleParent'
       ? personalSingle
-      : maritalStatus === 'widowed'
-      ? widowNoDependants
       : married; //=IF('Questions for App'!E15="widowed",'Questions for App'!F120,'Questions for App'!F116)
 
   console.log('personal', personal);
@@ -224,17 +224,18 @@ const calculate = async (year, userId) => {
   // console.log(widowTrail);
   totalYearsPassedSpouse = maritalStatus === 'widowed' && year - spousePassDate.getUTCFullYear();
   const widow =
-    totalYearsPassedSpouse > 0 ? widowCreditYearly - (totalYearsPassedSpouse - 1) * 450 : 0;
+    totalYearsPassedSpouse > 0 ? (widowNoDependants || 0) - (totalYearsPassedSpouse - 1) * 450 : 0;
 
   let widowTrail = maritalStatus === 'widowed' ? widow : 0; //formula should be understand from questions app
   // Carer Missed for married (Question app M37)
   // =IF(AND(E37>0,E128-((N2-E129)/2)>0),E128-((N2-E129)/2),0)
 
   let married1incomes = 100000;
-  let carerCredit =
-    type === 'married1Income' && children.length > 0 && carerCredit > 0
-      ? homeCarer - (married1incomes - homeCarerEarningLimitsMin) / 2
-      : 0;
+  let carerCredit = grossTaxableIncome < 7200
+  ? 1600
+  : grossTaxableIncome > 10600
+    ? 0
+    : 1600 - ((grossTaxableIncome - 7200) / 2);
   console.log('carerCredit', carerCredit);
 
   let incapacitatedChild = incapacitatedChildrenDetails?.length ? incapacitated : 0;
@@ -428,7 +429,7 @@ const calculate = async (year, userId) => {
     taxPaid,
     uscPaid,
     taxPaidTotal,
-    over65Exemption,
+    exemptionLimitsOver65:over65Exemption,
     standardRateBand,
     pension: totalPension || 0, // totalPension
     incomeProtection: totalIncomeProtection, // totalIncomeProtection
@@ -436,11 +437,13 @@ const calculate = async (year, userId) => {
     adjustedBand,
     adjustedBandOne: grossIncome1,
     adjustedBandTwo: grossIncome2,
-    grossIncomeDue: netIncomeTaxDue, // netIncomeTaxDue
+    adjustedBandOnePercentage: lowerRatePercent,
+    adjustedBandTwoPercentage: marginalRatePercent,
+    grossIncomeDue: totalGrossIncome,
     personal,
     paye: totalPaye, //totalPaye
     singleParent: singleParentStandardCredits, // singleParentStandardCredits
-    flatRateExpense: 'TBD', //TBD is a default value
+    flatRateExpense, //TBD is a default value
     ageCredit, // please set a hard code value for now
     widowTrail,
     carer: carerCredit, // carerCredit
