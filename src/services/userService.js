@@ -10,6 +10,7 @@ const PersonalInfo = require("../models/personalDetailsModel");
 const AppError = require("../errors/AppError");
 
 const { ACCOUNT_SID, AUTH_TOKEN, VERIFY_SID } = require("../../config/vars");
+const PersonalDetails = require("../models/personalDetailsModel");
 
 const client = new twilio(ACCOUNT_SID, AUTH_TOKEN);
 
@@ -225,8 +226,12 @@ const UserService = {
    * Fetch user detail
    * @param {*} id
    */
-  async fetchUserDetail(id){
-    return await User.findById(id);
+  async fetchUserDetail(id,personalDetail){
+    let query = User.findById(id);
+    if(personalDetail){
+      query= PersonalDetails.findOne({userId:id}).populate('userId');
+    }
+    return await query.exec();
  },
 
   /**

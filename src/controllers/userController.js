@@ -78,7 +78,8 @@ exports.getUsersList = async (req, res, next) => {
 exports.getUserDetail = async (req, res, next) => {
   try {
     const {id}=req.params;
-    const user = await UserService.fetchUserDetail(id);
+    const {personalDetail}=req.query;
+    const user = await UserService.fetchUserDetail(id,personalDetail);
     sendAppResponse({
       res,
       data:user,
