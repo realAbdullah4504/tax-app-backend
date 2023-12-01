@@ -86,7 +86,7 @@ const calculate = async (year, userId) => {
   const { contributionDetails } = (await OtherDetails.findOne({ userId })) || {};
   const { workFromHomeDetails, payRentDetails } = await HomeDetails.findOne({
     userId,
-  });
+  }) || {};
   const {
     incapacitatedChildren,
     incapacitatedChildrenDetails,
@@ -210,7 +210,7 @@ const calculate = async (year, userId) => {
     (item) => item.year === year && item?.fullTimeCourse === 'fullTime'
   );
   const singleParentStandardCredits =
-    type === 'singleParent' && singleParentFullTimeCourse ? singleParent : 0;
+    (type === 'singleParent' && singleParentFullTimeCourse) ? singleParent : 0;
 
   const standardCredits = personal + totalPaye + singleParentStandardCredits; //we have taken paye for one only
   console.log('standardCredits', standardCredits);
@@ -224,8 +224,7 @@ const calculate = async (year, userId) => {
   // console.log(widowTrail);
   totalYearsPassedSpouse = maritalStatus === 'widowed' && year - spousePassDate.getUTCFullYear();
   const widow =
-    totalYearsPassedSpouse > 0 ? (widowNoDependants || 0) - (totalYearsPassedSpouse - 1) * 450 : 0;
-
+    totalYearsPassedSpouse > 0 ? (widowCreditYearly || 0) - (totalYearsPassedSpouse - 1) * 450 : 0;
   let widowTrail = maritalStatus === 'widowed' ? widow : 0; //formula should be understand from questions app
   // Carer Missed for married (Question app M37)
   // =IF(AND(E37>0,E128-((N2-E129)/2)>0),E128-((N2-E129)/2),0)
@@ -295,9 +294,9 @@ const calculate = async (year, userId) => {
   //RENT CALCULATIONS
   //=IF(E62="Yes",MIN(F134,F136*E65),0)
   let totalRent = 0;
-  payRentDetails.forEach(({ propertyType, rentPaid, year: rentYear }) => {
+  payRentDetails && payRentDetails.forEach(({ propertyType, rentPaid, year: rentYear }) => {
     if (year === rentYear) {
-      if (propertyType === 'primary') {
+      if (propertyType === 'primaryResidence') {
         totalRent +=
           type === 'single' || type === 'singleParent'
             ? Math.min(rentPerPerson, (rentPaid * maxPercentageOfRent) / 100)
