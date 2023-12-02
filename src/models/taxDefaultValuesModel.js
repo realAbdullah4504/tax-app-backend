@@ -60,6 +60,7 @@ const uscRatesSchema = {
 
 const taxSchema = new mongoose.Schema({
   year: Number,
+  flatRateExpense:Number,
   taxRates: taxRatesSchema,
   taxBands: taxBandsSchema,
   exemptionLimitsOver65: exemptionLimitsSchema,

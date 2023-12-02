@@ -10,6 +10,7 @@ const PersonalInfo = require("../models/personalDetailsModel");
 const AppError = require("../errors/AppError");
 
 const { ACCOUNT_SID, AUTH_TOKEN, VERIFY_SID } = require("../../config/vars");
+const PersonalDetails = require("../models/personalDetailsModel");
 
 const client = new twilio(ACCOUNT_SID, AUTH_TOKEN);
 
@@ -210,8 +211,12 @@ const UserService = {
    * Fetch users list
    * @param {*} type 
    */
- async fetchUsersList(type){
+ async fetchUsersList(type,filters){
+  const {firstName,lastName,email}=filters;
     const query = {
+      ...(firstName&& {firstName}),
+      ...(lastName&& {surName:lastName}),
+      ...(email&& {email}),
       ...(type&& {userType:type})
     }
     return await User.find(query);
@@ -221,8 +226,12 @@ const UserService = {
    * Fetch user detail
    * @param {*} id
    */
-  async fetchUserDetail(id){
-    return await User.findById(id);
+  async fetchUserDetail(id,personalDetail){
+    let query = User.findById(id);
+    if(personalDetail){
+      query= PersonalDetails.findOne({userId:id}).populate('userId');
+    }
+    return await query.exec();
  },
 
   /**
@@ -236,7 +245,18 @@ const UserService = {
     return await Model.findOne({userId});
  },
 
+ /**
+  * 
+  * @param {*} userId 
+  * @returns 
+  * service function to delete user by id
+  */
+ async deleteUser(userId){
+  return await User.deleteOne({_id:userId});
+},
+
 };
+
 
 
 
