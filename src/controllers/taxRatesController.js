@@ -226,6 +226,7 @@ const calculate = async (year, userId) => {
   //***********************************SECTION 3 *************************************************** */
   //Additional Credits
   //age credit is not defined (need to work on it)
+  const flatRateExpensePer = flatRateExpense * 0.2;
   const ageCredit =
     age >= 65 ? (maritalStatus === 'single' ? ageCreditSingle : ageCreditMarried) : 0;
 
@@ -303,7 +304,6 @@ const calculate = async (year, userId) => {
   //=IF(E62="Yes",MIN(F134,F136*E65),0)
   let totalRent = 0;
   payRentDetails && payRentDetails.forEach(({ propertyType, rentPaid, year: rentYear }) => {
-    console.log('======Rent per couple======', rentPerCouple, rentPerPerson, rentPaid, maxPercentageOfRent);
     if (year === rentYear) {
       if (propertyType === 'primaryResidence') {
         totalRent +=
@@ -383,6 +383,7 @@ const calculate = async (year, userId) => {
 
   // console.log('=====totalTaxCreadit======', standardCredits,
   //   ageCredit,
+  // flatRateExpensePer ,
   //   widowTrail,
   //   incapacitatedChild,
   //   totalElderlyRelativeCredit,
@@ -397,6 +398,7 @@ const calculate = async (year, userId) => {
 
   const totalTaxCredit =
     standardCredits +
+    flatRateExpensePer +
     ageCredit +
     widowTrail +
     incapacitatedChild +
