@@ -1,4 +1,6 @@
 const User = require("../models/userModel");
+const { validationResult } = require('express-validator');
+const AppError = require('../errors/AppError'); 
 const UserService = require("../services/userService");
 const sendAppResponse = require("../utils/helper/appResponse");
 
@@ -176,6 +178,32 @@ exports.deleteUser = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * block user
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ */
+exports.blockUser =async (req, res, next)=>{
+  try {
+    const result = validationResult(req);
+    if (!result.isEmpty()) {
+      throw new AppError(JSON.stringify(result.errors), 400);
+    }
+    const {status,userId}=req.body;
+     await UserService.blockUser(status,userId);
+    sendAppResponse({
+      res,
+      data:{},
+      statusCode: 200,
+      status: "success",
+      message: "User blocked status updated",
+    });
+  } catch (error) {
+    next(error);
+  }
+}
 
 
 

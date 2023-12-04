@@ -8,14 +8,15 @@ const { authenticate } = require("../middlewares/auth");
 const { pdfParser } = PdfParserController;
 const { fileUpload, fileUploadA2, getA2File, getDocuments, downloadFile, deleteFile } = userDocumentService;
 
-const { signUp, verifyCode, login, resendCode, forgetPassword, resetPassword } =
+const { signUp, verifyCode, login, resendCode, forgetPassword, resetPassword,memberResetPassword } =
   AuthController;
-const { getUserProfile,getUserDetail, updateUserDetail,getUsersList,getUserQuestionsDetail,deleteUser,updateUserProfile } = UserController;
-const { taxRates, taxCalculations, getCalculations } = taxRatesController;
+const { getUserProfile,getUserDetail, updateUserDetail,getUsersList,getUserQuestionsDetail,deleteUser,updateUserProfile,blockUser } = UserController;
+const { taxRates, taxCalculations, getCalculations,updateDefaultTaxValues } = taxRatesController;
 const {
   createUserValidator,
   verifyCodeValidator,
   loginUserValidator,
+  blockUserValidator
 } = require("../middlewares/validators");
 const router = express.Router();
 
@@ -27,6 +28,7 @@ router.post("/resend-code", authenticate, resendCode);
 router.post("/login", loginUserValidator, login);
 router.post("/forgetPassword", forgetPassword);
 router.patch("/resetPassword/:token", resetPassword);
+router.post("/resetMemberPassword",authenticate, memberResetPassword);
 
 // User
 router.get("/detail", authenticate, getUserProfile);
@@ -36,6 +38,7 @@ router.post("/update", authenticate, updateUserDetail);
 router.post("/taxRates",authenticate, taxRates);
 router.post("/calculateTax", authenticate, taxCalculations);
 router.post("/getCalculationDetails", authenticate, getCalculations);
+router.put("/defaultTaxValues/:year", authenticate, updateDefaultTaxValues);
 
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -47,6 +50,7 @@ router.get("/A2File",authenticate, getA2File);
 router.post("/upload/A2File", authenticate, upload.single("file"), fileUploadA2);
 // Update the route to use `upload.array` for handling multiple files
 router.post("/fileUpload", authenticate, upload.array("files", 5), fileUpload);
+router.post("/block",[authenticate,blockUserValidator],blockUser);
 router.get("/getDocuments", authenticate, getDocuments);
 router.get("/downloadFile/:filename",authenticate, downloadFile);
 router.delete("/deleteFile/:filename",authenticate, deleteFile);

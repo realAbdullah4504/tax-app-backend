@@ -27,8 +27,15 @@ const loginUserValidator = [
   body('password').isLength({ min: 8 }).withMessage('Password must be at least 8 characters long'),
 ];
 
+const blockUserValidator = [
+  body('status').notEmpty().withMessage('block status is required')
+  .isIn(['block','unBlock']).withMessage('block status must be [block|unBlock]'),
+  body('userId').notEmpty().withMessage('userId is required'),
+];
+
 module.exports = {
   createUserValidator,
   verifyCodeValidator,
   loginUserValidator,
+  blockUserValidator
 };

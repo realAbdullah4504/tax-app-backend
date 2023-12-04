@@ -41,7 +41,6 @@ exports.sendTokenToClient = async (req, res, next) => {
 exports.signUp = async (req, res, next) => {
   try {
     const errors = validationResult(req);
-    console.log(errors);
     if (!errors.isEmpty()) {
       throw new AppError('Validation failed', 400);
     }
@@ -100,6 +99,9 @@ exports.login = async (req, res, next) => {
     const { email, password } = req.body;
     const user = await UserService.loginUser(email, password);
     if (!user) throw new AppError('Invalid credentials', 400);
+    if(user.isBlocked){
+      throw new AppError('user has been blocked', 403);
+    }
     const token = generateToken(user?._id);
     user.password = undefined;
     if (user?.is2FA) await UserService.sendVerificationCode(user?.phoneNumber);
@@ -140,3 +142,22 @@ exports.resetPassword = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * controller for resetting user password by admin
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ */
+
+exports.memberResetPassword=async(req, res, next) =>{
+  try {
+    const {userId} = req.body;
+    const {_id}=req.user;
+    const newPassword = await UserService.resetMemberPassword(userId,_id);
+    sendAppResponse({ res, statusCode: 200, status: 'success', message: 'user password reset successfully',newPassword });
+  } catch (error) {
+    next(error);
+  }
+
+}
