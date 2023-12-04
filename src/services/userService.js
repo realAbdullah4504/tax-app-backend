@@ -212,12 +212,13 @@ const UserService = {
    * @param {*} type 
    */
  async fetchUsersList(type,filters){
-  const {firstName,lastName,email}=filters;
+  const {firstName,lastName,email,stage}=filters;
     const query = {
       ...(firstName&& {firstName}),
       ...(lastName&& {surName:lastName}),
       ...(email&& {email}),
-      ...(type&& {userType:type})
+      ...(type&& {userType:type}),
+      ...(stage && {stage})
     }
     return await User.find(query);
  },

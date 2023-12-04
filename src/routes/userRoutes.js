@@ -53,7 +53,7 @@ router.delete("/deleteFile/:filename",authenticate, deleteFile);
 router.get("/:id",authenticate,getUserDetail);
 router.put("/:id",authenticate,updateUserProfile);
 router.delete("/:id",authenticate,deleteUser);
-router.get("/",getUsersList);
+router.get("/",authenticate,getUsersList);
 // Protected route using the authenticate middleware
 
 module.exports = router;
