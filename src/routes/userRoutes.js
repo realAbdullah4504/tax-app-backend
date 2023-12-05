@@ -10,7 +10,7 @@ const { fileUpload, fileUploadA2, getA2File, getDocuments, downloadFile, deleteF
 
 const { signUp, verifyCode, login, resendCode, forgetPassword, resetPassword } =
   AuthController;
-const { getUserProfile,getUserDetail, updateUserDetail,getUsersList,getUserQuestionsDetail,deleteUser,updateUserProfile } = UserController;
+const { getUserProfile,getUserDetail, updateUserDetail,getUsersList, getUserQuestionsDetail, deleteUser,updateUserProfile } = UserController;
 const { taxRates, taxCalculations, getCalculations } = taxRatesController;
 const {
   createUserValidator,
