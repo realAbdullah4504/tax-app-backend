@@ -19,8 +19,8 @@ exports.getUserProfile = async (req, res, next) => {
 };
 exports.updateUserDetail = async (req, res, next) => {
   try {
-    const { type, ...restPayload } = req.body;
-    const id = req?.user?.id;
+    const { type, userInfo, ...restPayload } = req.body;
+    const id = req?.body?.userId ? req?.body?.userId : req?.user?.id;
     //check should be made whether subtype is number or string it fails to update the result when we post the number but it treated as string
     const payload = {};
     for (const key in restPayload) {
@@ -31,7 +31,9 @@ exports.updateUserDetail = async (req, res, next) => {
         payload[key] = value;
       }
     }
-  
+    if(req?.body?.userId){
+    const updatedUserInfo = await UserService.updateCurrentUser(id, "user", userInfo);
+    }
     const updatedUser = await UserService.updateCurrentUser(id, type, payload);
     sendAppResponse({
       res,
