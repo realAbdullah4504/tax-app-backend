@@ -105,9 +105,11 @@ exports.getUserQuestionsDetail = async (req, res, next) => {
     const {type}=req.query;
     const {userId}=req.params;
     const detail = await UserService.fetchUserQuestionsDetail(type,userId);
+    const user = await User.findOne({_id: userId});
     sendAppResponse({
       res,
       data:detail,
+      userInfo:user || {},
       statusCode: 200,
       status: "success",
       message: "User details",
