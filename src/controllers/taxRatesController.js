@@ -581,3 +581,34 @@ exports.getCalculations = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * controller function to update tax default values
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ */
+exports.updateDefaultTaxValues = async(req,res,next)=>{
+  try {
+    const yearToUpdate = req.params.year;
+    const updatedTaxRates = await TaxDefaultValues.findOneAndUpdate(
+      { year: yearToUpdate },
+      req.body,
+      {
+        upsert: true
+      }
+    );
+    // if (!updatedTaxRates) throw new AppError("Year not found", 404);
+
+    sendAppResponse({
+      res,
+      updatedTaxRates,
+      statusCode: 200,
+      status: 'success',
+      message: 'Tax Rates successfully updated.',
+    });
+  } catch (error) {
+    next(error);
+  }
+  
+}

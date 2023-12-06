@@ -256,6 +256,38 @@ const UserService = {
   return await User.deleteOne({_id:userId});
 },
 
+/**
+ * service function to block and unblock user
+ * @param {*} status 
+ * @param {*} userId 
+ * @returns 
+ */
+async blockUser(status,userId){
+  let isBlocked=undefined;
+  isBlocked = status==="block" ? true:false;
+ return await User.findByIdAndUpdate(userId, {isBlocked}, {
+    new: false,
+    runValidator: true,
+  });
+},
+
+/**
+ * service functio to reset user password by admin
+ * @param {*} userId 
+ * @returns 
+ */
+async resetMemberPassword(userId,leadId){
+  const user = await User.findById(userId);
+  if(user.leadMember!==leadId){
+    throw new AppError("you are not authorized to reset password for this member",403);
+  }
+
+  const newPassword = Math.random().toString(36).slice(2);
+    user.password=newPassword;
+    await user.save();
+    return newPassword
+}
+
 };
 
 
