@@ -5,6 +5,8 @@ const AppError = require('../errors/AppError');
 const { validationResult } = require('express-validator');
 const { JWT_SECRET, JWT_COOKIE_EXPIRE_IN, NODE_ENV } = require('../../config/vars');
 const sendAppResponse = require('../utils/helper/appResponse');
+const emailService = require('../services/emailService');
+const { TokenFileWebIdentityCredentials } = require('aws-sdk');
 
 const generateToken = (id) => {
   return jwt.sign({ id }, JWT_SECRET, {
@@ -125,7 +127,9 @@ exports.forgetPassword = async (req, res, next) => {
   try {
     const baseUrl = `${req.protocol}://${req.get('host')}/api/v1/users/resetPassword`;
     const resetTokenUrl = await UserService.forgotPasswordUser(req?.body?.email, baseUrl);
-    res.status(200).json({ status: 'success', resetTokenUrl });
+    const info = await emailService(resetTokenUrl,req?.body?.email);
+    // console.log(info);
+    res.status(200).json({ status: 'success', resetTokenUrl, info });
   } catch (error) {
     next(error);
   }
@@ -134,6 +138,7 @@ exports.resetPassword = async (req, res, next) => {
   try {
     const token = req.params.token;
     const { password, confirmPassword } = req.body;
+    // console.log('token', token)
     const resp = await UserService.resetPasswordUser(token, password, confirmPassword);
 
     // 4 log the user in, send jwt

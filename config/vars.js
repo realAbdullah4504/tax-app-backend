@@ -23,5 +23,11 @@ module.exports = {
   BUCKET_NAME: process.env.BUCKET_NAME,
   DIRECTORY_NAME: process.env.DIRECTORY_NAME,
 
+  //MAIL GUN
+  MAILGUN_DOMAIN: process.env.MAILGUN_DOMAIN,
+  MAILGUN_API_KEY: process.env.MAILGUN_API_KEY,
+
   // Add more variables as needed
+
+
 };

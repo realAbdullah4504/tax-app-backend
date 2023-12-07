@@ -23,6 +23,7 @@
     "express-validator": "^7.0.1",
     "formidable": "^3.5.1",
     "jsonwebtoken": "^9.0.1",
+    "mailgun-js": "^0.22.0",
     "mindee": "^4.3.1",
     "mongoose": "^7.4.3",
     "multer": "^1.4.5-lts.1",
