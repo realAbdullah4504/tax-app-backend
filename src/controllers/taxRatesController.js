@@ -21,13 +21,22 @@ const calculate = async (year, userId) => {
   console.log(summaryDetails);
   console.log('==============', userId);
 
+  let grossIncomeUscSelf = 0;
+  let grossIncomeUscSpouse = 0;
   let grossIncomeUsc = 0;
   let grossTaxableIncome = 0;
   let taxPaid = 0;
   let uscPaid = 0;
 
   summaryDetails?.forEach((item) => {
-    grossIncomeUsc += item.gross_pay;
+
+    if (item?.summary_type === 'Self') {
+      grossIncomeUscSelf = item.gross_pay;
+    }
+    if (item?.summary_type === 'Spouse') {
+      grossIncomeUscSpouse = item.gross_pay;
+    }
+    grossIncomeUsc = grossIncomeUscSelf + grossIncomeUscSpouse
     grossTaxableIncome += item.pay_for_income_tax;
     taxPaid += item.income_tax_paid;
     uscPaid += item.usc_paid;
@@ -211,7 +220,7 @@ const calculate = async (year, userId) => {
 
   console.log('personal', personal);
 
-  const totalPaye = type === 'married2Income' ? paye + paye : paye;
+  const totalPaye = type === 'married2Incomes' ? paye + paye : paye;
   console.log('totalPaye', totalPaye);
   const singleParentFullTimeCourse = students?.find(
     (item) => item.year === year && item?.fullTimeCourse === 'fullTime'
@@ -236,7 +245,7 @@ const calculate = async (year, userId) => {
   const widow =
     totalYearsPassedSpouse > 0
       ? (widowCreditYearly || 0) -
-        ((totalYearsPassedSpouse > 5 ? 5 : totalYearsPassedSpouse) - 1) * 450
+      ((totalYearsPassedSpouse > 5 ? 5 : totalYearsPassedSpouse) - 1) * 450
       : 0;
   let widowTrail = maritalStatus === 'widowed' ? widow : 0; //formula should be understand from questions app
   // Carer Missed for married (Question app M37)
@@ -421,33 +430,43 @@ const calculate = async (year, userId) => {
 
   ////***********************************SECTION 4 *************************************************** */
   //USC Calculation
+  const uscCalculation = (grossIncomeUsc) => {
+    const usc1 = (Math.min(grossIncomeUsc, uscBands[0]) * uscRatesPercentage[0]) / 100;
+    console.log('usc1', usc1);
 
-  const usc1 = (Math.min(grossIncomeUsc, uscBands[0]) * uscRatesPercentage[0]) / 100;
-  console.log('usc1', usc1);
+    const usc2 = (Math.min(grossIncomeUsc - uscBands[1], uscBands[1]) * uscRatesPercentage[1]) / 100;
+    console.log('usc2', usc2);
 
-  const usc2 = (Math.min(grossIncomeUsc - usc1, uscBands[1]) * uscRatesPercentage[1]) / 100;
-  console.log('usc2', usc2);
+    const usc3 =
+      (Math.min(grossIncomeUsc - (uscBands[0] + uscBands[1]), uscBands[2]) * uscRatesPercentage[2]) / 100;
+    console.log('usc3', usc3);
+    const usc4 =
+      ((grossIncomeUsc - (uscBands[0] + uscBands[1] + uscBands[2])) *
+        (fullGpMedicalCard ? medicalCardExemptionTopRate : uscRatesPercentage[3])) /
+      100;
 
-  const usc3 =
-    (Math.min(grossIncomeUsc - (usc1 + usc2), uscBands[2]) * uscRatesPercentage[2]) / 100;
-  console.log('usc3', usc3);
-  const usc4 =
-    ((grossIncomeUsc - (uscBands[0] + uscBands[1] + uscBands[2])) *
-      (fullGpMedicalCard ? medicalCardExemptionTopRate : uscRatesPercentage[3])) /
-    100;
+    console.log(
+      '======',
+      grossIncomeUsc - (uscBands[0] + uscBands[1] + uscBands[2]),
+      fullGpMedicalCard,
+      medicalCardExemptionTopRate,
+      uscRatesPercentage[3]
+    );
+    console.log('usc4', usc4);
 
-  console.log(
-    '======',
-    grossIncomeUsc - (uscBands[0] + uscBands[1] + uscBands[2]),
-    fullGpMedicalCard,
-    medicalCardExemptionTopRate,
-    uscRatesPercentage[3]
-  );
-  console.log('usc4', usc4);
 
-  //add total
-  const totalUsc = usc1 + usc2 + usc3 + usc4;
-  console.log('totalUsc', totalUsc);
+    //add total
+    const totalUsc = usc1 + usc2 + usc3 + usc4;
+    return { totalUsc, usc1, usc2, usc3, usc4 };
+    // console.log('totalUsc', totalUsc);
+    // return totalUsc;
+  }
+  const { totalUsc: totalUscSelf, usc1, usc2, usc3, usc4 } = uscCalculation(grossIncomeUscSelf);
+  const { totalUsc: totalUscSpouse, usc1: spouseUsc1, usc2: spouseUsc2, usc3: spouseUsc3, usc4: spouseUsc4 } = type === 'married2Incomes' ? uscCalculation(grossIncomeUscSpouse) : {};
+
+  const totalUsc = totalUscSelf + (totalUscSpouse || 0);
+
+  console.log(type, grossIncomeUscSelf, grossIncomeUscSpouse, totalUsc);
   // =D48+D63
   const netTaxDue = netIncomeTaxDue + totalUsc;
   console.log('netTaxDue', netTaxDue);
@@ -501,6 +520,11 @@ const calculate = async (year, userId) => {
     usc3,
     usc4,
     totalUsc,
+    spouseUsc1,
+    spouseUsc2,
+    spouseUsc3,
+    spouseUsc4,
+    totalUscSpouse,
     netTaxDue,
     taxResult,
     priorRebates,
@@ -588,7 +612,7 @@ exports.getCalculations = async (req, res, next) => {
  * @param {*} res 
  * @param {*} next 
  */
-exports.updateDefaultTaxValues = async(req,res,next)=>{
+exports.updateDefaultTaxValues = async (req, res, next) => {
   try {
     const yearToUpdate = req.params.year;
     const updatedTaxRates = await TaxDefaultValues.findOneAndUpdate(
