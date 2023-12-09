@@ -282,8 +282,13 @@ async resetMemberPassword(userId){
     user.password=newPassword;
     await user.save();
     return newPassword
-}
+},
 
+async assignMemberOrStage(ids,data){
+  return await User.updateMany({
+    _id:{$in:ids}
+   },data)
+}
 };
 
 

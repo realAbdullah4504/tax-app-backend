@@ -338,7 +338,8 @@ exports.assignMemberOrStage =async (req, res, next)=>{
     if(!['admin','supervisor'].includes(req.user.role)){
       throw new AppError('you are not authorized to assing member or stage', 403);
     }
-     await UserService.assignMemberOrStage(req.body);
+    const {ids,...data}=req.body;
+    await UserService.assignMemberOrStage(ids,data);
     sendAppResponse({
       res,
       data:{},
