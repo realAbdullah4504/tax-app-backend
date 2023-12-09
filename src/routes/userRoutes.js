@@ -10,7 +10,8 @@ const { fileUpload, fileUploadA2, getA2File, getDocuments, downloadFile, deleteF
   userDocumentService;
 
 const { signUp, verifyCode, login, resendCode, forgetPassword, resetPassword,memberResetPassword } = AuthController;
-const { getUserProfile,getUserDetail, updateUserDetail,getUsersList,getUserQuestionsDetail,deleteMember,updateUserProfile,blockUser,createMember,updateMember,assignMemberOrStage,deleteUser } = UserController;
+const { getUserProfile,getUserDetail, updateUserDetail,getUsersList,getUserQuestionsDetail,deleteMember,updateUserProfile,blockUser,createMember,updateMember,assignMemberOrStage,deleteUser   downloadSignedPDF
+} = UserController;
 const { taxRates, taxCalculations, getCalculations,updateDefaultTaxValues } = taxRatesController;
 const {
   createUserValidator,
@@ -80,6 +81,7 @@ router.delete("/deleteFile/:filename",authenticate, deleteFile);
 router.get("/:id",authenticate,getUserDetail);
 router.put("/:id",authenticate,updateUserProfile);
 router.get("/",authenticate,getUsersList);
+router.get('/download-sign-pdf', authenticate, downloadSignedPDF);
 // Protected route using the authenticate middleware
 
 module.exports = router;

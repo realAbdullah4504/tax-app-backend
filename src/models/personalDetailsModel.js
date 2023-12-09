@@ -5,6 +5,7 @@ const personalDetailsSchema = new mongoose.Schema({
     ref: "User",
   },
   ppsn: String,
+  signature:String,
   dateOfBirth: Date,
   occupation: String,
   hasIncomeOutsidePyeOrSocialWelfare: Boolean,
@@ -32,6 +33,7 @@ const personalDetailsSchema = new mongoose.Schema({
   fileTaxesAs: String,
   marriageDate: Date,
   spousePassDate: Date,
+  divorceDate: Date,
   currentStep:Number,
   isComplete:Boolean
 },

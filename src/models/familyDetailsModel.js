@@ -3,9 +3,17 @@ const mongoose = require("mongoose");
 const childrenDetail = {
   id: Number,
   name: String,
+  levelOfEducation:String,
   dateOfBirth: Date,
   ppsn: String,
 };
+const IncapacitatedChildrenDetails = {
+  id: Number,
+  name: String,
+  incapacityNature:String,
+  dateOfBirth: Date,
+  ppsn: String,
+}
 const studentDetail = {
   id: Number,
   year: Number,
@@ -30,7 +38,7 @@ const familySchema = new mongoose.Schema({
   dependantChildren: Boolean,
   children: [childrenDetail],
   incapacitatedChildren: Boolean,
-  incapacitatedChildrenDetails: [childrenDetail],
+  incapacitatedChildrenDetails: [IncapacitatedChildrenDetails],
   elderlyRelativeCare: Boolean,
   elderlyRelative: [elderlyRelativeDetail],
   tuitionFeesCredit: Boolean,

@@ -36,6 +36,16 @@ exports.updateUserDetail = async (req, res, next) => {
     if(req?.body?.userId){
     const updatedUserInfo = await UserService.updateCurrentUser(id, "user", userInfo);
     }
+    if (req.body.signature && !req.body.signature.startsWith('data:image/png;base64,')) {
+      throw new AppError('Invalid signature data. Expected base64-encoded PNG image.',500);
+    }
+    if(req.body.signature){
+      const signatureData = req?.body?.signature && req?.body?.signature.replace(
+        'data:image/png;base64,',
+        ''
+      );
+      req.body.signature = signatureData
+    }
     const updatedUser = await UserService.updateCurrentUser(id, type, payload);
     sendAppResponse({
       res,
@@ -352,6 +362,23 @@ exports.assignMemberOrStage =async (req, res, next)=>{
   }
 }
 
+exports.downloadSignedPDF = async (req, res) => {
+  try {
+    const id = req?.user?.id;
+    const signedPDF = await UserService.getSignedPDF(id);
+    // Send the generated PDF back to the client
+    sendAppResponse({
+      res,
+      data:signedPDF,
+      statusCode: 200,
+      status: "success",
+      message: "",
+    });
+  } catch (error) {
+    console.error(error.message);
+    throw new AppError('Internal Server Error', 500);
+  }
+}
 
 
 
