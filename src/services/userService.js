@@ -216,13 +216,14 @@ const UserService = {
    * @param {*} type 
    */
  async fetchUsersList(type,filters){
-  const {firstName,lastName,email,stage}=filters;
+  const {firstName,lastName,email,stage,member}=filters;
     const query = {
-      ...(firstName&& {firstName}),
-      ...(lastName&& {surName:lastName}),
-      ...(email&& {email}),
-      ...(type&& {userType:type}),
-      ...(stage && {stage})
+      ...(firstName&& {firstName:new RegExp(firstName, "i")}),
+      ...(lastName&& {surName:new RegExp(lastName, "i")}),
+      ...(email&& {email:new RegExp(email, "i")}),
+      ...(type&& {userType:new RegExp(type, "i")}),
+      ...(stage && {stage:new RegExp(stage, "i")}),
+      ...(member && {leadMember:member})
     }
     return await User.find(query);
  },
