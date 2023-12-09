@@ -247,7 +247,7 @@ const UserService = {
  },
 
  /**
-  * 
+  *
   * @param {*} userId 
   * @returns 
   * service function to delete user by id
@@ -264,7 +264,7 @@ const UserService = {
  */
 async blockUser(status,userId){
   let isBlocked=undefined;
-  isBlocked = status==="block" ? true:false;
+  isBlocked = status==="blocked" ? true:false;
  return await User.findByIdAndUpdate(userId, {isBlocked}, {
     new: false,
     runValidator: true,
@@ -276,12 +276,8 @@ async blockUser(status,userId){
  * @param {*} userId 
  * @returns 
  */
-async resetMemberPassword(userId,leadId){
+async resetMemberPassword(userId){
   const user = await User.findById(userId);
-  if(user.leadMember!==leadId){
-    throw new AppError("you are not authorized to reset password for this member",403);
-  }
-
   const newPassword = Math.random().toString(36).slice(2);
     user.password=newPassword;
     await user.save();
