@@ -10,7 +10,7 @@ const { fileUpload, fileUploadA2, getA2File, getDocuments, downloadFile, deleteF
   userDocumentService;
 
 const { signUp, verifyCode, login, resendCode, forgetPassword, resetPassword,memberResetPassword } = AuthController;
-const { getUserProfile,getUserDetail, updateUserDetail,getUsersList,getUserQuestionsDetail,deleteMember,updateUserProfile,blockUser,createMember,updateMember,assignMemberOrStage,deleteUser   downloadSignedPDF
+const { getUserProfile,getUserDetail, updateUserDetail,getUsersList,getUserQuestionsDetail,deleteMember,updateUserProfile,blockUser,createMember,updateMember,assignMemberOrStage,deleteUser , downloadSignedPDF
 } = UserController;
 const { taxRates, taxCalculations, getCalculations,updateDefaultTaxValues } = taxRatesController;
 const {
