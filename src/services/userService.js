@@ -216,13 +216,14 @@ const UserService = {
    * @param {*} type 
    */
  async fetchUsersList(type,filters){
-  const {firstName,lastName,email,stage}=filters;
+  const {firstName,lastName,email,stage,member}=filters;
     const query = {
-      ...(firstName&& {firstName}),
-      ...(lastName&& {surName:lastName}),
-      ...(email&& {email}),
-      ...(type&& {userType:type}),
-      ...(stage && {stage})
+      ...(firstName&& {firstName:new RegExp(firstName, "i")}),
+      ...(lastName&& {surName:new RegExp(lastName, "i")}),
+      ...(email&& {email:new RegExp(email, "i")}),
+      ...(type&& {userType:new RegExp(type, "i")}),
+      ...(stage && {stage:new RegExp(stage, "i")}),
+      ...(member && {leadMember:member})
     }
     return await User.find(query);
  },
@@ -251,7 +252,7 @@ const UserService = {
  },
 
  /**
-  * 
+  *
   * @param {*} userId 
   * @returns 
   * service function to delete user by id
@@ -268,7 +269,7 @@ const UserService = {
  */
 async blockUser(status,userId){
   let isBlocked=undefined;
-  isBlocked = status==="block" ? true:false;
+  isBlocked = status==="blocked" ? true:false;
  return await User.findByIdAndUpdate(userId, {isBlocked}, {
     new: false,
     runValidator: true,
@@ -280,16 +281,18 @@ async blockUser(status,userId){
  * @param {*} userId 
  * @returns 
  */
-async resetMemberPassword(userId,leadId){
+async resetMemberPassword(userId){
   const user = await User.findById(userId);
-  if(user.leadMember!==leadId){
-    throw new AppError("you are not authorized to reset password for this member",403);
-  }
-
   const newPassword = Math.random().toString(36).slice(2);
     user.password=newPassword;
     await user.save();
     return newPassword
+},
+
+async assignMemberOrStage(ids,data){
+  return await User.updateMany({
+    _id:{$in:ids}
+   },data)
 },
 
 async getSignedPDF(userId){

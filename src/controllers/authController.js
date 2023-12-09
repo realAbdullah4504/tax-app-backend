@@ -53,7 +53,8 @@ exports.signUp = async (req, res, next) => {
         status: 'fail',
         message: 'User has already registered.',
       });
-    const userData = await UserService.registerUser(req.body);
+    const payload={...req.body,userType:'customer'}
+    const userData = await UserService.registerUser(payload);
     // Send SMS code to mobile number and save reg record into db
     await UserService.sendVerificationCode(phoneNumber);
 
@@ -135,7 +136,6 @@ exports.resetPassword = async (req, res, next) => {
     const token = req.params.token;
     const { password, confirmPassword } = req.body;
     const resp = await UserService.resetPasswordUser(token, password, confirmPassword);
-
     // 4 log the user in, send jwt
     createSendToken(resp, 201, res);
   } catch (error) {
@@ -153,8 +153,11 @@ exports.resetPassword = async (req, res, next) => {
 exports.memberResetPassword=async(req, res, next) =>{
   try {
     const {userId} = req.body;
-    const {_id}=req.user;
-    const newPassword = await UserService.resetMemberPassword(userId,_id);
+    const {role}=req.user;
+    if(!['admin','supervisor'].includes(role)){
+      throw new AppError('you are not authorized to reset password', 403);
+    }
+    const newPassword = await UserService.resetMemberPassword(userId);
     sendAppResponse({ res, statusCode: 200, status: 'success', message: 'user password reset successfully',newPassword });
   } catch (error) {
     next(error);

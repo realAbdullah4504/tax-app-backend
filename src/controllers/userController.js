@@ -194,6 +194,121 @@ exports.deleteUser = async (req, res, next) => {
 };
 
 /**
+ * @Delete
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ * delete user by id
+ */
+
+exports.deleteMember = async (req, res, next) => {
+  try {
+    const {id}=req.params;
+    const {role,email}=req.user;
+      if(!["admin","supervisor"].includes(role)){
+        throw new AppError('you are not authorize to add member', 403);
+      }
+    const user = await UserService.authenticateUser(email, req.body.adminPassword);
+      if (!user) {
+        throw new AppError('admin password does not match', 403);
+      }
+  await UserService.deleteUser(id);
+    sendAppResponse({
+      res,
+      data:{},
+      statusCode: 200,
+      status: "success",
+      message: "User Deleted successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * create member
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ */
+
+exports.createMember = async(req,res,next)=>{
+  try {
+    const result = validationResult(req);
+    if (!result.isEmpty()) {
+      throw new AppError(JSON.stringify(result.errors), 400);
+    }
+    const {role}=req.user;
+    if(!["admin","supervisor"].includes(role)){
+      throw new AppError('you are not authorize to add member', 403);
+    }
+
+    const payload={
+      ...req.body,
+      userType:'member',
+      tob: false,
+      taxAgent: false,
+    }
+    const user = await UserService.registerUser(payload)
+    sendAppResponse({
+      res,
+      data:user,
+      statusCode: 200,
+      status: "success",
+      message: "member added successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * update member
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ */
+
+exports.updateMember = async(req,res,next)=>{
+  try {
+    const result = validationResult(req);
+    if (!result.isEmpty()) {
+      throw new AppError(JSON.stringify(result.errors), 400);
+    }
+    const {role}=req.user;
+    if(!["admin","supervisor"].includes(role)){
+      throw new AppError('you are not authorize to update member', 403);
+    }
+
+    const id = req.params.id;
+    //check should be made whether subtype is number or string it fails to update the result when we post the number but it treated as string
+    const payload = {};
+    const data = req.body;
+    for (const key in data) {
+      const value = data[key];
+      if (!isNaN(value) && !Array.isArray(value) && typeof value!=="boolean") {
+        payload[key] = +value;
+      } else {
+        payload[key] = value;
+      }
+    }
+    delete payload.password;
+    const updatedUser = await UserService.updatedUser({id,data:payload});
+    sendAppResponse({
+      res,
+      data:updatedUser,
+      statusCode: 200,
+      status: "success",
+      message: "member updated successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+
+
+/**
  * block user
  * @param {*} req 
  * @param {*} res 
@@ -205,14 +320,42 @@ exports.blockUser =async (req, res, next)=>{
     if (!result.isEmpty()) {
       throw new AppError(JSON.stringify(result.errors), 400);
     }
-    const {status,userId}=req.body;
-     await UserService.blockUser(status,userId);
+    if(!['admin','supervisor'].includes(req.user.role)){
+      throw new AppError('you are not authorized to block user', 403);
+    }
+    const {status}=req.body;
+     await UserService.blockUser(status,req.params.id);
     sendAppResponse({
       res,
       data:{},
       statusCode: 200,
       status: "success",
       message: "User blocked status updated",
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
+/**
+ * assing stage or member
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ */
+exports.assignMemberOrStage =async (req, res, next)=>{
+  try {
+    if(!['admin','supervisor'].includes(req.user.role)){
+      throw new AppError('you are not authorized to assing member or stage', 403);
+    }
+    const {ids,...data}=req.body;
+    await UserService.assignMemberOrStage(ids,data);
+    sendAppResponse({
+      res,
+      data:{},
+      statusCode: 200,
+      status: "success",
+      message: "members details has been updated",
     });
   } catch (error) {
     next(error);

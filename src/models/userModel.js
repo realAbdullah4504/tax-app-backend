@@ -31,10 +31,11 @@ const userSchema = new mongoose.Schema({
   },
   stage:{
     type:String,
-    default:""
+    default:"registered"
   },
   role:{
-    type:String
+    type:String,
+    enum:['call_center','staff_member','supervisor','support']
   },
   leadMember:{
     type: mongoose.Schema.ObjectId,
