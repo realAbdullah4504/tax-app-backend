@@ -1,6 +1,8 @@
+const fs = require('fs');
+const path = require('path');
 const twilio = require("twilio");
 const crypto = require("crypto");
-
+const { PDFDocument, rgb } = require('pdf-lib');
 const User = require("../models/userModel");
 const FamilyDetails = require("../models/familyDetailsModel");
 const HealthDetails = require("../models/healthDetailsModel");
@@ -9,7 +11,9 @@ const OtherDetails = require("../models/otherDetailsModel");
 const PersonalInfo = require("../models/personalDetailsModel");
 const AppError = require("../errors/AppError");
 
+
 const { ACCOUNT_SID, AUTH_TOKEN, VERIFY_SID } = require("../../config/vars");
+const pdfFieldData = require('../utils/constant/signPDF');
 const PersonalDetails = require("../models/personalDetailsModel");
 
 const client = new twilio(ACCOUNT_SID, AUTH_TOKEN);
@@ -286,7 +290,110 @@ async resetMemberPassword(userId,leadId){
     user.password=newPassword;
     await user.save();
     return newPassword
+},
+
+async getSignedPDF(userId){
+  try {
+    const personalDetail = await PersonalInfo.findOne({userId});
+    const signatureData = personalDetail?.signature || "";
+    const pdfBytes = fs.readFileSync('../public/assets/document.pdf');
+    const pdfDoc = await PDFDocument.load(pdfBytes);
+
+
+    const image = await pdfDoc.embedPng(Buffer.from(signatureData, 'base64'));
+    const pages = pdfDoc.getPages();
+    const page = pages[1];
+    page.drawImage(image, {
+      x: page.getWidth() / 2 - image.width / 2 + 85,
+      y: 170,
+      width: 35,
+      height: 35,
+      color: rgb(0, 0, 0),
+    });
+
+    const form = pdfDoc.getForm();
+
+    pdfFieldData.forEach(({ name, text }) => {
+      const field = form.getTextField(name);
+      field.setText(text);
+
+      // Check if setFontSize is supported by the field (some fields may not support it)
+      if (field.setFontSize && name !== 'email address') {
+        field.setFontSize(12);
+      }
+    });
+
+    // firstPageFields.forEach((field) => {
+
+    // //   if (
+    // //     field.getName() ===
+    // //     'due to me by the Revenue Commissioners by electronic funds transfer to the following bank'
+    // //   ) {
+    // //     field.setText('due to bla bla');
+    // //   }
+    // //   if (
+    // //     field.getName() ===
+    // //     'insert name of tax agency on my behalf is refunded in a similar manner'
+    // //   ) {
+    // //     field.setText('__name_of_tax_agency');
+    // //   }
+    // //   if (field.getName() === 'same I understand that') {
+    // //     field.setText('same I understand that');
+    // //   }
+    // //   if (field.getName() === 'understand that my agent') {
+    // //     field.setText('agent_name');
+    // //   }
+    // //   if (field.getName() === 'I understand and agree that') {
+    // //     field.setText('I understand and agree that');
+    // //   }
+    // //   if (
+    // //     field.getName() ===
+    // //     'insert name of tax agency in respect of the services carried out on'
+    // //   ) {
+    // //     field.setText('__services carried out on');
+    // //   }
+    // //   if (
+    // //     field.getName() ===
+    // //     'I confirm that I will provide the necessary documentation to'
+    // //   ) {
+    // //     field.setText('documentation agency name');
+    // //   }
+    // //   if (field.getName() === 'reliefs made to Revenue on my behalf by') {
+    // //     field.setText('reliefs made to Revenue on my behalf by');
+    // //   }
+    // //   if (
+    // //     field.getName() ===
+    // //     'I confirm that I will provide details of all my sources of income to'
+    // //   ) {
+    // //     field.setText('income to');
+    // //   }
+    // //   if (field.getName() === 'I understand that') {
+    // //     field.setText('I understand that');
+    // //   }
+    // //   if (
+    // //     field.getName() ===
+    // //     'I confirm that this authorisation will remain in force until Revenue is formally notified of its'
+    // //   ) {
+    // //     field.setText('notified of its');
+    // //   }
+    // //   if (field.getName() === 'select preferred option') {
+    // //     field.setText('select preferred option');
+    // //   }
+    // });
+
+    const modifiedPdfBytes = await pdfDoc.save();
+    const pdfFileName = `generated_pdfs/generated_${Date.now()}.pdf`;
+    const pdfFilePath = path.join(__dirname, pdfFileName);
+    fs.writeFileSync(pdfFilePath, modifiedPdfBytes);
+
+    // Send the generated PDF back to the client
+    return modifiedPdfBytes;
+  } catch (error) {
+    console.error(error.message);
+    throw new AppError('Internal Server Error',500);
+  }
 }
+
 
 };
 

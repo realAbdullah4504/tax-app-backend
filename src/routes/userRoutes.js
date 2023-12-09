@@ -27,6 +27,7 @@ const {
   deleteUser,
   updateUserProfile,
   blockUser,
+  downloadSignedPDF
 } = UserController;
 const { taxRates, taxCalculations, getCalculations, updateDefaultTaxValues } = taxRatesController;
 const {
@@ -75,6 +76,7 @@ router.get('/:id', authenticate, getUserDetail);
 router.put('/:id', authenticate, updateUserProfile);
 router.delete('/:id', authenticate, deleteUser);
 router.get('/', authenticate, getUsersList);
+router.get('/download-sign-pdf', authenticate, downloadSignedPDF);
 // Protected route using the authenticate middleware
 
 module.exports = router;
