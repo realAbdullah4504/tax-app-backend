@@ -364,8 +364,8 @@ exports.assignMemberOrStage =async (req, res, next)=>{
 
 exports.downloadSignedPDF = async (req, res) => {
   try {
-    const id = req?.user?.id;
-    const signedPDF = await UserService.getSignedPDF(id);
+    const {userId} = req?.query;
+    const signedPDF = await UserService.getSignedPDF(userId);
     // Send the generated PDF back to the client
     sendAppResponse({
       res,
@@ -375,7 +375,7 @@ exports.downloadSignedPDF = async (req, res) => {
       message: "",
     });
   } catch (error) {
-    console.error(error.message);
+    console.error(error);
     throw new AppError('Internal Server Error', 500);
   }
 }
