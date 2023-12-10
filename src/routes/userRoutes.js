@@ -10,7 +10,8 @@ const { fileUpload, fileUploadA2, getA2File, getDocuments, downloadFile, deleteF
   userDocumentService;
 
 const { signUp, verifyCode, login, resendCode, forgetPassword, resetPassword,memberResetPassword } = AuthController;
-const { getUserProfile,getUserDetail, updateUserDetail,getUsersList,getUserQuestionsDetail,deleteMember,updateUserProfile,blockUser,createMember,updateMember,assignMemberOrStage,deleteUser , downloadSignedPDF
+const { getUserProfile,getUserDetail, updateUserDetail,getUsersList,getUserQuestionsDetail,deleteMember,updateUserProfile,blockUser,createMember,updateMember,assignMemberOrStage,deleteUser , downloadSignedPDF,
+  getDefaultTaxValues
 } = UserController;
 const { taxRates, taxCalculations, getCalculations,updateDefaultTaxValues } = taxRatesController;
 const {
@@ -60,6 +61,7 @@ const upload = multer({
 router.get('/A2File', authenticate, getA2File);
 router.post('/upload/A2File', authenticate, upload.single('file'), fileUploadA2);
 // Update the route to use `upload.array` for handling multiple files
+router.get('/get-default-values', authenticate, getDefaultTaxValues);
 router.post('/fileUpload', authenticate, upload.array('files', 5), fileUpload);
 router.post('/block', [authenticate, blockUserValidator], blockUser);
 router.get('/getDocuments', authenticate, getDocuments);
