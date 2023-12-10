@@ -203,7 +203,7 @@ exports.deleteUser = async (req, res, next) => {
 
 exports.deleteMember = async (req, res, next) => {
   try {
-    const {id}=req.params;
+    const {ids}=req.body;
     const {role,email}=req.user;
       if(!["admin","supervisor"].includes(role)){
         throw new AppError('you are not authorize to add member', 403);
@@ -212,13 +212,13 @@ exports.deleteMember = async (req, res, next) => {
       if (!user) {
         throw new AppError('admin password does not match', 403);
       }
-  await UserService.deleteUser(id);
+  await UserService.deleteUsers(ids);
     sendAppResponse({
       res,
       data:{},
       statusCode: 200,
       status: "success",
-      message: "User Deleted successfully",
+      message: "Users Deleted successfully",
     });
   } catch (error) {
     next(error);

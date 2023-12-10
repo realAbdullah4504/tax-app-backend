@@ -295,6 +295,12 @@ async assignMemberOrStage(ids,data){
    },data)
 },
 
+async deleteUsers(ids){
+  return await User.deleteMany({
+    _id:{$in:ids}
+   })
+},
+
 async getSignedPDF(userId){
   try {
     const personalDetail = await PersonalInfo.findOne({userId});
@@ -395,6 +401,7 @@ async getSignedPDF(userId){
     console.error(error.message);
     throw new AppError('Internal Server Error',500);
   }
+
 }
 
 
