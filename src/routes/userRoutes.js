@@ -65,6 +65,7 @@ router.post('/block', [authenticate, blockUserValidator], blockUser);
 router.get('/getDocuments', authenticate, getDocuments);
 router.get('/downloadFile/:filename', authenticate, downloadFile);
 router.delete('/deleteFile/:filename', authenticate, deleteFile);
+router.get('/download-sign-pdf', authenticate, downloadSignedPDF);
 router.get('/:id', authenticate, getUserDetail);
 router.put('/:id', authenticate, updateUserProfile);
 router.get('/', authenticate, getUsersList);
@@ -81,7 +82,7 @@ router.get("/:id",authenticate,getUserDetail);
 router.put("/:id",authenticate,updateUserProfile);
 router.delete('/:id', authenticate, deleteUser);
 router.get("/",authenticate,getUsersList);
-router.get('/download-sign-pdf', authenticate, downloadSignedPDF);
+
 // Protected route using the authenticate middleware
 
 module.exports = router;

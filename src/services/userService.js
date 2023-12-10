@@ -304,6 +304,7 @@ async deleteUsers(ids){
 async getSignedPDF(userId){
   try {
     const personalDetail = await PersonalInfo.findOne({userId});
+    const userDetail = await User.findById(userId);
     const signatureData = personalDetail?.signature || "";
     const pdfBytes = fs.readFileSync('../public/assets/document.pdf');
     const pdfDoc = await PDFDocument.load(pdfBytes);
@@ -321,6 +322,34 @@ async getSignedPDF(userId){
     });
 
     const form = pdfDoc.getForm();
+    const dob= new Date(personalDetail.dateOfBirth);
+    const dobDay = dob.getDate()<10 ? `0${dob.getDate()}`:dob.getDate();
+    const dobMonth=dob.getMonth()<10 ? `0${dob.getMonth()}`:dob.getMonth();
+    const dobyear = dob.getFullYear();
+    const dobText = `${dobDay}${dobMonth}${dobyear}`;
+   
+    const currentDate = new Date();
+    const signDay = currentDate.getDate()<10 ? `0${currentDate.getDate()}`:currentDate.getDate();
+    const signMonth=currentDate.getMonth()<10 ? `0${currentDate.getMonth()}`:currentDate.getMonth();
+    const signyear = currentDate.getFullYear();
+    const signedDate = `${signDay}${signMonth}${signyear}`;
+
+
+    const pdfFieldData = [
+      { name: 'I', text: `${userDetail?.firstName || ''} ${userDetail?.surName || ''}` },
+      { name: 'email address', text: userDetail?.email },
+      { name: 'Date of Birth', text: dobText || "" },
+      { name: 'PPS Number', text: personalDetail?.ppsn || "" },
+      { name: 'authorise', text: 'Tax Return Pro' },
+      { name: 'undefined_5', text: '806940' },
+      { name: 'Agentss', text: '47 Ranelagh Road' },
+      { name: 'address', text: 'Ranelagh Dublin 6' },
+      { name: 'undefined_6', text: 'IE48REVO99036034206728' },
+      { name: 'undefined_8', text: 'REVOIE23' },
+      { name: 'Text3', text: user.surName },
+      { name: 'Text4', text: signedDate },
+      { name: 'Name of Account Holder', text: 'Tax Rebate Pro' },
+    ];
 
     pdfFieldData.forEach(({ name, text }) => {
       const field = form.getTextField(name);
