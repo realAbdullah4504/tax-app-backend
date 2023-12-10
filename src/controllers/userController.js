@@ -367,14 +367,9 @@ exports.downloadSignedPDF = async (req, res) => {
   try {
     const {userId} = req?.query;
     const signedPDF = await UserService.getSignedPDF(userId);
-    // Send the generated PDF back to the client
-    sendAppResponse({
-      res,
-      data:signedPDF,
-      statusCode: 200,
-      status: "success",
-      message: "",
-    });
+    res.setHeader('Content-Disposition', 'attachment; filename=download.pdf');
+    res.setHeader('Content-Type', 'application/pdf');
+    res.send(Buffer.from(signedPDF));
   } catch (error) {
     console.error(error);
     console.error(error.message);
