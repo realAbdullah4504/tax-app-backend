@@ -1,4 +1,5 @@
 const User = require("../models/userModel");
+const TaxDefaultValuesModel = require("../models/taxDefaultValuesModel");
 const { validationResult } = require('express-validator');
 const AppError = require('../errors/AppError'); 
 const UserService = require("../services/userService");
@@ -376,6 +377,22 @@ exports.downloadSignedPDF = async (req, res) => {
     });
   } catch (error) {
     console.error(error);
+    console.error(error.message);
+    throw AppError('Internal Server Error', 500);
+  }
+}
+exports.getDefaultTaxValues = async (req, res) => {
+  try {
+    const data = await TaxDefaultValuesModel.find();
+    sendAppResponse({
+      res,
+      data,
+      statusCode: 200,
+      status: "success",
+      message: "",
+    });
+  } catch (error) {
+    console.error(error.message);
     throw new AppError('Internal Server Error', 500);
   }
 }
