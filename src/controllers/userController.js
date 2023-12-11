@@ -204,7 +204,7 @@ exports.deleteUser = async (req, res, next) => {
 
 exports.deleteMember = async (req, res, next) => {
   try {
-    const {id}=req.params;
+    const {ids}=req.body;
     const {role,email}=req.user;
       if(!["admin","supervisor"].includes(role)){
         throw new AppError('you are not authorize to add member', 403);
@@ -213,13 +213,13 @@ exports.deleteMember = async (req, res, next) => {
       if (!user) {
         throw new AppError('admin password does not match', 403);
       }
-  await UserService.deleteUser(id);
+  await UserService.deleteUsers(ids);
     sendAppResponse({
       res,
       data:{},
       statusCode: 200,
       status: "success",
-      message: "User Deleted successfully",
+      message: "Users Deleted successfully",
     });
   } catch (error) {
     next(error);
@@ -365,17 +365,13 @@ exports.assignMemberOrStage =async (req, res, next)=>{
 
 exports.downloadSignedPDF = async (req, res) => {
   try {
-    const id = req?.query?.userId || "";
-    const signedPDF = await UserService.getSignedPDF(id);
-    // Send the generated PDF back to the client
-    sendAppResponse({
-      res,
-      data:signedPDF,
-      statusCode: 200,
-      status: "success",
-      message: "",
-    });
+    const {userId} = req?.query;
+    const signedPDF = await UserService.getSignedPDF(userId);
+    res.setHeader('Content-Disposition', 'attachment; filename=download.pdf');
+    res.setHeader('Content-Type', 'application/pdf');
+    res.send(Buffer.from(signedPDF));
   } catch (error) {
+    console.error(error);
     console.error(error.message);
     throw AppError('Internal Server Error', 500);
   }

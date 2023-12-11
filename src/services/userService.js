@@ -10,6 +10,7 @@ const HomeDetails = require("../models/homeDetailsModel");
 const OtherDetails = require("../models/otherDetailsModel");
 const PersonalInfo = require("../models/personalDetailsModel");
 const AppError = require("../errors/AppError");
+const { ObjectId } = require('mongodb');
 
 
 const { ACCOUNT_SID, AUTH_TOKEN, VERIFY_SID } = require("../../config/vars");
@@ -295,15 +296,34 @@ async assignMemberOrStage(ids,data){
    },data)
 },
 
+async deleteUsers(ids){
+  return await User.deleteMany({
+    _id:{$in:ids}
+   })
+},
+
 async getSignedPDF(userId){
   try {
     const personalDetail = await PersonalInfo.findOne({userId});
+    const userDetail = await User.findById(userId);
     const signatureData = personalDetail?.signature || "";
-    const pdfBytes = fs.readFileSync('../public/assets/document.pdf');
+    const pdfBytes = fs.readFileSync('src/public/assets/document.pdf');
     const pdfDoc = await PDFDocument.load(pdfBytes);
+    if (
+      !signatureData ||
+      !signatureData.startsWith('data:image/png;base64,')
+    ) {
+      throw new Error(
+        'Invalid signature data. Expected base64-encoded PNG image.'
+      );
+    }
 
-
-    const image = await pdfDoc.embedPng(Buffer.from(signatureData, 'base64'));
+    const signatureDataStr = signatureData.replace(
+      'data:image/png;base64,',
+      ''
+    );
+    const bufferData=Buffer.from(signatureDataStr, 'base64');
+    const image = await pdfDoc.embedPng(bufferData);
     const pages = pdfDoc.getPages();
     const page = pages[1];
     page.drawImage(image, {
@@ -315,6 +335,34 @@ async getSignedPDF(userId){
     });
 
     const form = pdfDoc.getForm();
+    const dob= new Date(personalDetail.dateOfBirth);
+    const dobDay = dob.getDate()<10 ? `0${dob.getDate()}`:dob.getDate();
+    const dobMonth=dob.getMonth()<10 ? `0${dob.getMonth()}`:dob.getMonth();
+    const dobyear = dob.getFullYear();
+    const dobText = `${dobDay}${dobMonth}${dobyear}`;
+   
+    const currentDate = new Date();
+    const signDay = currentDate.getDate()<10 ? `0${currentDate.getDate()}`:currentDate.getDate();
+    const signMonth=currentDate.getMonth()<10 ? `0${currentDate.getMonth()}`:currentDate.getMonth();
+    const signyear = currentDate.getFullYear();
+    const signedDate = `${signDay}${signMonth}${signyear}`;
+
+
+    const pdfFieldData = [
+      { name: 'I', text: `${userDetail?.firstName || ''} ${userDetail?.surName || ''}` },
+      { name: 'email address', text: userDetail?.email },
+      { name: 'Date of Birth', text: dobText || "" },
+      { name: 'PPS Number', text: personalDetail?.ppsn || "" },
+      { name: 'authorise', text: 'Tax Return Pro' },
+      { name: 'undefined_5', text: '806940' },
+      { name: 'Agentss', text: '47 Ranelagh Road' },
+      { name: 'address', text: 'Ranelagh Dublin 6' },
+      { name: 'undefined_6', text: 'IE48REVO99036034206728' },
+      { name: 'undefined_8', text: 'REVOIE23' },
+      { name: 'Text3', text: userDetail.surName },
+      { name: 'Text4', text: signedDate },
+      { name: 'Name of Account Holder', text: 'Tax Rebate Pro' },
+    ];
 
     pdfFieldData.forEach(({ name, text }) => {
       const field = form.getTextField(name);
@@ -385,16 +433,17 @@ async getSignedPDF(userId){
     // });
 
     const modifiedPdfBytes = await pdfDoc.save();
-    const pdfFileName = `generated_pdfs/generated_${Date.now()}.pdf`;
-    const pdfFilePath = path.join(__dirname, pdfFileName);
-    fs.writeFileSync(pdfFilePath, modifiedPdfBytes);
+    // const pdfFileName = `generated_pdfs/generated_${Date.now()}.pdf`;
+    // const pdfFilePath = path.join(__dirname, pdfFileName);
+    // fs.writeFileSync(pdfFilePath, modifiedPdfBytes);
 
     // Send the generated PDF back to the client
     return modifiedPdfBytes;
   } catch (error) {
-    console.error(error.message);
+    console.error(error);
     throw new AppError('Internal Server Error',500);
   }
+
 }
 
 
