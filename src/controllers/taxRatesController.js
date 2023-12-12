@@ -288,12 +288,12 @@ const calculate = async (year, userId) => {
   let hasPartTimeCourse = false; // Track if there are part-time courses
 
   if (tuitionFeesCredit) {
-    students?.forEach(({ fullTimeCourse, fees }) => {
-      if (fullTimeCourse === 'fullTime') {
+    students?.forEach(({ fullTimeCourse, fees, year: courseYear }) => {
+      if (fullTimeCourse === 'fullTime' && year === courseYear) {
         totalFeesCoursesFullTime += Math.min(fees, courseMaximum);
         hasFullTimeCourse = true;
       }
-      if (fullTimeCourse === 'partTime') {
+      if (fullTimeCourse === 'partTime' && year === courseYear) {
         totalFeesCoursesPartTime += Math.min(fees, courseMaximum);
         hasPartTimeCourse = true;
       }
@@ -412,6 +412,7 @@ const calculate = async (year, userId) => {
     flatRateExpensePer +
     ageCredit +
     widowTrail +
+    carerCredit +
     incapacitatedChild +
     totalElderlyRelativeCredit +
     totalFeesCourses +
@@ -443,9 +444,11 @@ const calculate = async (year, userId) => {
       100;
     console.log('usc3', usc3);
     const usc4 =
-      ((grossIncomeUsc - (uscBands[0] + uscBands[1] + uscBands[2])) *
-        (fullGpMedicalCard ? medicalCardExemptionTopRate : uscRatesPercentage[3])) /
-      100;
+      grossIncomeUsc - (uscBands[0] + uscBands[1] + uscBands[2]) > 0
+        ? ((grossIncomeUsc - (uscBands[0] + uscBands[1] + uscBands[2])) *
+            (fullGpMedicalCard ? medicalCardExemptionTopRate : uscRatesPercentage[3])) /
+          100
+        : 0;
 
     console.log(
       '======',
