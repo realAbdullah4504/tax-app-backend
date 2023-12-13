@@ -34,11 +34,7 @@ router.post('/login', loginUserValidator, login);
 router.post('/forgetPassword', forgetPassword);
 router.patch('/resetPassword/:token', resetPassword);
 router.post('/resetMemberPassword', authenticate, memberResetPassword);
-router.post("/register", createUserValidator, signUp);
-router.post("/verify-code", [authenticate, verifyCodeValidator], verifyCode);
-router.post("/resend-code", authenticate, resendCode);
 router.post("/login", loginUserValidator, login);
-router.post("/forgetPassword", forgetPassword);
 router.patch("/resetPassword/:token", resetPassword);
 router.post("/member/resetMemberPassword",authenticate, memberResetPassword);
 

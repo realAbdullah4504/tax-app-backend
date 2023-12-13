@@ -44,7 +44,13 @@ exports.signUp = async (req, res, next) => {
     if (!errors.isEmpty()) {
       throw new AppError('Validation failed', 400);
     }
-    const { email, phoneNumber } = req.body;
+    let { email, phoneNumber } = req.body;
+    const countryCode = phoneNumber.slice(0,4);
+    let number = phoneNumber.slice(4);
+    if(number.length===10 && number.charAt(0)==="0"){
+       number=number.slice(1);
+       phoneNumber=countryCode+number;
+    }
     const existUser = await UserService.userExists({ email, phoneNumber });
     if (existUser)
       sendAppResponse({

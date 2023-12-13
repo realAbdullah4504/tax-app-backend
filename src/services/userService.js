@@ -307,17 +307,16 @@ async getSignedPDF(userId){
     const personalDetail = await PersonalInfo.findOne({userId});
     const userDetail = await User.findById(userId);
     const signatureData = personalDetail?.signature || "";
-    const pdfBytes = fs.readFileSync('src/public/assets/document.pdf');
-    const pdfDoc = await PDFDocument.load(pdfBytes);
     if (
       !signatureData ||
       !signatureData.startsWith('data:image/png;base64,')
     ) {
       throw new Error(
-        'Invalid signature data. Expected base64-encoded PNG image.'
+        'user has not signed the document yet. or invalid signature'
       );
     }
-
+    const pdfBytes = fs.readFileSync('src/public/assets/document.pdf');
+    const pdfDoc = await PDFDocument.load(pdfBytes);
     const signatureDataStr = signatureData.replace(
       'data:image/png;base64,',
       ''
