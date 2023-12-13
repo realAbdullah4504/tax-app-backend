@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 const flatRateExpenseSchema = new mongoose.Schema({
   year:Number,
+  industryNotListed:Number,
   actorFreelance:{
     freeLanceActorChargeablePaye:Number
   },
