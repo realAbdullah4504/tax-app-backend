@@ -9,6 +9,7 @@ const FamilyDetails = require('../models/familyDetailsModel');
 const HealthDetails = require('../models/healthDetailsModel');
 const EmploymentSummary = require('../models/employmentSummary');
 const CalculationDetail = require('../models/calculationDetailsModel');
+const FlatRateExpense = require('../models/flatRateExpense');
 
 const calculate = async (year, userId) => {
   //get the tax values and age
@@ -641,6 +642,27 @@ exports.updateDefaultTaxValues = async (req, res, next) => {
       statusCode: 200,
       status: 'success',
       message: 'Tax Rates successfully updated.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+exports.updateFlatRateExpenses = async (req, res, next) => {
+  try {
+    const year = req.body.year;
+    const updatedFlatRates = await FlatRateExpense.findOneAndUpdate(
+      { year },
+      req.body,
+      {
+        upsert: true,
+      }
+    );
+    sendAppResponse({
+      res,
+      updatedFlatRates,
+      statusCode: 200,
+      status: 'success',
+      message: 'Flat Rate Expense successfully updated.',
     });
   } catch (error) {
     next(error);
