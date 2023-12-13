@@ -28,13 +28,20 @@ const elderlyRelativeDetail = {
   annualIncome: Number,
   yearsOfCare: [Number],
 };
-
+const occupationsDetail = {
+  id: Number,
+  category: String,
+  subCategory: String,
+  years: [Number],
+};
 const familySchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.ObjectId,
     ref: "User",
   },
   taxReviewYears: [Number],
+  occupations:[occupationsDetail],
+  spouseOccupations:[occupationsDetail],
   dependantChildren: Boolean,
   children: [childrenDetail],
   incapacitatedChildren: Boolean,
