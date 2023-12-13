@@ -10,6 +10,7 @@ const HealthDetails = require('../models/healthDetailsModel');
 const EmploymentSummary = require('../models/employmentSummary');
 const CalculationDetail = require('../models/calculationDetailsModel');
 const FlatRateExpense = require('../models/flatRateExpense');
+const Category = require('../models/categoryModel');
 
 const calculate = async (year, userId) => {
   //get the tax values and age
@@ -663,6 +664,42 @@ exports.updateFlatRateExpenses = async (req, res, next) => {
       statusCode: 200,
       status: 'success',
       message: 'Flat Rate Expense successfully updated.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+exports.addCategories = async (req, res, next) => {
+  try {
+    const value = req.body.value;
+    const data = await Category.findOneAndUpdate(
+      { value },
+      req.body,
+      {
+        upsert: true,
+      }
+    );
+    sendAppResponse({
+      res,
+      data,
+      statusCode: 200,
+      status: 'success',
+      message: 'Category successfully saved.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.getCategories = async (req, res, next) => {
+  try {
+    const data = await Category.find({});
+    sendAppResponse({
+      res,
+      data,
+      statusCode: 200,
+      status: 'success',
+      message: 'Categories fetched successfully.',
     });
   } catch (error) {
     next(error);

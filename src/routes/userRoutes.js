@@ -13,7 +13,7 @@ const { signUp, verifyCode, login, resendCode, forgetPassword, resetPassword,mem
 const { getUserProfile,getUserDetail, updateUserDetail,getUsersList,getUserQuestionsDetail,deleteMember,updateUserProfile,blockUser,createMember,updateMember,assignMemberOrStage,deleteUser , downloadSignedPDF,
   getDefaultTaxValues
 } = UserController;
-const { taxRates, taxCalculations, getCalculations, updateDefaultTaxValues, updateFlatRateExpenses } = taxRatesController;
+const { taxRates, taxCalculations, getCalculations, updateDefaultTaxValues, updateFlatRateExpenses, addCategories, getCategories } = taxRatesController;
 const {
   createUserValidator,
   verifyCodeValidator,
@@ -45,6 +45,8 @@ router.post("/member/resetMemberPassword",authenticate, memberResetPassword);
 // User
 router.get('/detail', authenticate, getUserProfile);
 router.post('/flatRateExpense', authenticate, updateFlatRateExpenses);
+router.post('/add-categories', authenticate, addCategories);
+router.get('/get-categories', authenticate, getCategories);
 router.get('/:userId/questions', authenticate, getUserQuestionsDetail);
 router.post('/pdf/:docType', authenticate, pdfParser);
 router.post('/update', authenticate, updateUserDetail);
