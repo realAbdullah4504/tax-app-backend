@@ -9,6 +9,8 @@ const FamilyDetails = require('../models/familyDetailsModel');
 const HealthDetails = require('../models/healthDetailsModel');
 const EmploymentSummary = require('../models/employmentSummary');
 const CalculationDetail = require('../models/calculationDetailsModel');
+const FlatRateExpense = require('../models/flatRateExpense');
+const Category = require('../models/categoryModel');
 
 const calculate = async (year, userId) => {
   //get the tax values and age
@@ -288,12 +290,12 @@ const calculate = async (year, userId) => {
   let hasPartTimeCourse = false; // Track if there are part-time courses
 
   if (tuitionFeesCredit) {
-    students?.forEach(({ fullTimeCourse, fees }) => {
-      if (fullTimeCourse === 'fullTime') {
+    students?.forEach(({ fullTimeCourse, fees, year: courseYear }) => {
+      if (fullTimeCourse === 'fullTime' && year === courseYear) {
         totalFeesCoursesFullTime += Math.min(fees, courseMaximum);
         hasFullTimeCourse = true;
       }
-      if (fullTimeCourse === 'partTime') {
+      if (fullTimeCourse === 'partTime' && year === courseYear) {
         totalFeesCoursesPartTime += Math.min(fees, courseMaximum);
         hasPartTimeCourse = true;
       }
@@ -412,6 +414,7 @@ const calculate = async (year, userId) => {
     flatRateExpensePer +
     ageCredit +
     widowTrail +
+    carerCredit +
     incapacitatedChild +
     totalElderlyRelativeCredit +
     totalFeesCourses +
@@ -443,9 +446,11 @@ const calculate = async (year, userId) => {
       100;
     console.log('usc3', usc3);
     const usc4 =
-      ((grossIncomeUsc - (uscBands[0] + uscBands[1] + uscBands[2])) *
-        (fullGpMedicalCard ? medicalCardExemptionTopRate : uscRatesPercentage[3])) /
-      100;
+      grossIncomeUsc - (uscBands[0] + uscBands[1] + uscBands[2]) > 0
+        ? ((grossIncomeUsc - (uscBands[0] + uscBands[1] + uscBands[2])) *
+            (fullGpMedicalCard ? medicalCardExemptionTopRate : uscRatesPercentage[3])) /
+          100
+        : 0;
 
     console.log(
       '======',
@@ -638,6 +643,63 @@ exports.updateDefaultTaxValues = async (req, res, next) => {
       statusCode: 200,
       status: 'success',
       message: 'Tax Rates successfully updated.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+exports.updateFlatRateExpenses = async (req, res, next) => {
+  try {
+    const year = req.body.year;
+    const updatedFlatRates = await FlatRateExpense.findOneAndUpdate(
+      { year },
+      req.body,
+      {
+        upsert: true,
+      }
+    );
+    sendAppResponse({
+      res,
+      updatedFlatRates,
+      statusCode: 200,
+      status: 'success',
+      message: 'Flat Rate Expense successfully updated.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+exports.addCategories = async (req, res, next) => {
+  try {
+    const value = req.body.value;
+    const data = await Category.findOneAndUpdate(
+      { value },
+      req.body,
+      {
+        upsert: true,
+      }
+    );
+    sendAppResponse({
+      res,
+      data,
+      statusCode: 200,
+      status: 'success',
+      message: 'Category successfully saved.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.getCategories = async (req, res, next) => {
+  try {
+    const data = await Category.find({});
+    sendAppResponse({
+      res,
+      data,
+      statusCode: 200,
+      status: 'success',
+      message: 'Categories fetched successfully.',
     });
   } catch (error) {
     next(error);
