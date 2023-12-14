@@ -11,7 +11,14 @@ const EmploymentSummary = require('../models/employmentSummary');
 const CalculationDetail = require('../models/calculationDetailsModel');
 const FlatRateExpense = require('../models/flatRateExpense');
 const Category = require('../models/categoryModel');
-
+const valueConverter = (value ="", defaultValue = 0) => {
+  if(value == "NAN"){
+    return 0;
+  }else if(!value){
+    return defaultValue !==0 ? defaultValue :0;
+  }
+  return value;
+}
 const calculate = async (year, userId) => {
   //get the tax values and age
 
@@ -92,9 +99,10 @@ const calculate = async (year, userId) => {
       allowableHealthExpenses,
       medicalInsurance: { maxPerAdult, maxPerChild },
     },
-    flatRateExpense,
+    // flatRateExpense,
     uscRatesBands: { uscRatesPercentage, uscBands, medicalCardExemptionTopRate },
-  } = await TaxDefaultValues.findOne({ year });
+  } = await TaxDefaultValues.findOne({ year }) || {};
+  console.log('=========== exemptionLimitsOver65 ========', exemptionLimitsOver65 )
   const { dateOfBirth, maritalStatus, spousePassDate } = await PersonalInfo.findOne({ userId });
   const { contributionDetails } = (await OtherDetails.findOne({ userId })) || {};
   const { workFromHomeDetails, payRentDetails } =
@@ -109,7 +117,7 @@ const calculate = async (year, userId) => {
     elderlyRelativeCare,
     elderlyRelative,
     children,
-
+    occupations,
     tuitionFeesCredit,
     students,
   } = (await FamilyDetails.findOne({ userId })) || {};
@@ -120,13 +128,24 @@ const calculate = async (year, userId) => {
   let type = '';
   let marriedType = summaryDetails?.some(({ summary_type }) => summary_type === 'Spouse');
   console.log('marriedType', marriedType);
-
+  const FlatRateExpenseData = await FlatRateExpense.findOne({ year }) || {};
+  let categoryValue = ""; let subCategoryValue = "";
+  (occupations && occupations.length) && occupations?.forEach(({ category,subCategory, years }) => {
+    if (years?.includes(year)) {
+     categoryValue = category;
+     if(subCategory)
+     subCategoryValue = subCategory;
+    }
+  });
+  const flatRateExpense = (categoryValue && FlatRateExpenseData) ?  (categoryValue && !subCategoryValue)? FlatRateExpenseData[categoryValue] : FlatRateExpenseData[categoryValue][subCategoryValue] : 100;
   // const result = marriedType.some((item) => item.spouse === "spouse");
-
+  console.log('====== FlatRateExpense ========', flatRateExpense)
   if (maritalStatus === 'single' && (!incapacitated || !dependentChildren)) {
     type = 'single';
-  } else if (maritalStatus === 'widowed' && (incapacitated || dependentChildren)) {
-    type = 'singleParent';
+  } else if ((maritalStatus === 'widowed' || maritalStatus === "divorce" || maritalStatus === "separated" || maritalStatus === "singleParent" || maritalStatus === "cohabiting")) {
+    if ((maritalStatus === "singleParent" || incapacitated || dependentChildren || (children &&  children.length))){
+     type = 'singleParent';
+   }
   } else if (maritalStatus === 'married') {
     type = marriedType ? 'married2Incomes' : 'married1Income';
   }
@@ -145,12 +164,9 @@ const calculate = async (year, userId) => {
   console.log('=========== age ==============', age);
 
   if (age > 65) {
-    const exemption =
-      type === 'single' || type === 'singleParent'
-        ? exemptionLimitsOver65[type]
-        : exemptionLimitsOver65['married'];
-    // console.log("=========== exemption ==============",grossTaxableIncome, exemption );
-    over65Exemption = Math.min(grossTaxableIncome, exemption);
+    const exemption = (type === 'single' || type === 'singleParent') ? exemptionLimitsOver65['single']
+    : (maritalStatus === 'married') ? exemptionLimitsOver65['married'] : 0;
+    over65Exemption = Math.min(grossTaxableIncome, valueConverter(exemption));
     grossIncomePercent = over65ExemptionRatePercent ? over65ExemptionRatePercent / 100 : 0; //=IF(A15=">65",0,'Questions for App'!F105)
   } else {
     const band = taxBands[type];
@@ -237,7 +253,7 @@ const calculate = async (year, userId) => {
   //***********************************SECTION 3 *************************************************** */
   //Additional Credits
   //age credit is not defined (need to work on it)
-  const flatRateExpensePer = flatRateExpense * 0.2;
+  const flatRateExpensePer = flatRateExpense && (Number(flatRateExpense) * 0.2);
   const ageCredit =
     age >= 65 ? (maritalStatus === 'single' ? ageCreditSingle : ageCreditMarried) : 0;
 

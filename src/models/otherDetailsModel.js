@@ -8,6 +8,7 @@ const otherSchema = new mongoose.Schema({
   contributionDetails: [
     {
       id: Number,
+      providerName:String,
       year: Number,
       typeDetails: String,
       pension: Number,

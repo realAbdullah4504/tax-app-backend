@@ -44,14 +44,14 @@ exports.signUp = async (req, res, next) => {
     if (!errors.isEmpty()) {
       throw new AppError('Validation failed', 400);
     }
-    let { email, phoneNumber } = req.body;
-    const countryCode = phoneNumber.slice(0,4);
+    let { email, firstName, password, phoneNumber, signature, surName, taxAgent, tob } = req.body;
+    const countryCode = phoneNumber.slice(0, 4);
     let number = phoneNumber.slice(4);
-    if(number.length===10 && number.charAt(0)==="0"){
-       number=number.slice(1);
-       phoneNumber=countryCode+number;
+    if (number.length === 10 && number.charAt(0) === '0') {
+      number = number.slice(1);
+      phoneNumber = countryCode + number;
     }
-    const existUser = await UserService.userExists({ email, phoneNumber });
+    const existUser = await UserService.userExists({ email });
     if (existUser)
       sendAppResponse({
         res,
@@ -59,10 +59,20 @@ exports.signUp = async (req, res, next) => {
         status: 'fail',
         message: 'User has already registered.',
       });
-    const payload={...req.body,userType:'customer'}
-    const userData = await UserService.registerUser(payload);
     // Send SMS code to mobile number and save reg record into db
     await UserService.sendVerificationCode(phoneNumber);
+    const payload = {
+      email,
+      firstName,
+      password,
+      phoneNumber,
+      signature,
+      surName,
+      taxAgent,
+      tob,
+      userType: 'customer',
+    };
+    const userData = await UserService.registerUser(payload);
 
     const respMsg =
       'Registration is successful! Please activate your account using the verification code sent to your registered phone number';
@@ -106,7 +116,7 @@ exports.login = async (req, res, next) => {
     const { email, password } = req.body;
     const user = await UserService.loginUser(email, password);
     if (!user) throw new AppError('Invalid credentials', 400);
-    if(user.isBlocked){
+    if (user.isBlocked) {
       throw new AppError('user has been blocked', 403);
     }
     const token = generateToken(user?._id);
@@ -151,22 +161,27 @@ exports.resetPassword = async (req, res, next) => {
 
 /**
  * controller for resetting user password by admin
- * @param {*} req 
- * @param {*} res 
- * @param {*} next 
+ * @param {*} req
+ * @param {*} res
+ * @param {*} next
  */
 
-exports.memberResetPassword=async(req, res, next) =>{
+exports.memberResetPassword = async (req, res, next) => {
   try {
-    const {userId} = req.body;
-    const {role}=req.user;
-    if(!['admin','supervisor'].includes(role)){
+    const { userId } = req.body;
+    const { role } = req.user;
+    if (!['admin', 'supervisor'].includes(role)) {
       throw new AppError('you are not authorized to reset password', 403);
     }
     const newPassword = await UserService.resetMemberPassword(userId);
-    sendAppResponse({ res, statusCode: 200, status: 'success', message: 'user password reset successfully',newPassword });
+    sendAppResponse({
+      res,
+      statusCode: 200,
+      status: 'success',
+      message: 'user password reset successfully',
+      newPassword,
+    });
   } catch (error) {
     next(error);
   }
-
-}
+};
