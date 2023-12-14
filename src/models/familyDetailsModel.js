@@ -27,6 +27,8 @@ const elderlyRelativeDetail = {
   name: String,
   ppsn: String,
   annualIncome: Number,
+  liveInOrWithin2Km:String,
+  relationWithRelative:String,
   yearsOfCare: [Number],
 };
 const occupationsDetail = {
@@ -58,8 +60,6 @@ const familySchema = new mongoose.Schema({
   children: [childrenDetail],
   incapacitatedChildren: Boolean,
   incapacitatedChildrenDetails: [IncapacitatedChildrenDetails],
-  liveInOrWithin2Km:String,
-  relationWithRelative:String,
   isPayNursingHome:Boolean,
   nursingDetail:[nursingDetails],
   isCarerExpense:Boolean,
