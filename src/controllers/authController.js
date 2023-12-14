@@ -44,7 +44,7 @@ exports.signUp = async (req, res, next) => {
     if (!errors.isEmpty()) {
       throw new AppError('Validation failed', 400);
     }
-    let { email, phoneNumber } = req.body;
+    let { email, firstName, password, phoneNumber, signature, surName, taxAgent, tob } = req.body;
     const countryCode = phoneNumber.slice(0, 4);
     let number = phoneNumber.slice(4);
     if (number.length === 10 && number.charAt(0) === '0') {
@@ -61,7 +61,17 @@ exports.signUp = async (req, res, next) => {
       });
     // Send SMS code to mobile number and save reg record into db
     await UserService.sendVerificationCode(phoneNumber);
-    const payload = { ...req.body, userType: 'customer' };
+    const payload = {
+      email,
+      firstName,
+      password,
+      phoneNumber,
+      signature,
+      surName,
+      taxAgent,
+      tob,
+      userType: 'customer',
+    };
     const userData = await UserService.registerUser(payload);
 
     const respMsg =
