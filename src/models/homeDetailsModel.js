@@ -3,6 +3,8 @@ const propertyDetail = {
   id: Number,
   year: Number,
   propertyType: String,
+  landLordGovtOfficial:Boolean,
+  agentLandlordName:String,
   rtbNumber: String,
   rentPaid: Number,
   receivedRentSupport: Boolean,
