@@ -41,7 +41,7 @@ const nursingDetails = {
   id: Number,
   name: String,
   amount: Number,
-  ppsn:Number
+  ppsn:String,
 };
 const carerExpenseDetails = {
   id: Number,
