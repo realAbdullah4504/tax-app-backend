@@ -18,6 +18,7 @@ const studentDetail = {
   id: Number,
   year: Number,
   name: String,
+  qualifyingDate:Date,
   fullTimeCourse: String,
   fees: Number,
 };
@@ -34,6 +35,17 @@ const occupationsDetail = {
   subCategory: String,
   years: [Number],
 };
+const nursingDetails = {
+  id: Number,
+  name: String,
+  amount: Number,
+  ppsn:Number
+};
+const carerExpenseDetails = {
+  id: Number,
+  netCost: Number,
+  relation:String
+};
 const familySchema = new mongoose.Schema({
   userId: {
     type: mongoose.Schema.ObjectId,
@@ -46,6 +58,12 @@ const familySchema = new mongoose.Schema({
   children: [childrenDetail],
   incapacitatedChildren: Boolean,
   incapacitatedChildrenDetails: [IncapacitatedChildrenDetails],
+  liveInOrWithin2Km:String,
+  relationWithRelative:String,
+  isPayNursingHome:Boolean,
+  nursingDetail:[nursingDetails],
+  isCarerExpense:Boolean,
+  carerExpenseDetail:[carerExpenseDetails],
   elderlyRelativeCare: Boolean,
   elderlyRelative: [elderlyRelativeDetail],
   tuitionFeesCredit: Boolean,

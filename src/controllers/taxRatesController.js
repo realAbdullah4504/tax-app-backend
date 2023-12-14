@@ -92,7 +92,7 @@ const calculate = async (year, userId) => {
       allowableHealthExpenses,
       medicalInsurance: { maxPerAdult, maxPerChild },
     },
-    flatRateExpense,
+    // flatRateExpense,
     uscRatesBands: { uscRatesPercentage, uscBands, medicalCardExemptionTopRate },
   } = await TaxDefaultValues.findOne({ year });
   const { dateOfBirth, maritalStatus, spousePassDate } = await PersonalInfo.findOne({ userId });
@@ -109,7 +109,7 @@ const calculate = async (year, userId) => {
     elderlyRelativeCare,
     elderlyRelative,
     children,
-
+    occupations,
     tuitionFeesCredit,
     students,
   } = (await FamilyDetails.findOne({ userId })) || {};
@@ -120,9 +120,18 @@ const calculate = async (year, userId) => {
   let type = '';
   let marriedType = summaryDetails?.some(({ summary_type }) => summary_type === 'Spouse');
   console.log('marriedType', marriedType);
-
+  const FlatRateExpenseData = await FlatRateExpense.findOne({ year }) || {};
+  let categoryValue = ""; let subCategoryValue = "";
+  (occupations && occupations.length) && occupations?.forEach(({ category,subCategory, years }) => {
+    if (years?.includes(year)) {
+     categoryValue = category;
+     if(subCategory)
+     subCategoryValue = subCategory;
+    }
+  });
+  const flatRateExpense = (categoryValue && FlatRateExpenseData) ?  (categoryValue && !subCategoryValue)? FlatRateExpenseData[categoryValue] : FlatRateExpenseData[categoryValue][subCategoryValue] : 100;
   // const result = marriedType.some((item) => item.spouse === "spouse");
-
+  console.log('====== FlatRateExpense ========', flatRateExpense)
   if (maritalStatus === 'single' && (!incapacitated || !dependentChildren)) {
     type = 'single';
   } else if (maritalStatus === 'widowed' && (incapacitated || dependentChildren)) {
