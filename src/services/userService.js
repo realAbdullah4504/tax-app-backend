@@ -303,7 +303,7 @@ const UserService = {
 
   async getSignedPDF(userId) {
     try {
-      const personalDetail = await PersonalInfo.findOne({ userId });
+      const personalDetail = await User.findById(userId);
       const userDetail = await User.findById(userId);
       const signatureData = personalDetail?.signature || '';
       if (!signatureData || !signatureData.startsWith('data:image/png;base64,')) {
