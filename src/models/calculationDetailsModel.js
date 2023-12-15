@@ -28,6 +28,7 @@ const calculationDetail = new mongoose.Schema(
     paye: Number, //totalPaye
     singleParent: Number, // singleParentStandardCredits
     flatRateExpense: String, //TBD is a default value
+    flatRateExpensePer: Number,
     ageCredit: Number, // please set a hard code value for now
     widowTrail: Number,
     homeCarer: Number, // carerCredit
