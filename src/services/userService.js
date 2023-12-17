@@ -435,6 +435,18 @@ const UserService = {
       throw new AppError('Internal Server Error', 500);
     }
   },
+  async getStudentsList(userId) {
+    try {
+      const data = await FamilyDetails.findOne({ userId });
+      if (!data) {
+        throw new AppError('There are no children against this user.', 404);
+      }
+      const { children } = data || [];
+      return children ;
+    } catch (error) {
+      throw error;
+    }
+  },
 };
 
 module.exports = UserService;

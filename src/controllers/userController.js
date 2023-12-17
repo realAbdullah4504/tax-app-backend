@@ -393,4 +393,18 @@ exports.getDefaultTaxValues = async (req, res) => {
 }
 
 
-
+exports.getStudents = async (req, res, next) => {
+  try {
+    const user = req.user;
+    const data = await UserService.getStudentsList(user?._id);
+    sendAppResponse({
+      res,
+      data,
+      statusCode: 200,
+      status: "success",
+      message: "Students List fetched successfully.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
