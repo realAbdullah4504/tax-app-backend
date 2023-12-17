@@ -1,8 +1,8 @@
 const AppError = require('../errors/AppError');
 
-const authenticate = async (req, res, next) => {
+const authenticateBank = async (req, res, next) => {
     try {
-        const accessToken = req.header('Authorization')
+        const accessToken = req.header('AuthorizationBank')
         if (!accessToken) throw new AppError('Access token missing', 401);
 
         const headers = {
@@ -19,5 +19,5 @@ const authenticate = async (req, res, next) => {
 };
 
 module.exports = {
-    authenticate,
+    authenticateBank,
 };

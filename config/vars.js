@@ -23,5 +23,11 @@ module.exports = {
   BUCKET_NAME: process.env.BUCKET_NAME,
   DIRECTORY_NAME: process.env.DIRECTORY_NAME,
 
+  // bank details
+  ACCOUNT_REVOLUT: process.env.ACCOUNT_REVOLUT,
+  CLIENT_ID: process.env.CLIENT_ID,
+  CLIENT_ASSERTION: process.env.CLIENT_ASSERTION,
+  REVOLUT_URL: process.env.REVOLUT_URL,
+
   // Add more variables as needed
 };
