@@ -12,10 +12,8 @@ const CalculationDetail = require('../models/calculationDetailsModel');
 const FlatRateExpense = require('../models/flatRateExpense');
 const Category = require('../models/categoryModel');
 const valueConverter = (value = '', defaultValue = 0) => {
-  if (value == 'NAN') {
-    return 0;
-  } else if (!value) {
-    return defaultValue !== 0 ? defaultValue : 0;
+  if (value == 'NAN' || !value) {
+    return defaultValue;
   }
   return value;
 };

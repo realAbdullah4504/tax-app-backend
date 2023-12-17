@@ -11,7 +11,7 @@ const { fileUpload, fileUploadA2, getA2File, getDocuments, downloadFile, deleteF
 
 const { signUp, verifyCode, login, resendCode, forgetPassword, resetPassword,memberResetPassword } = AuthController;
 const { getUserProfile,getUserDetail, updateUserDetail,getUsersList,getUserQuestionsDetail,deleteMember,updateUserProfile,blockUser,createMember,updateMember,assignMemberOrStage,deleteUser , downloadSignedPDF,
-  getDefaultTaxValues
+  getDefaultTaxValues, getStudents
 } = UserController;
 const { taxRates, taxCalculations, getCalculations, updateDefaultTaxValues, updateFlatRateExpenses, addCategories, getCategories } = taxRatesController;
 const {
@@ -40,6 +40,7 @@ router.post("/member/resetMemberPassword",authenticate, memberResetPassword);
 
 // User
 router.get('/detail', authenticate, getUserProfile);
+router.get('/students', authenticate, getStudents);
 router.post('/flatRateExpense', authenticate, updateFlatRateExpenses);
 router.post('/add-categories', authenticate, addCategories);
 router.get('/get-categories', authenticate, getCategories);
