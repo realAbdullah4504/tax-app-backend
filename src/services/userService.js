@@ -177,6 +177,8 @@ const UserService = {
       const resetToken = user.createPasswordResetToken();
       await user.save({ validateBeforeSave: false });
       const resetUrl = `${baseUrl}/${resetToken}`;
+      // console.log('resetToken', resetToken);
+
       return resetUrl;
     } catch (error) {
       throw error;
@@ -197,6 +199,7 @@ const UserService = {
       throw new AppError('Token is invalid or expired.', 400);
     }
     // 3 update the changePasswordAt property for the user
+    user.userType = 'customer';
     user.password = password;
     user.passwordResetToken = undefined;
     user.passwordResetExpiry = undefined;
@@ -433,6 +436,18 @@ const UserService = {
     } catch (error) {
       console.error(error);
       throw new AppError('Internal Server Error', 500);
+    }
+  },
+  async getStudentsList(userId) {
+    try {
+      const data = await FamilyDetails.findOne({ userId });
+      if (!data) {
+        throw new AppError('There are no children against this user.', 404);
+      }
+      const { children } = data || [];
+      return children ;
+    } catch (error) {
+      throw error;
     }
   },
 };
