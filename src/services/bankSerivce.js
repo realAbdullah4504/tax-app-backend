@@ -21,7 +21,7 @@ const BankServices = {
     try {
       const apiUrlPost = `${REVOLUT_URL}/counterparty`;
       const { data } = await axios.post(apiUrlPost, user, { headers });
-      if (!data) throw new AppError("Failed to create beneficiary", 500);
+
       return data;
     } catch (error) {
       throw new AppError(error.message, 500);
@@ -36,9 +36,10 @@ const BankServices = {
         {
           runValidators: true,
           upsert: true,
+          new: true,
         }
       );
-      if (!bankDetails) throw new AppError("Failed to create beneficiary", 500);
+      // console.log("bankDetails", bankDetails);
       return bankDetails;
     } catch (error) {
       throw new AppError(error.message, 500);
@@ -65,6 +66,7 @@ const BankServices = {
       const filteredTransactions = data?.filter((transaction) =>
         transaction?.reference?.includes(ppsn)
       );
+      // console.log("filteredTransactions", filteredTransactions);
       return filteredTransactions;
     } catch (error) {
       throw new AppError(error, 500);
@@ -72,7 +74,7 @@ const BankServices = {
   },
 
   async initiateTransfer(
-    { userId, ppsn, totalReceivedBankAmount, totalRefundAmount },
+    { userId, ppsn, totalRefundAmount },
     newReceivedDate,
     totalAmountTransactions
   ) {
@@ -86,7 +88,7 @@ const BankServices = {
     // );
     try {
       const initiate =
-        totalReceivedBankAmount === Math.floor(totalRefundAmount)
+        totalAmountTransactions === Math.floor(totalRefundAmount)
           ? "Initiate Payment"
           : "Cannot Initiate Payment";
       // console.log("initiate", initiate);

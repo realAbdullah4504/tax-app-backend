@@ -78,10 +78,10 @@ exports.createBeneficiary = async (req, res, next) => {
 
     const { ppsn } = await PersonalDetails.findOne({ userId: id });
     //how to send the year to review
-    const { taxResult } = await CalculationDetails.findOne({
+    const { taxResult } = (await CalculationDetails.findOne({
       userId: id,
       year: 2023,
-    });
+    })) || { taxResult: 0 };
 
     const payload = {
       userId: id,
@@ -120,10 +120,15 @@ exports.checkBankReceived = async (req, res, next) => {
     const headers = req.headers;
 
     for (const detail of data) {
-      const { submittedDate, receivedDate, ppsn, totalReceivedBankAmount } =
-        detail;
+      const {
+        submittedDate,
+        receivedDate,
+        ppsn,
+        totalReceivedBankAmount,
+        totalRefundAmount,
+      } = detail;
 
-      if (submittedDate) {
+      if (submittedDate && totalRefundAmount > 0) {
         const transactions = await BankServices.getTransactions(
           ppsn,
           submittedDate,
@@ -158,7 +163,7 @@ exports.checkBankReceived = async (req, res, next) => {
           results.push({ message: "No Transactions Found", detail });
         }
       } else {
-        results.push({ message: "Not submitted yet", detail });
+        results.push({ message: "Cannot initiate", detail });
       }
 
       //   console.log("bankDetails", bankDetails);
@@ -179,7 +184,7 @@ exports.checkBankReceived = async (req, res, next) => {
 exports.transferMoney = async (req, res, next) => {
   try {
     const { userId } = req.params;
-    console.log("userId", userId);
+    // console.log("userId", userId);
     const headers = req.headers;
 
     const accountDetails = await BankDetails.findOne({ userId });
@@ -246,7 +251,7 @@ exports.getTransactions = async (req, res, next) => {
       year === currentDate.getFullYear()
         ? currentDate
         : new Date(`${year}-12-31`);
-    console.log(year, startDate, endDate);
+    // console.log(year, startDate, endDate);
 
     const headers = req.headers;
     const params = {
