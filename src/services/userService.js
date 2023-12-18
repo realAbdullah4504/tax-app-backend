@@ -308,7 +308,7 @@ const UserService = {
     try {
       const personalDetail = await PersonalInfo.findOne({ userId });
       const userDetail = await User.findById(userId);
-      const signatureData = personalDetail?.signature || '';
+      const signatureData = userDetail?.signature || '';
       if (!signatureData || !signatureData.startsWith('data:image/png;base64,')) {
         throw new Error('user has not signed the document yet. or invalid signature');
       }
@@ -320,7 +320,7 @@ const UserService = {
       const pages = pdfDoc.getPages();
       const page = pages[1];
       page.drawImage(image, {
-        x: page.getWidth() / 2 - image.width / 2 + 85,
+        x: 150,
         y: 170,
         width: 35,
         height: 35,
@@ -328,19 +328,8 @@ const UserService = {
       });
 
       const form = pdfDoc.getForm();
-      const dob = new Date(personalDetail.dateOfBirth);
-      const dobDay = dob.getDate() < 10 ? `0${dob.getDate()}` : dob.getDate();
-      const dobMonth = dob.getMonth() < 10 ? `0${dob.getMonth()}` : dob.getMonth();
-      const dobyear = dob.getFullYear();
-      const dobText = `${dobDay}${dobMonth}${dobyear}`;
-
-      const currentDate = new Date();
-      const signDay =
-        currentDate.getDate() < 10 ? `0${currentDate.getDate()}` : currentDate.getDate();
-      const signMonth =
-        currentDate.getMonth() < 10 ? `0${currentDate.getMonth()}` : currentDate.getMonth();
-      const signyear = currentDate.getFullYear();
-      const signedDate = `${signDay}${signMonth}${signyear}`;
+      const dobText = this.getDOBText(personalDetail?.dateOfBirth);
+      const signedDate = this.getSignatureDate();
 
       const pdfFieldData = [
         { name: 'I', text: `${userDetail?.firstName || ''} ${userDetail?.surName || ''}` },
@@ -449,6 +438,29 @@ const UserService = {
     } catch (error) {
       throw error;
     }
+  },
+
+
+  // Helper functions
+  getDOBText (dateOfBirth) {
+    if(!!dateOfBirth) {
+      const dob = new Date(dateOfBirth);
+      const dobDay = dob.getDate() < 10 ? `0${dob.getDate()}` : dob.getDate();
+      const dobMonth = dob.getMonth() < 10 ? `0${dob.getMonth()}` : dob.getMonth();
+      const dobyear = dob.getFullYear();
+      const dobText = `${dobDay}${dobMonth}${dobyear}`;
+      return dobText;
+    } return '';
+  },
+
+  getSignatureDate () {
+    const currentDate = new Date();
+    const signDay =
+      currentDate.getDate() < 10 ? `0${currentDate.getDate()}` : currentDate.getDate();
+    const signMonth =
+      currentDate.getMonth() < 10 ? `0${currentDate.getMonth()}` : currentDate.getMonth();
+    const signyear = currentDate.getFullYear();
+    return `${signDay}${signMonth}${signyear}`;
   },
 };
 
