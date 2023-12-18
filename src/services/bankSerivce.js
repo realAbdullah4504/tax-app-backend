@@ -21,6 +21,7 @@ const BankServices = {
     try {
       const apiUrlPost = `${REVOLUT_URL}/counterparty`;
       const { data } = await axios.post(apiUrlPost, user, { headers });
+
       return data;
     } catch (error) {
       throw new AppError(error.message, 500);
@@ -38,6 +39,7 @@ const BankServices = {
           new: true,
         }
       );
+
       return bankDetails;
     } catch (error) {
       throw new AppError(error.message, 500);
@@ -64,6 +66,7 @@ const BankServices = {
       const filteredTransactions = data?.filter((transaction) =>
         transaction?.reference?.includes(ppsn)
       );
+      // console.log("filteredTransactions", filteredTransactions);
       return filteredTransactions;
     } catch (error) {
       throw new AppError(error, 500);
@@ -71,7 +74,7 @@ const BankServices = {
   },
 
   async initiateTransfer(
-    { userId, ppsn, totalReceivedBankAmount, totalRefundAmount },
+    { userId, ppsn, totalRefundAmount },
     newReceivedDate,
     totalAmountTransactions
   ) {
@@ -84,19 +87,19 @@ const BankServices = {
     //   totalRefundAmount
     // );
     try {
-
-  
-        
+      //for testing
+      let totalBank = Math.abs(totalAmountTransactions);
       const initiate =
-        totalReceivedBankAmount === Math.floor(totalRefundAmount)
+      totalBank === Math.floor(totalRefundAmount)
           ? "Initiate Payment"
           : "Cannot Initiate Payment";
       // console.log("initiate", initiate);
+      console.log(totalBank);
 
       const bankDetails = await BankDetails.findOneAndUpdate(
         { userId, ppsn },
         {
-          totalReceivedBankAmount: totalAmountTransactions,
+          totalReceivedBankAmount: totalBank,
           receivedDate: newReceivedDate,
           status: initiate,
         },
