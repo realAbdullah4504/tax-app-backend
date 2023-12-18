@@ -36,12 +36,10 @@ const createMemberValidator = [
   body('firstName').notEmpty().withMessage('First Name is required'),
   body('surName').notEmpty().withMessage('Sur Name is required'),
   body('email').isEmail().withMessage('Invalid email address'),
-  body('phoneNumber')
-    .notEmpty()
-    .withMessage('Phone Number is required')
-    // .matches(/^(?:\+92|0092|0)?(?:3[0-5][0-9]{8})$/)//for pakistani phone number
-    .matches(/^(?:\+353|0353|0)?(?:[0-9]{9})$/) //for irish phone number
-    .withMessage('Invalid Pakistani phone number'),
+  body('phoneNumber').notEmpty().withMessage('Phone Number is required'),
+  // .matches(/^(?:\+92|0092|0)?(?:3[0-5][0-9]{8})$/)//for pakistani phone number
+  // .matches(/^(?:\+353|0353|0)?(?:[0-9]{9})$/) //for irish phone number
+  // .withMessage('Invalid Pakistani phone number'),
   body('password').isLength({ min: 6 }).withMessage('Password must be at least 6 characters long'),
   body('role')
     .notEmpty()
@@ -54,12 +52,10 @@ const updateMemberValidator = [
   body('firstName').notEmpty().withMessage('First Name is required'),
   body('surName').notEmpty().withMessage('Sur Name is required'),
   body('email').isEmail().withMessage('Invalid email address'),
-  body('phoneNumber')
-    .notEmpty()
-    .withMessage('Phone Number is required')
-    // .matches(/^(?:\+92|0092|0)?(?:3[0-5][0-9]{8})$/)//for pakistani phone number
-    .matches(/^(?:\+353|0353|0)?(?:[0-9]{9})$/) //for irish phone number
-    .withMessage('Invalid Pakistani phone number'),
+  body('phoneNumber').notEmpty().withMessage('Phone Number is required'),
+  // .matches(/^(?:\+92|0092|0)?(?:3[0-5][0-9]{8})$/)//for pakistani phone number
+  // .matches(/^(?:\+353|0353|0)?(?:[0-9]{9})$/) //for irish phone number
+  // .withMessage('Invalid Pakistani phone number'),
   body('role')
     .notEmpty()
     .withMessage('role is required')
