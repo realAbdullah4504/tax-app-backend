@@ -21,7 +21,6 @@ const BankServices = {
     try {
       const apiUrlPost = `${REVOLUT_URL}/counterparty`;
       const { data } = await axios.post(apiUrlPost, user, { headers });
-      if (!data) throw new AppError("Failed to create beneficiary", 500);
       return data;
     } catch (error) {
       throw new AppError(error.message, 500);
@@ -36,9 +35,9 @@ const BankServices = {
         {
           runValidators: true,
           upsert: true,
+          new: true,
         }
       );
-      if (!bankDetails) throw new AppError("Failed to create beneficiary", 500);
       return bankDetails;
     } catch (error) {
       throw new AppError(error.message, 500);
@@ -85,6 +84,9 @@ const BankServices = {
     //   totalRefundAmount
     // );
     try {
+
+  
+        
       const initiate =
         totalReceivedBankAmount === Math.floor(totalRefundAmount)
           ? "Initiate Payment"
@@ -100,11 +102,6 @@ const BankServices = {
         },
         { new: true }
       );
-
-      if (!bankDetails) {
-        console.log("No matching document found for ppsn:", ppsn);
-        return null;
-      }
 
       //   console.log("Updated bankDetails:", bankDetails);
       return bankDetails;

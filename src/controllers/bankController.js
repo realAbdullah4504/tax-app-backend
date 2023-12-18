@@ -4,6 +4,7 @@ const {
   ACCOUNT_REVOLUT,
   CLIENT_ASSERTION,
   CLIENT_ID,
+  REVOLUT_URL,
 } = require("../../config/vars");
 
 const BankDetails = require("../models/bankDetailsModel");
@@ -78,10 +79,10 @@ exports.createBeneficiary = async (req, res, next) => {
 
     const { ppsn } = await PersonalDetails.findOne({ userId: id });
     //how to send the year to review
-    const { taxResult } = await CalculationDetails.findOne({
+    const { taxResult } = (await CalculationDetails.findOne({
       userId: id,
       year: 2023,
-    });
+    })) || { taxResult: 0 };
 
     const payload = {
       userId: id,
@@ -229,6 +230,26 @@ exports.transferMoney = async (req, res, next) => {
     });
   } catch (error) {
     console.error("Error:", error);
+    next(error);
+  }
+};
+
+exports.transfer = async (req, res, next) => {
+  try {
+    const payload = req.body;
+    const headers = req.headers;
+
+    const apiUrlPost = `${REVOLUT_URL}/pay`;
+    const { data } = await axios.post(apiUrlPost, payload, { headers });
+
+    sendAppResponse({
+      res,
+      data,
+      statusCode: 200,
+      status: "success",
+      message: "Transfer created successfully.",
+    });
+  } catch (error) {
     next(error);
   }
 };
