@@ -366,7 +366,7 @@ const calculate = async (year, userId) => {
             type === 'single' || type === 'singleParent'
               ? Math.min(rentPerPerson, (rentPaid * maxPercentageOfRent) / 100)
               : Math.min(rentPerCouple, (rentPaid * maxPercentageOfRent) / 100);
-        } else if (propertyType === 'dependentChild') {
+        } else if (propertyType === 'dependentCollegeChild') {
           totalRent +=
             type !== 'single' && Math.min(rentPerPerson, (rentPaid * maxPercentageOfRent) / 100);
         }
