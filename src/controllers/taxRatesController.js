@@ -37,10 +37,10 @@ const calculate = async (year, userId) => {
 
   summaryDetails?.forEach((item) => {
     if (item?.summary_type === 'Self') {
-      grossIncomeUscSelf = item.pay_for_usc;
+      grossIncomeUscSelf += item.pay_for_usc;
     }
     if (item?.summary_type === 'Spouse') {
-      grossIncomeUscSpouse = item.pay_for_usc;
+      grossIncomeUscSpouse += item.pay_for_usc;
     }
     grossIncomeUsc = grossIncomeUscSelf + grossIncomeUscSpouse;
     grossTaxableIncome += item.pay_for_income_tax;
