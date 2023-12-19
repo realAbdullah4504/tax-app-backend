@@ -176,7 +176,7 @@ const UserService = {
       }
       const resetToken = user.createPasswordResetToken();
       await user.save({ validateBeforeSave: false });
-      const resetUrl = `${baseUrl}/${resetToken}`;
+      const resetUrl = `${baseUrl}?token=${resetToken}`;
       // console.log('resetToken', resetToken);
 
       return resetUrl;
