@@ -19,6 +19,7 @@ const {
 
 exports.getAccessToken = async (req, res, next) => {
   try {
+    console.log(CLIENT_ASSERTION);
     const apiUrl = "https://sandbox-b2b.revolut.com/api/1.0/auth/token";
 
     const config = {
@@ -142,7 +143,7 @@ exports.checkBankReceived = async (req, res, next) => {
 
         if (transactions.length) {
           const totalAmountTransactions =
-            totalReceivedBankAmount +
+            Math.abs(totalReceivedBankAmount) +
             transactions.reduce((total, transaction) => {
               return total + transaction.legs[0].amount;
             }, 0);

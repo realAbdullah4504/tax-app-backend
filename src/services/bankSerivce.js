@@ -88,9 +88,9 @@ const BankServices = {
     // );
     try {
       //for testing
-      let totalBank = Math.abs(totalAmountTransactions);
+      let totalBank = totalAmountTransactions;
       const initiate =
-      totalBank === Math.floor(totalRefundAmount)
+        totalBank === Math.floor(totalRefundAmount)
           ? "Initiate Payment"
           : "Cannot Initiate Payment";
       // console.log("initiate", initiate);
@@ -110,7 +110,7 @@ const BankServices = {
       return bankDetails;
     } catch (error) {
       console.error("Error updating bank details:", error.message);
-      throw AppError(error.message, 500);
+      throw new AppError(error.message, 500);
     }
   },
   async transferMoney(userId, payload, headers) {
@@ -126,7 +126,7 @@ const BankServices = {
       return data;
     } catch (error) {
       console.error("Error:", error);
-      throw AppError(error.message, 500);
+      throw new AppError(error.message, 500);
     }
   },
 };
