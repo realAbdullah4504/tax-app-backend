@@ -283,10 +283,8 @@ const calculate = async (year, userId) => {
       : 0;
 
   // console.log(widowTrail);
-  totalYearsPassedSpouse =
-    maritalStatus === 'widowed' && year - spousePassDate
-      ? spousePassDate.getUTCFullYear()
-      : maritalStatusDate.getUTCFullYear();
+  totalYearsPassedSpouse = maritalStatus === 'widowed' && year - maritalStatusDate.getUTCFullYear();
+
   const widow =
     totalYearsPassedSpouse > 0
       ? (widowCreditYearly || 0) -
