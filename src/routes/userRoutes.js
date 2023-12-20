@@ -98,19 +98,19 @@ router.get('/download-sign-pdf', authenticate, downloadSignedPDF);
 router.get('/:id', authenticate, getUserDetail);
 router.put('/:id', authenticate, updateUserProfile);
 router.get('/', authenticate, getUsersList);
-router.post('/fileUpload', authenticate, upload.array('files', 5), fileUpload);
+// router.post('/fileUpload', authenticate, upload.array('files', 5), fileUpload);
 router.put('/member/:id/block', [authenticate, blockUserValidator], blockUser);
 router.post('/member/assign', authenticate, assignMemberOrStage);
 router.post('/member', [authenticate, createMemberValidator], createMember);
 router.put('/member/:id', [authenticate, updateMemberValidator], updateMember);
 router.delete('/member', authenticate, deleteMember);
-router.get('/getDocuments', authenticate, getDocuments);
-router.get('/downloadFile/:filename', authenticate, downloadFile);
-router.delete('/deleteFile/:filename', authenticate, deleteFile);
-router.get('/:id', authenticate, getUserDetail);
-router.put('/:id', authenticate, updateUserProfile);
+// router.get('/getDocuments', authenticate, getDocuments);
+// router.get('/downloadFile/:filename', authenticate, downloadFile);
+// router.delete('/deleteFile/:filename', authenticate, deleteFile);
+// router.get('/:id', authenticate, getUserDetail);
+// router.put('/:id', authenticate, updateUserProfile);
 router.delete('/:id', authenticate, deleteUser);
-router.get('/', authenticate, getUsersList);
+// router.get('/', authenticate, getUsersList);
 
 // Protected route using the authenticate middleware
 
