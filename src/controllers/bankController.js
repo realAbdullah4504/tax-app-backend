@@ -1,5 +1,6 @@
 const { NetworkContextImpl } = require("twilio/lib/rest/supersim/v1/network");
 const sendAppResponse = require("../utils/helper/appResponse");
+const TaxDetails = require("../models/calculationDetailsModel");
 const axios = require("axios");
 
 
@@ -147,6 +148,31 @@ exports.getTransactions = async (req, res, next) => {
         sendAppResponse({
             res,
             data,
+            statusCode: 200,
+            status: "success",
+            message: "Transactions fetched successfully.",
+        })
+
+    } catch (error) {
+
+    }
+
+}
+exports.getRefundDetails = async (req, res, next) => {
+    try {
+        const userId = req?.query?.userId || "";
+        const taxDetails = await TaxDetails.find({userId});
+        let totalRefund = 0; const data = [];
+        (taxDetails && taxDetails.length) && taxDetails?.forEach(({ year, taxResult, updatedAt, createdAt }) => {
+            const obj = {year, amount :taxResult && taxResult?.toFixed(2), submitedDate: (updatedAt || createdAt) };
+            data.push(obj);
+            totalRefund += taxResult;
+          });
+          totalRefund = totalRefund && totalRefund?.toFixed(2);
+        sendAppResponse({
+            res,
+            data,
+            totalRefund,
             statusCode: 200,
             status: "success",
             message: "Transactions fetched successfully.",
