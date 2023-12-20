@@ -101,7 +101,8 @@ const calculate = async (year, userId) => {
     uscRatesBands: { uscRatesPercentage, uscBands, medicalCardExemptionTopRate },
   } = (await TaxDefaultValues.findOne({ year })) || {};
   console.log('=========== exemptionLimitsOver65 ========', exemptionLimitsOver65);
-  const { dateOfBirth, maritalStatus, spousePassDate } = await PersonalInfo.findOne({ userId });
+  const { dateOfBirth, maritalStatus, spousePassDate, maritalStatusDate } =
+    await PersonalInfo.findOne({ userId });
   const { contributionDetails } = (await OtherDetails.findOne({ userId })) || {};
   const { workFromHomeDetails, payRentDetails } =
     (await HomeDetails.findOne({
@@ -282,7 +283,10 @@ const calculate = async (year, userId) => {
       : 0;
 
   // console.log(widowTrail);
-  totalYearsPassedSpouse = maritalStatus === 'widowed' && year - spousePassDate.getUTCFullYear();
+  totalYearsPassedSpouse =
+    maritalStatus === 'widowed' && year - spousePassDate
+      ? spousePassDate.getUTCFullYear()
+      : maritalStatusDate.getUTCFullYear();
   const widow =
     totalYearsPassedSpouse > 0
       ? (widowCreditYearly || 0) -
