@@ -11,7 +11,9 @@ const {
   transferMoney,
   getTransactions,
   checkBankReceived,
-  transfer
+  transfer,
+  refundReceivedUserDetails,
+  paymentDetails,
 } = bankController;
 
 const router = express.Router();
@@ -24,6 +26,9 @@ router.post(
   createBeneficiary
 );
 router.get("/checkBankReceived", authenticateBank, checkBankReceived);
+
+router.get("/userRefundDetails", authenticateBank, refundReceivedUserDetails);
+router.get("/paymentDetails", authenticateBank, paymentDetails);
 
 router.get("/getAccounts", authenticateBank, getAccounts);
 router.get("/getBeneficiary", authenticateBank, getBeneficiary);

@@ -19,7 +19,7 @@ const {
 
 exports.getAccessToken = async (req, res, next) => {
   try {
-    console.log(CLIENT_ASSERTION);
+    // console.log(CLIENT_ASSERTION);
     const apiUrl = "https://sandbox-b2b.revolut.com/api/1.0/auth/token";
 
     const config = {
@@ -134,8 +134,8 @@ exports.checkBankReceived = async (req, res, next) => {
         const transactions = await BankServices.getTransactions(
           ppsn,
           submittedDate,
-          receivedDate,
-          headers
+          headers,
+          receivedDate
         );
         //   console.log("transactions", transactions);
 
@@ -174,6 +174,127 @@ exports.checkBankReceived = async (req, res, next) => {
     sendAppResponse({
       res,
       data: results,
+      statusCode: 200,
+      status: "success",
+      message: "Beneficiary fetched successfully.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+exports.refundReceivedUserDetails = async (req, res, next) => {
+  try {
+    const { userId } = req.query;
+    const headers = req.headers;
+    const accountDetails = await BankDetails.findOne({ userId: userId });
+    const { submittedDate, ppsn } = accountDetails;
+    // console.log(userId, submittedDate, ppsn);
+    if (!submittedDate) {
+      sendAppResponse({
+        res,
+        statusCode: 400,
+        status: "error",
+        message: "Form is not Submitted yet.",
+      });
+    }
+    const transactions = await BankServices.getTransactions(
+      ppsn,
+      submittedDate,
+      headers,
+      null
+    );
+    if (!transactions.length) {
+      sendAppResponse({
+        res,
+        statusCode: 400,
+        status: "error",
+        message: "No transactions found.",
+      });
+    }
+    const totalAmountTransactions = transactions.reduce(
+      (total, transaction) => {
+        return total + transaction.legs[0].amount;
+      },
+      0
+    );
+
+    const refAmountCreated =
+      transactions?.map((transaction) => ({
+        reference: transaction.reference,
+        transactionPrices: transaction.legs[0].amount,
+        receivedDate: transaction.created_at,
+      })) || [];
+
+    sendAppResponse({
+      res,
+      data: {
+        from: "1234",
+        totalAmountTransactions,
+        refAmountCreated,
+      },
+      statusCode: 200,
+      status: "success",
+      message: "Beneficiary fetched successfully.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+exports.paymentDetails = async (req, res, next) => {
+  try {
+    const { userId } = req.query;
+    const headers = req.headers;
+    const accountDetails = await BankDetails.findOne({ userId: userId });
+    const { submittedDate, ppsn } = accountDetails;
+    // console.log(userId, submittedDate, ppsn);
+    if (!submittedDate) {
+      sendAppResponse({
+        res,
+        statusCode: 400,
+        status: "error",
+        message: "Form is not Submitted yet.",
+      });
+    }
+    const transactions = await BankServices.getTransactions(
+      userId,
+      submittedDate,
+      headers,
+      null
+    );
+    console.log(transactions);
+    if (!transactions.length) {
+      sendAppResponse({
+        res,
+        statusCode: 400,
+        status: "error",
+        message: "No transactions found.",
+      });
+    }
+    const totalAmountTransactions = transactions.reduce(
+      (total, transaction) => {
+        if (transaction.state === "pending") {
+          return total+transaction.legs[0].amount;
+        }
+        return total;
+      },
+      0
+    );
+
+    const refAmountCreated =
+      transactions?.map((transaction) => ({
+        reference: transaction.reference,
+        transactionPrices: transaction.legs[0].amount,
+        status: transaction.state,
+        receivedDate: transaction.created_at,
+      })) || [];
+
+    sendAppResponse({
+      res,
+      data: {
+        from: "1234",
+        totalAmountTransactions,
+        refAmountCreated,
+      },
       statusCode: 200,
       status: "success",
       message: "Beneficiary fetched successfully.",

@@ -46,7 +46,7 @@ const BankServices = {
     }
   },
 
-  async getTransactions(ppsn, submittedDate, receivedDate, headers) {
+  async getTransactions(ppsn, submittedDate, headers, receivedDate) {
     try {
       const apiUrlGet = `${REVOLUT_URL}/transactions`;
       const { startDate, endDate } = getEndDate(submittedDate, receivedDate);
