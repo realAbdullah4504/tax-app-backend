@@ -4,6 +4,7 @@ const { authenticateBank } = require("../middlewares/authBank");
 const { authenticate } = require("../middlewares/auth");
 
 const {
+  getUserBankDetails,
   getAccessToken,
   getAccounts,
   createBeneficiary,
@@ -18,6 +19,7 @@ const {
 
 const router = express.Router();
 
+router.get("/getUserBankDetails", getUserBankDetails);
 router.get("/", getAccessToken);
 router.post(
   "/createBeneficiary",
