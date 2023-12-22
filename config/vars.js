@@ -28,6 +28,7 @@ module.exports = {
   CLIENT_ID: process.env.CLIENT_ID,
   CLIENT_ASSERTION: process.env.CLIENT_ASSERTION,
   REVOLUT_URL: process.env.REVOLUT_URL,
+  REFRESH_TOKEN:process.env.REFRESH_TOKEN
 
   // Add more variables as needed
 };

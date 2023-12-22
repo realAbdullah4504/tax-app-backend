@@ -25,16 +25,16 @@ router.post(
   authenticateBank,
   createBeneficiary
 );
-router.get("/checkBankReceived", authenticateBank, checkBankReceived);
+router.get("/checkBankReceived", authenticate, authenticateBank, checkBankReceived);
 
-router.get("/userRefundDetails", authenticateBank, refundReceivedUserDetails);
-router.get("/paymentDetails", authenticateBank, paymentDetails);
+router.get("/userRefundDetails", authenticate, authenticateBank, refundReceivedUserDetails);
+router.get("/paymentDetails", authenticate, authenticateBank, paymentDetails);
 
-router.get("/getAccounts", authenticateBank, getAccounts);
-router.get("/getBeneficiary", authenticateBank, getBeneficiary);
-router.get("/getTransactions", authenticateBank, getTransactions);
+router.get("/getAccounts", authenticate, authenticateBank, getAccounts);
+router.get("/getBeneficiary",authenticate, authenticateBank, getBeneficiary);
+router.get("/getTransactions",authenticate, authenticateBank, getTransactions);
 
-router.post("/:userId/transferMoney", authenticateBank, transferMoney);
-router.post("/transfer", authenticateBank, transfer);
+router.post("/:userId/transferMoney",authenticate, authenticateBank, transferMoney);
+router.post("/transfer",authenticate, authenticateBank, transfer);
 
 module.exports = router;
