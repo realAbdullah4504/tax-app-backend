@@ -32,6 +32,7 @@ module.exports = {
   MAILGUN_DOMAIN: process.env.MAILGUN_DOMAIN,
   MAILGUN_API_KEY: process.env.MAILGUN_API_KEY,
   FORGET_PASSWORD_ROUTE: process.env.FORGET_PASSWORD_ROUTE,
+  REFRESH_TOKEN:process.env.REFRESH_TOKEN
 
   // Add more variables as needed
 

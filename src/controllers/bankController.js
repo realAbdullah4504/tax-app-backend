@@ -19,6 +19,30 @@ const {
   generateRandomReferenceId,
 } = require("../utils/helper/randomReference");
 
+exports.getUserBankDetails = async (req, res, next) => {
+  try {
+    const { userId } = req?.query || "";
+    const data = await BankDetails.findOne({ userId }); 
+    if(!data){
+      return sendAppResponse({
+        res,
+        statusCode: 404,
+        status: "error",
+        message: "No record found against this user!",
+      });
+    }
+    sendAppResponse({
+      res,
+      data,
+      statusCode: 200,
+      status: "success",
+      // message: "User updated successfully.",
+    });
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+};
 exports.getAccessToken = async (req, res, next) => {
   try {
     // console.log(CLIENT_ASSERTION);
