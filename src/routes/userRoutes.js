@@ -24,18 +24,35 @@ const {
   updateUserDetail,
   getUsersList,
   getUserQuestionsDetail,
-  deleteUser,
+  deleteMember,
   updateUserProfile,
   blockUser,
-  downloadSignedPDF
+  createMember,
+  updateMember,
+  assignMemberOrStage,
+  deleteUser,
+  downloadSignedPDF,
+  getDefaultTaxValues,
+  getStudents,
 } = UserController;
-const { taxRates, taxCalculations, getCalculations, updateDefaultTaxValues } = taxRatesController;
+const {
+  taxRates,
+  taxCalculations,
+  getCalculations,
+  updateDefaultTaxValues,
+  updateFlatRateExpenses,
+  addCategories,
+  getCategories,
+} = taxRatesController;
 const {
   createUserValidator,
   verifyCodeValidator,
   loginUserValidator,
   blockUserValidator,
+  createMemberValidator,
+  updateMemberValidator,
 } = require('../middlewares/validators');
+
 const router = express.Router();
 
 const multer = require('multer');
@@ -43,13 +60,17 @@ const multer = require('multer');
 router.post('/register', createUserValidator, signUp);
 router.post('/verify-code', [authenticate, verifyCodeValidator], verifyCode);
 router.post('/resend-code', authenticate, resendCode);
-router.post('/login', loginUserValidator, login);
 router.post('/forgetPassword', forgetPassword);
+router.post('/login', loginUserValidator, login);
 router.patch('/resetPassword/:token', resetPassword);
-router.post('/resetMemberPassword', authenticate, memberResetPassword);
+router.post('/member/resetMemberPassword', authenticate, memberResetPassword);
 
 // User
 router.get('/detail', authenticate, getUserProfile);
+router.get('/students', authenticate, getStudents);
+router.post('/flatRateExpense', authenticate, updateFlatRateExpenses);
+router.post('/add-categories', authenticate, addCategories);
+router.get('/get-categories', authenticate, getCategories);
 router.get('/:userId/questions', authenticate, getUserQuestionsDetail);
 router.post('/pdf/:docType', authenticate, pdfParser);
 router.post('/update', authenticate, updateUserDetail);
@@ -67,16 +88,30 @@ const upload = multer({
 router.get('/A2File', authenticate, getA2File);
 router.post('/upload/A2File', authenticate, upload.single('file'), fileUploadA2);
 // Update the route to use `upload.array` for handling multiple files
+router.get('/get-default-values', authenticate, getDefaultTaxValues);
 router.post('/fileUpload', authenticate, upload.array('files', 5), fileUpload);
 router.post('/block', [authenticate, blockUserValidator], blockUser);
 router.get('/getDocuments', authenticate, getDocuments);
 router.get('/downloadFile/:filename', authenticate, downloadFile);
 router.delete('/deleteFile/:filename', authenticate, deleteFile);
+router.get('/download-sign-pdf', authenticate, downloadSignedPDF);
 router.get('/:id', authenticate, getUserDetail);
 router.put('/:id', authenticate, updateUserProfile);
-router.delete('/:id', authenticate, deleteUser);
 router.get('/', authenticate, getUsersList);
-router.get('/download-sign-pdf', authenticate, downloadSignedPDF);
+// router.post('/fileUpload', authenticate, upload.array('files', 5), fileUpload);
+router.put('/member/:id/block', [authenticate, blockUserValidator], blockUser);
+router.post('/member/assign', authenticate, assignMemberOrStage);
+router.post('/member', [authenticate, createMemberValidator], createMember);
+router.put('/member/:id', [authenticate, updateMemberValidator], updateMember);
+router.delete('/member', authenticate, deleteMember);
+// router.get('/getDocuments', authenticate, getDocuments);
+// router.get('/downloadFile/:filename', authenticate, downloadFile);
+// router.delete('/deleteFile/:filename', authenticate, deleteFile);
+// router.get('/:id', authenticate, getUserDetail);
+// router.put('/:id', authenticate, updateUserProfile);
+router.delete('/:id', authenticate, deleteUser);
+// router.get('/', authenticate, getUsersList);
+
 // Protected route using the authenticate middleware
 
 module.exports = router;

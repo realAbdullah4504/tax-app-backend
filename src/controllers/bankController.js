@@ -1,3 +1,6 @@
+const { NetworkContextImpl } = require("twilio/lib/rest/supersim/v1/network");
+const sendAppResponse = require("../utils/helper/appResponse");
+const TaxDetails = require("../models/calculationDetailsModel");
 const axios = require("axios");
 
 const {
@@ -10,7 +13,6 @@ const {
 const BankDetails = require("../models/bankDetailsModel");
 const PersonalDetails = require("../models/personalDetailsModel");
 
-const sendAppResponse = require("../utils/helper/appResponse");
 const CalculationDetails = require("../models/calculationDetailsModel");
 const BankServices = require("../services/bankSerivce");
 const {
@@ -273,7 +275,7 @@ exports.paymentDetails = async (req, res, next) => {
     const totalAmountTransactions = transactions.reduce(
       (total, transaction) => {
         if (transaction.state === "pending") {
-          return total+transaction.legs[0].amount;
+          return total + transaction.legs[0].amount;
         }
         return total;
       },
@@ -424,6 +426,35 @@ exports.getTransactions = async (req, res, next) => {
     console.log(error);
     next(error);
   }
+};
+
+exports.getRefundDetails = async (req, res, next) => {
+  try {
+    const userId = req?.query?.userId || "";
+    const taxDetails = await TaxDetails.find({ userId });
+    let totalRefund = 0;
+    const data = [];
+    taxDetails &&
+      taxDetails.length &&
+      taxDetails?.forEach(({ year, taxResult, updatedAt, createdAt }) => {
+        const obj = {
+          year,
+          amount: taxResult && taxResult?.toFixed(2),
+          submitedDate: updatedAt || createdAt,
+        };
+        data.push(obj);
+        totalRefund += taxResult;
+      });
+    totalRefund = totalRefund && totalRefund?.toFixed(2);
+    sendAppResponse({
+      res,
+      data,
+      totalRefund,
+      statusCode: 200,
+      status: "success",
+      message: "Transactions fetched successfully.",
+    });
+  } catch (error) {}
 };
 
 exports.getAccounts = async (req, res, next) => {

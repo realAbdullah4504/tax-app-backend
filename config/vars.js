@@ -28,6 +28,12 @@ module.exports = {
   CLIENT_ID: process.env.CLIENT_ID,
   CLIENT_ASSERTION: process.env.CLIENT_ASSERTION,
   REVOLUT_URL: process.env.REVOLUT_URL,
+  //MAIL GUN
+  MAILGUN_DOMAIN: process.env.MAILGUN_DOMAIN,
+  MAILGUN_API_KEY: process.env.MAILGUN_API_KEY,
+  FORGET_PASSWORD_ROUTE: process.env.FORGET_PASSWORD_ROUTE,
 
   // Add more variables as needed
+
+
 };

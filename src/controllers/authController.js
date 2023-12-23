@@ -3,8 +3,10 @@ const User = require('../models/userModel');
 const UserService = require('../services/userService');
 const AppError = require('../errors/AppError');
 const { validationResult } = require('express-validator');
-const { JWT_SECRET, JWT_COOKIE_EXPIRE_IN, NODE_ENV } = require('../../config/vars');
+const { JWT_SECRET, JWT_COOKIE_EXPIRE_IN, NODE_ENV, FORGET_PASSWORD_ROUTE } = require('../../config/vars');
 const sendAppResponse = require('../utils/helper/appResponse');
+const emailService = require('../services/emailService');
+const { TokenFileWebIdentityCredentials } = require('aws-sdk');
 
 const generateToken = (id) => {
   return jwt.sign({ id }, JWT_SECRET, {
@@ -44,8 +46,14 @@ exports.signUp = async (req, res, next) => {
     if (!errors.isEmpty()) {
       throw new AppError('Validation failed', 400);
     }
-    const { email, phoneNumber } = req.body;
-    const existUser = await UserService.userExists({ email, phoneNumber });
+    let { email, firstName, password, phoneNumber, signature, surName, taxAgent, tob } = req.body;
+    const countryCode = phoneNumber.slice(0, 4);
+    let number = phoneNumber.slice(4);
+    if (number.length === 10 && number.charAt(0) === '0') {
+      number = number.slice(1);
+      phoneNumber = countryCode + number;
+    }
+    const existUser = await UserService.userExists({ email });
     if (existUser)
       sendAppResponse({
         res,
@@ -53,9 +61,20 @@ exports.signUp = async (req, res, next) => {
         status: 'fail',
         message: 'User has already registered.',
       });
-    const userData = await UserService.registerUser(req.body);
     // Send SMS code to mobile number and save reg record into db
     await UserService.sendVerificationCode(phoneNumber);
+    const payload = {
+      email,
+      firstName,
+      password,
+      phoneNumber,
+      signature,
+      surName,
+      taxAgent,
+      tob,
+      userType: 'customer',
+    };
+    const userData = await UserService.registerUser(payload);
 
     const respMsg =
       'Registration is successful! Please activate your account using the verification code sent to your registered phone number';
@@ -99,7 +118,7 @@ exports.login = async (req, res, next) => {
     const { email, password } = req.body;
     const user = await UserService.loginUser(email, password);
     if (!user) throw new AppError('Invalid credentials', 400);
-    if(user.isBlocked){
+    if (user.isBlocked) {
       throw new AppError('user has been blocked', 403);
     }
     const token = generateToken(user?._id);
@@ -123,9 +142,14 @@ exports.resendCode = async (req, res, next) => {
 };
 exports.forgetPassword = async (req, res, next) => {
   try {
-    const baseUrl = `${req.protocol}://${req.get('host')}/api/v1/users/resetPassword`;
+    const baseUrl = `${req.protocol}://${FORGET_PASSWORD_ROUTE}`;
+
+
     const resetTokenUrl = await UserService.forgotPasswordUser(req?.body?.email, baseUrl);
-    res.status(200).json({ status: 'success', resetTokenUrl });
+    
+    const info = await emailService(resetTokenUrl,req?.body?.email);
+    // console.log(resetTokenUrl);
+    res.status(200).json({ status: 'success', resetTokenUrl,info});
   } catch (error) {
     next(error);
   }
@@ -134,8 +158,8 @@ exports.resetPassword = async (req, res, next) => {
   try {
     const token = req.params.token;
     const { password, confirmPassword } = req.body;
+    // console.log('token', token)
     const resp = await UserService.resetPasswordUser(token, password, confirmPassword);
-
     // 4 log the user in, send jwt
     createSendToken(resp, 201, res);
   } catch (error) {
@@ -145,19 +169,27 @@ exports.resetPassword = async (req, res, next) => {
 
 /**
  * controller for resetting user password by admin
- * @param {*} req 
- * @param {*} res 
- * @param {*} next 
+ * @param {*} req
+ * @param {*} res
+ * @param {*} next
  */
 
-exports.memberResetPassword=async(req, res, next) =>{
+exports.memberResetPassword = async (req, res, next) => {
   try {
-    const {userId} = req.body;
-    const {_id}=req.user;
-    const newPassword = await UserService.resetMemberPassword(userId,_id);
-    sendAppResponse({ res, statusCode: 200, status: 'success', message: 'user password reset successfully',newPassword });
+    const { userId } = req.body;
+    const { role } = req.user;
+    if (!['admin', 'supervisor'].includes(role)) {
+      throw new AppError('you are not authorized to reset password', 403);
+    }
+    const newPassword = await UserService.resetMemberPassword(userId);
+    sendAppResponse({
+      res,
+      statusCode: 200,
+      status: 'success',
+      message: 'user password reset successfully',
+      newPassword,
+    });
   } catch (error) {
     next(error);
   }
-
-}
+};

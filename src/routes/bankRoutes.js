@@ -3,6 +3,8 @@ const bankController = require("../controllers/bankController");
 const { authenticateBank } = require("../middlewares/authBank");
 const { authenticate } = require("../middlewares/auth");
 
+
+
 const {
   getAccessToken,
   getAccounts,
@@ -14,18 +16,18 @@ const {
   transfer,
   refundReceivedUserDetails,
   paymentDetails,
+  getRefundDetails
 } = bankController;
 
 const router = express.Router();
 
 router.get("/", getAccessToken);
-router.post(
-  "/createBeneficiary",
-  authenticate,
-  authenticateBank,
-  createBeneficiary
-);
-router.get("/checkBankReceived", authenticateBank, checkBankReceived);
+router.get("/getAccounts", authenticate, getAccounts)
+router.post('/createBeneficiary', authenticate, createBeneficiary)
+router.get('/getBeneficiary', authenticate, getBeneficiary)
+router.post('/transferMoney', authenticate, transferMoney)
+router.get('/getTransactions', authenticate, getTransactions)
+router.get('/getRefundDetails', authenticate, getRefundDetails)
 
 router.get("/userRefundDetails", authenticateBank, refundReceivedUserDetails);
 router.get("/paymentDetails", authenticateBank, paymentDetails);

@@ -9,7 +9,14 @@ const FamilyDetails = require('../models/familyDetailsModel');
 const HealthDetails = require('../models/healthDetailsModel');
 const EmploymentSummary = require('../models/employmentSummary');
 const CalculationDetail = require('../models/calculationDetailsModel');
-
+const FlatRateExpense = require('../models/flatRateExpense');
+const Category = require('../models/categoryModel');
+const valueConverter = (value = '', defaultValue = 0) => {
+  if (value == 'NAN' || !value) {
+    return defaultValue;
+  }
+  return value;
+};
 const calculate = async (year, userId) => {
   //get the tax values and age
 
@@ -30,10 +37,10 @@ const calculate = async (year, userId) => {
 
   summaryDetails?.forEach((item) => {
     if (item?.summary_type === 'Self') {
-      grossIncomeUscSelf = item.gross_pay;
+      grossIncomeUscSelf += item.pay_for_usc;
     }
     if (item?.summary_type === 'Spouse') {
-      grossIncomeUscSpouse = item.gross_pay;
+      grossIncomeUscSpouse += item.pay_for_usc;
     }
     grossIncomeUsc = grossIncomeUscSelf + grossIncomeUscSpouse;
     grossTaxableIncome += item.pay_for_income_tax;
@@ -90,10 +97,12 @@ const calculate = async (year, userId) => {
       allowableHealthExpenses,
       medicalInsurance: { maxPerAdult, maxPerChild },
     },
-    flatRateExpense,
+    // flatRateExpense,
     uscRatesBands: { uscRatesPercentage, uscBands, medicalCardExemptionTopRate },
-  } = await TaxDefaultValues.findOne({ year });
-  const { dateOfBirth, maritalStatus, spousePassDate } = await PersonalInfo.findOne({ userId });
+  } = (await TaxDefaultValues.findOne({ year })) || {};
+  console.log('=========== exemptionLimitsOver65 ========', exemptionLimitsOver65);
+  const { dateOfBirth, maritalStatus, spousePassDate, maritalStatusDate } =
+    await PersonalInfo.findOne({ userId });
   const { contributionDetails } = (await OtherDetails.findOne({ userId })) || {};
   const { workFromHomeDetails, payRentDetails } =
     (await HomeDetails.findOne({
@@ -107,7 +116,7 @@ const calculate = async (year, userId) => {
     elderlyRelativeCare,
     elderlyRelative,
     children,
-
+    occupations,
     tuitionFeesCredit,
     students,
   } = (await FamilyDetails.findOne({ userId })) || {};
@@ -118,13 +127,42 @@ const calculate = async (year, userId) => {
   let type = '';
   let marriedType = summaryDetails?.some(({ summary_type }) => summary_type === 'Spouse');
   console.log('marriedType', marriedType);
-
+  const FlatRateExpenseData = (await FlatRateExpense.findOne({ year })) || {};
+  let categoryValue = '';
+  let subCategoryValue = '';
+  occupations &&
+    occupations.length &&
+    occupations?.forEach(({ category, subCategory, years }) => {
+      if (years?.includes(year)) {
+        categoryValue = category;
+        if (subCategory) subCategoryValue = subCategory;
+      }
+    });
+  const flatRateExpense =
+    categoryValue && FlatRateExpenseData
+      ? categoryValue && !subCategoryValue
+        ? FlatRateExpenseData[categoryValue]
+        : FlatRateExpenseData[categoryValue][subCategoryValue]
+      : 100;
   // const result = marriedType.some((item) => item.spouse === "spouse");
-
+  console.log('====== FlatRateExpense ========', flatRateExpense);
   if (maritalStatus === 'single' && (!incapacitated || !dependentChildren)) {
     type = 'single';
-  } else if (maritalStatus === 'widowed' && (incapacitated || dependentChildren)) {
-    type = 'singleParent';
+  } else if (
+    maritalStatus === 'widowed' ||
+    maritalStatus === 'divorce' ||
+    maritalStatus === 'separated' ||
+    maritalStatus === 'singleParent' ||
+    maritalStatus === 'cohabiting'
+  ) {
+    if (
+      maritalStatus === 'singleParent' ||
+      incapacitated ||
+      dependentChildren ||
+      (children && children.length)
+    ) {
+      type = 'singleParent';
+    }
   } else if (maritalStatus === 'married') {
     type = marriedType ? 'married2Incomes' : 'married1Income';
   }
@@ -145,10 +183,11 @@ const calculate = async (year, userId) => {
   if (age > 65) {
     const exemption =
       type === 'single' || type === 'singleParent'
-        ? exemptionLimitsOver65[type]
-        : exemptionLimitsOver65['married'];
-    // console.log("=========== exemption ==============",grossTaxableIncome, exemption );
-    over65Exemption = Math.min(grossTaxableIncome, exemption);
+        ? exemptionLimitsOver65['single']
+        : maritalStatus === 'married'
+        ? exemptionLimitsOver65['married']
+        : 0;
+    over65Exemption = Math.min(grossTaxableIncome, valueConverter(exemption));
     grossIncomePercent = over65ExemptionRatePercent ? over65ExemptionRatePercent / 100 : 0; //=IF(A15=">65",0,'Questions for App'!F105)
   } else {
     const band = taxBands[type];
@@ -235,12 +274,17 @@ const calculate = async (year, userId) => {
   //***********************************SECTION 3 *************************************************** */
   //Additional Credits
   //age credit is not defined (need to work on it)
-  const flatRateExpensePer = flatRateExpense * 0.2;
+  const flatRateExpensePer = flatRateExpense && Number(flatRateExpense) * 0.2;
   const ageCredit =
-    age >= 65 ? (maritalStatus === 'single' ? ageCreditSingle : ageCreditMarried) : 0;
+    age >= 65
+      ? maritalStatus === 'single' || maritalStatus === 'singleParent'
+        ? ageCreditSingle
+        : ageCreditMarried
+      : 0;
 
   // console.log(widowTrail);
-  totalYearsPassedSpouse = maritalStatus === 'widowed' && year - spousePassDate.getUTCFullYear();
+  totalYearsPassedSpouse = maritalStatus === 'widowed' && year - maritalStatusDate.getUTCFullYear();
+
   const widow =
     totalYearsPassedSpouse > 0
       ? (widowCreditYearly || 0) -
@@ -288,12 +332,12 @@ const calculate = async (year, userId) => {
   let hasPartTimeCourse = false; // Track if there are part-time courses
 
   if (tuitionFeesCredit) {
-    students?.forEach(({ fullTimeCourse, fees }) => {
-      if (fullTimeCourse === 'fullTime') {
+    students?.forEach(({ fullTimeCourse, fees, year: courseYear }) => {
+      if (fullTimeCourse === 'fullTime' && year === courseYear) {
         totalFeesCoursesFullTime += Math.min(fees, courseMaximum);
         hasFullTimeCourse = true;
       }
-      if (fullTimeCourse === 'partTime') {
+      if (fullTimeCourse === 'partTime' && year === courseYear) {
         totalFeesCoursesPartTime += Math.min(fees, courseMaximum);
         hasPartTimeCourse = true;
       }
@@ -324,7 +368,7 @@ const calculate = async (year, userId) => {
             type === 'single' || type === 'singleParent'
               ? Math.min(rentPerPerson, (rentPaid * maxPercentageOfRent) / 100)
               : Math.min(rentPerCouple, (rentPaid * maxPercentageOfRent) / 100);
-        } else if (propertyType === 'dependentChild') {
+        } else if (propertyType === 'dependentCollegeChild') {
           totalRent +=
             type !== 'single' && Math.min(rentPerPerson, (rentPaid * maxPercentageOfRent) / 100);
         }
@@ -412,6 +456,7 @@ const calculate = async (year, userId) => {
     flatRateExpensePer +
     ageCredit +
     widowTrail +
+    carerCredit +
     incapacitatedChild +
     totalElderlyRelativeCredit +
     totalFeesCourses +
@@ -443,9 +488,11 @@ const calculate = async (year, userId) => {
       100;
     console.log('usc3', usc3);
     const usc4 =
-      ((grossIncomeUsc - (uscBands[0] + uscBands[1] + uscBands[2])) *
-        (fullGpMedicalCard ? medicalCardExemptionTopRate : uscRatesPercentage[3])) /
-      100;
+      grossIncomeUsc - (uscBands[0] + uscBands[1] + uscBands[2]) > 0
+        ? ((grossIncomeUsc - (uscBands[0] + uscBands[1] + uscBands[2])) *
+            (fullGpMedicalCard ? medicalCardExemptionTopRate : uscRatesPercentage[3])) /
+          100
+        : 0;
 
     console.log(
       '======',
@@ -509,6 +556,7 @@ const calculate = async (year, userId) => {
     paye: totalPaye, //totalPaye
     singleParent: singleParentStandardCredits, // singleParentStandardCredits
     flatRateExpense, //TBD is a default value
+    flatRateExpensePer: flatRateExpensePer, //flate rate expense percentage for additional credits
     ageCredit, // please set a hard code value for now
     widowTrail,
     homeCarer: carerCredit, // carerCredit
@@ -638,6 +686,55 @@ exports.updateDefaultTaxValues = async (req, res, next) => {
       statusCode: 200,
       status: 'success',
       message: 'Tax Rates successfully updated.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+exports.updateFlatRateExpenses = async (req, res, next) => {
+  try {
+    const year = req.body.year;
+    const updatedFlatRates = await FlatRateExpense.findOneAndUpdate({ year }, req.body, {
+      upsert: true,
+    });
+    sendAppResponse({
+      res,
+      updatedFlatRates,
+      statusCode: 200,
+      status: 'success',
+      message: 'Flat Rate Expense successfully updated.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+exports.addCategories = async (req, res, next) => {
+  try {
+    const value = req.body.value;
+    const data = await Category.findOneAndUpdate({ value }, req.body, {
+      upsert: true,
+    });
+    sendAppResponse({
+      res,
+      data,
+      statusCode: 200,
+      status: 'success',
+      message: 'Category successfully saved.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+exports.getCategories = async (req, res, next) => {
+  try {
+    const data = await Category.find({});
+    sendAppResponse({
+      res,
+      data,
+      statusCode: 200,
+      status: 'success',
+      message: 'Categories fetched successfully.',
     });
   } catch (error) {
     next(error);
