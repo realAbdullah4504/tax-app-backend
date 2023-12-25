@@ -148,14 +148,14 @@ const BankServices = {
     let initiate = "";
   
     if (totalRefundAmount < threshold) {
-      initiate = "Yes Continue";
+      initiate = "yes";
     } else if (
       calculatedErrorBand < errorBand / 100 ||
       calculatedReturnDifference < returnDifference
     ) {
       initiate = "No-Manual Review";
     } else {
-      initiate = "Initiate Payment";
+      initiate = "yes";
     }
 
     console.log("initiate", initiate);

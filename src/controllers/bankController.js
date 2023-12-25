@@ -114,7 +114,8 @@ exports.createBeneficiary = async (req, res, next) => {
       beneficiaryId: data.id,
       ppsn: ppsn,
       receivedDate: null,
-      refundReceived: "Not Received",
+      refundReceived: "notReceived",
+      paymentStatus: "cannotInitiate",
       totalReceivedBankAmount: 0,
     };
     const bankDetails = await BankServices.createBeneficiaryDatabase(
@@ -150,7 +151,7 @@ exports.checkBankReceived = async (req, res, next) => {
         ppsn,
         totalReceivedBankAmount,
         accountTitle,
-        status,
+        paymentStatus,
         refundReceivedStatus,
       } = detail;
 
@@ -164,13 +165,15 @@ exports.checkBankReceived = async (req, res, next) => {
         "submittedDate",
         submittedDate,
         "totalRefund",
-        totalRefund
+        totalRefund,
+        "paymentStatus",
+        paymentStatus
       );
 
       if (
         submittedDate &&
         totalRefund > 0 &&
-        status === "Cannot Initiate Payment"
+        paymentStatus === "cannotInitiate"
       ) {
         const transactions = await BankServices.getTransactions(
           ppsn,
@@ -196,7 +199,7 @@ exports.checkBankReceived = async (req, res, next) => {
           console.log("newReceivedDate", newReceivedDate);
 
           const receivedStatus =
-            (newReceivedDate && "Received") || "Not Received";
+            (newReceivedDate && "received") || "notReceived";
 
           //for updating the receivedDate
           const bankDetails = await BankDetails.findOneAndUpdate(
@@ -215,7 +218,7 @@ exports.checkBankReceived = async (req, res, next) => {
             receivedDate: newReceivedDate,
             totalRcvd: totalAmountTransactions,
             refundExpected: totalRefund,
-            status: status,
+            paymentStatus: paymentStatus,
             refundReceivedStatus: receivedStatus,
           };
 
@@ -223,15 +226,15 @@ exports.checkBankReceived = async (req, res, next) => {
             message: "Bank Details Updated",
             details,
           });
-        } else if (refundReceivedStatus === "Received") {
+        } else if (refundReceivedStatus === "received") {
           const details = {
             userId: userId,
             accountTitle: accountTitle,
             submittedDate: submittedDate,
             receivedDate: receivedDate,
             totalRcvd: totalReceivedBankAmount,
-            refundExpected: +totalRefund,
-            status: status,
+            refundExpected: totalRefund,
+            paymentStatus: paymentStatus,
           };
 
           results.push({
@@ -239,14 +242,51 @@ exports.checkBankReceived = async (req, res, next) => {
             ...details,
             refundReceivedStatus,
           });
-        } else {
+        }
+      } else if (paymentStatus !== "cannotInitiate") {
+        const transactions =
+          (await BankServices.getTransactions(
+            userId,
+            submittedDate,
+            headers,
+            null
+          )) || [];
+
+        if (transactions.length) {
+          console.log("transactions=================", transactions[0].state);
+          const bankDetails =
+            transactions.length &&
+            (await BankDetails.findOneAndUpdate(
+              { userId, ppsn },
+              {
+                paymentStatus: transactions[0].state,
+              },
+              { new: true, upsert: true }
+            ));
+
+          const details = {
+            userId: userId,
+            accountTitle: accountTitle,
+            submittedDate: submittedDate,
+            receivedDate: receivedDate,
+            totalRcvd: totalReceivedBankAmount,
+            refundExpected: totalRefund,
+            paymentStatus: transactions[0].state,
+          };
+
           results.push({
             message: "No Transactions Found",
-            accountTitle,
-            status,
+            ...details,
             refundReceivedStatus,
           });
         }
+      } else {
+        results.push({
+          message: "No Transactions Found",
+          accountTitle,
+          paymentStatus,
+          refundReceivedStatus,
+        });
       }
     }
     //   console.log("bankDetails", bankDetails);
@@ -325,7 +365,12 @@ exports.refundReceivedUserDetails = async (req, res, next) => {
     const { userId } = req.query;
     const headers = req.headers;
     const accountDetails = await BankDetails.findOne({ userId: userId });
-    const { submittedDate, ppsn } = accountDetails;
+    const { ppsn } = accountDetails;
+    const { data: refundList } = await BankServices.getTotalRefundByUserId(
+      userId
+    );
+    const { submittedDate } = (refundList && refundList[0]) || {};
+
     // console.log(userId, submittedDate, ppsn);
     if (!submittedDate) {
       sendAppResponse({
@@ -383,7 +428,11 @@ exports.paymentDetails = async (req, res, next) => {
     const { userId } = req.query;
     const headers = req.headers;
     const accountDetails = await BankDetails.findOne({ userId: userId });
-    const { submittedDate, ppsn } = accountDetails;
+    const { ppsn } = accountDetails;
+    const { data: refundList } = await BankServices.getTotalRefundByUserId(
+      userId
+    );
+    const { submittedDate } = (refundList && refundList[0]) || {};
     // console.log(userId, submittedDate, ppsn);
     if (!submittedDate) {
       sendAppResponse({
@@ -410,7 +459,7 @@ exports.paymentDetails = async (req, res, next) => {
     }
     const totalAmountTransactions = transactions.reduce(
       (total, transaction) => {
-        if (transaction.state === "pending") {
+        if (transaction.state === "completed") {
           return total + transaction.legs[0].amount;
         }
         return total;
