@@ -314,7 +314,7 @@ exports.transferMoney = async (req, res, next) => {
 
     const initiate = await BankServices.validTransfer(
       totalReceivedBankAmount,
-      520
+      totalRefund
     );
 
     let netRebate = 0;
