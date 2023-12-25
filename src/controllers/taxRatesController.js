@@ -117,19 +117,19 @@ const calculate = async (year, userId) => {
     elderlyRelative,
     children,
     occupations,
+    spouseOccupations,
     tuitionFeesCredit,
     students,
   } = (await FamilyDetails.findOne({ userId })) || {};
 
   const { incurHealthExpensesDetail, spouseEmployerPays, employerPaysDetails, fullGpMedicalCard } =
     (await HealthDetails.findOne({ userId })) || {};
-
-  let type = '';
+  let type = ''; let spouseFlatRateExpense = 0;
   let marriedType = summaryDetails?.some(({ summary_type }) => summary_type === 'Spouse');
   console.log('marriedType', marriedType);
   const FlatRateExpenseData = (await FlatRateExpense.findOne({ year })) || {};
-  let categoryValue = '';
-  let subCategoryValue = '';
+  let categoryValue = ''; let spouseCategoryValue ="";
+  let subCategoryValue = ''; let spouseSubCategoryValue = '';
   occupations &&
     occupations.length &&
     occupations?.forEach(({ category, subCategory, years }) => {
@@ -138,12 +138,13 @@ const calculate = async (year, userId) => {
         if (subCategory) subCategoryValue = subCategory;
       }
     });
-  const flatRateExpense =
+   
+  let flatRateExpense =
     categoryValue && FlatRateExpenseData
       ? categoryValue && !subCategoryValue
         ? FlatRateExpenseData[categoryValue]
         : FlatRateExpenseData[categoryValue][subCategoryValue]
-      : 100;
+      : 0;
   // const result = marriedType.some((item) => item.spouse === "spouse");
   console.log('====== FlatRateExpense ========', flatRateExpense);
   if (maritalStatus === 'single' && (!incapacitated || !dependentChildren)) {
@@ -167,6 +168,25 @@ const calculate = async (year, userId) => {
     type = marriedType ? 'married2Incomes' : 'married1Income';
   }
   console.log('type', type);
+ // Spouse Flat Rate Expense 
+ if(type=== "married2Incomes"){
+  spouseOccupations &&
+  spouseOccupations.length &&
+  spouseOccupations?.forEach(({ category, subCategory, years }) => {
+    if (years?.includes(year)) {
+      spouseCategoryValue = category;
+      if (subCategory) spouseSubCategoryValue = subCategory;
+    }
+  });
+   spouseFlatRateExpense =
+    spouseCategoryValue && FlatRateExpenseData
+      ? spouseCategoryValue && !spouseSubCategoryValue
+        ? FlatRateExpenseData[spouseCategoryValue]
+        : FlatRateExpenseData[spouseCategoryValue][spouseSubCategoryValue]
+      : 0;
+      flatRateExpense = flatRateExpense + spouseFlatRateExpense
+   console.log('===== spouseFlatRateExpense =======', spouseFlatRateExpense)   
+ }
 
   // Get the year of birth from the date
   const birthYear = dateOfBirth?.getUTCFullYear();
@@ -225,7 +245,7 @@ const calculate = async (year, userId) => {
     standardRateBand +
     totalPension +
     totalIncomeProtection +
-    (flatRateExpense || 100) +
+    (flatRateExpense || 0) +
     (totalPriceWorkedFromHome || 0); //=SUM(D15:D19)
   console.log('adjustedBand', adjustedBand);
 
