@@ -1,72 +1,75 @@
 const mongoose = require('mongoose');
-const crypto = require("crypto");
+const crypto = require('crypto');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const { JWT_SECRET } = require('../../config/vars');
 
-const userSchema = new mongoose.Schema({
-  firstName: {
-    type: String,
+const userSchema = new mongoose.Schema(
+  {
+    firstName: {
+      type: String,
+    },
+    surName: {
+      type: String,
+    },
+    email: {
+      type: String,
+      unique: true,
+      lowercase: true,
+    },
+    signature: {
+      type: String,
+    },
+    phoneNumber: {
+      type: String,
+    },
+    password: {
+      type: String,
+      minlength: [8, 'Password must be at least 8 characters long'],
+      select: false,
+    },
+    userType: {
+      type: String,
+      enum: ['member', 'customer'],
+      required: true,
+    },
+    stage: {
+      type: String,
+      default: 'registered',
+    },
+    role: {
+      type: String,
+      enum: ['call_center', 'staff_member', 'supervisor', 'support'],
+    },
+    leadMember: {
+      type: mongoose.Schema.ObjectId,
+      ref: 'User',
+    },
+    tob: {
+      type: Boolean,
+    },
+    taxAgent: {
+      type: Boolean,
+    },
+    isActive: {
+      type: Boolean,
+      default: false,
+    },
+    isBlocked: {
+      type: Boolean,
+      default: false,
+    },
+    is2FA: {
+      type: Boolean,
+      default: false,
+    },
+    passwordResetToken: String,
+    passwordResetExpiry: Date,
   },
-  surName: {
-    type: String,
-  },
-  email: {
-    type: String,
-    unique: true,
-    lowercase: true,
-  },
-  signature:{
-   type: String,
-  },
-  phoneNumber: {
-    type: String,
-  },
-  password: {
-    type: String,
-    minlength: [8, 'Password must be at least 8 characters long'],
-    select: false,
-  },
-  userType: {
-    type: String,
-    enum: ['member', 'customer'],
-    required: true
-  },
-  stage:{
-    type:String,
-    default:"registered"
-  },
-  role:{
-    type:String,
-    enum:['call_center','staff_member','supervisor','support']
-  },
-  leadMember:{
-    type: mongoose.Schema.ObjectId,
-    ref: "User",
-  },
-  tob:{
-    type: Boolean,
-  },
-  taxAgent:{
-    type: Boolean,
-  },
-  isActive: {
-    type: Boolean,
-    default: false
-  },
-  isBlocked:{
-    type:Boolean,
-    default:false
-  },
-  is2FA: {
-    type: Boolean,
-    default: false
-  },
-  passwordResetToken: String,
-  passwordResetExpiry: Date,
-},{
-   timestamps: true
-});
+  {
+    timestamps: true,
+  }
+);
 
 // Password hashing pre hook
 userSchema.pre('save', async function (next) {
@@ -95,11 +98,8 @@ userSchema.methods.generateToken = function () {
   return jwt.sign({ _id: this._id.toString() }, JWT_SECRET, { expiresIn: '1h' });
 };
 userSchema.methods.createPasswordResetToken = function () {
-  const resetToken = crypto.randomBytes(32).toString("hex");
-  this.passwordResetToken = crypto
-    .createHash("sha256")
-    .update(resetToken)
-    .digest("hex");
+  const resetToken = crypto.randomBytes(32).toString('hex');
+  this.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
   this.passwordResetExpiry = Date.now() + 10 * 60 * 1000;
   return resetToken;
 };

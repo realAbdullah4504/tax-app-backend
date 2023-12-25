@@ -204,12 +204,12 @@ exports.deleteUser = async (req, res, next) => {
 
 exports.deleteMember = async (req, res, next) => {
   try {
-    const {ids}=req.body;
+    const {ids,adminPassword}=req.body;
     const {role,email}=req.user;
       if(!["admin","supervisor"].includes(role)){
         throw new AppError('you are not authorize to add member', 403);
       }
-    const user = await UserService.authenticateUser(email, req.body.adminPassword);
+    const user = await UserService.authenticateUser(email,adminPassword);
       if (!user) {
         throw new AppError('admin password does not match', 403);
       }
@@ -239,10 +239,17 @@ exports.createMember = async(req,res,next)=>{
     if (!result.isEmpty()) {
       throw new AppError(JSON.stringify(result.errors), 400);
     }
-    const {role}=req.user;
-    if(!["admin","supervisor"].includes(role)){
-      throw new AppError('you are not authorize to add member', 403);
+    const existUser = await UserService.userExists({ email:req.body.email });
+    if (existUser){
+      sendAppResponse({
+        res,
+        statusCode: 400,
+        status: 'fail',
+        message: 'Member already registered with this email',
+      });
+      return
     }
+
 
     const payload={
       ...req.body,
@@ -346,9 +353,6 @@ exports.blockUser =async (req, res, next)=>{
  */
 exports.assignMemberOrStage =async (req, res, next)=>{
   try {
-    if(!['admin','supervisor'].includes(req.user.role)){
-      throw new AppError('you are not authorized to assing member or stage', 403);
-    }
     const {ids,...data}=req.body;
     await UserService.assignMemberOrStage(ids,data);
     sendAppResponse({
