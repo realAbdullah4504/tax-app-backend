@@ -263,8 +263,8 @@ const calculate = async (year, userId) => {
   const singleParentFullTimeCourse = students?.find(
     (item) => item.year === year && item?.fullTimeCourse === 'fullTime'
   );
-  const singleParentStandardCredits =
-    type === 'singleParent' && singleParentFullTimeCourse ? singleParent : 0;
+  const singleParentStandardCredits = type === 'singleParent' ? singleParent : 0;
+  // type === 'singleParent' && singleParentFullTimeCourse ? singleParent : 0;
 
   console.log('single parent standard', singleParentFullTimeCourse);
 
@@ -326,6 +326,10 @@ const calculate = async (year, userId) => {
   let totalFeesCourses = 0;
   //=((MIN(F140,E55)-F139 +MIN(E59,F140)-F139)*F141
   //if(E52=Yes,=((MIN(F140,E55)-F139)+(MIN(E59,F140)-F138))*F141,0) individual or total??
+  //=IF(E66="No",0,MIN(F159,E70)+MIN(E74,F159)-F158)*F160 updated formula
+  //F159 courseMaximum
+  //E70, E74 coursefees
+  //
   let totalFeesCoursesFullTime = 0;
   let totalFeesCoursesPartTime = 0;
   let hasFullTimeCourse = false; // Track if there are full-time courses
@@ -475,17 +479,19 @@ const calculate = async (year, userId) => {
   ////***********************************SECTION 4 *************************************************** */
   //USC Calculation
   const uscCalculation = (grossIncomeUsc) => {
-    const usc1 = (Math.min(grossIncomeUsc, uscBands[0]) * uscRatesPercentage[0]) / 100;
+    const usc1 = Math.min(grossIncomeUsc, uscBands[0]) * (uscRatesPercentage[0] / 100);
     console.log('usc1', usc1);
 
     const usc2 =
-      (Math.min(grossIncomeUsc - uscBands[1], uscBands[1]) * uscRatesPercentage[1]) / 100;
+      Math.min(grossIncomeUsc - uscBands[0], uscBands[1]) * (uscRatesPercentage[1] / 100);
     console.log('usc2', usc2);
 
     const usc3 =
-      (Math.min(grossIncomeUsc - (uscBands[0] + uscBands[1]), uscBands[2]) *
-        uscRatesPercentage[2]) /
-      100;
+      Math.min(grossIncomeUsc - (uscBands[0] + uscBands[1]), uscBands[2]) > 0
+        ? (Math.min(grossIncomeUsc - (uscBands[0] + uscBands[1]), uscBands[2]) *
+            uscRatesPercentage[2]) /
+          100
+        : 0;
     console.log('usc3', usc3);
     const usc4 =
       grossIncomeUsc - (uscBands[0] + uscBands[1] + uscBands[2]) > 0
