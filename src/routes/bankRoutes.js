@@ -16,26 +16,29 @@ const {
   refundReceivedUserDetails,
   paymentDetails,
   getRefundDetails,
+  saveDefaultValues,
 } = bankController;
 
 const router = express.Router();
 
-router.get("/getUserBankDetails", getUserBankDetails);
 router.get("/", getAccessToken);
-router.post("/transferMoney", authenticate, transferMoney);
-router.get("/getRefundDetails", authenticate, getRefundDetails);
+
 router.post(
   "/createBeneficiary",
   authenticate,
   authenticateBank,
   createBeneficiary
 );
+router.post("/saveDefaultValues", saveDefaultValues);
 router.get(
   "/checkBankReceived",
   authenticate,
   authenticateBank,
   checkBankReceived
 );
+
+router.get("/getUserBankDetails", getUserBankDetails);
+router.get("/getRefundDetails", authenticate, getRefundDetails);
 
 router.get(
   "/userRefundDetails",
@@ -55,6 +58,7 @@ router.post(
   authenticateBank,
   transferMoney
 );
+
 router.post("/transfer", authenticate, authenticateBank, transfer);
 
 module.exports = router;

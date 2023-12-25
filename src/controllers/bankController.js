@@ -1,6 +1,6 @@
 const { NetworkContextImpl } = require("twilio/lib/rest/supersim/v1/network");
 const sendAppResponse = require("../utils/helper/appResponse");
-const TaxDetails = require("../models/calculationDetailsModel");
+
 const axios = require("axios");
 
 const {
@@ -18,12 +18,32 @@ const BankServices = require("../services/bankSerivce");
 const {
   generateRandomReferenceId,
 } = require("../utils/helper/randomReference");
+const BankDefaultValues = require("../models/bankDefaultValues");
 
+exports.saveDefaultValues = async (req, res, next) => {
+  const values = req.body;
+  try {
+    const data = await BankDefaultValues.findOneAndUpdate({}, values, {
+      upsert: true,
+      new: true,
+    });
+    sendAppResponse({
+      res,
+      data,
+      statusCode: 200,
+      status: "success",
+      message: "Default values saved successfully.",
+    });
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+};
 exports.getUserBankDetails = async (req, res, next) => {
   try {
     const { userId } = req?.query || "";
-    const data = await BankDetails.findOne({ userId }); 
-    if(!data){
+    const data = await BankDetails.findOne({ userId });
+    if (!data) {
       return sendAppResponse({
         res,
         statusCode: 404,
@@ -43,44 +63,25 @@ exports.getUserBankDetails = async (req, res, next) => {
     next(error);
   }
 };
-exports.getAccessToken = async (req, res, next) => {
+
+exports.getRefundDetails = async (req, res, next) => {
   try {
-    // console.log(CLIENT_ASSERTION);
-    const apiUrl = "https://sandbox-b2b.revolut.com/api/1.0/auth/token";
-
-    const config = {
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-      },
-    };
-    // console.log(req.query);
-    const { code } = req.query;
-
-    const requestData = {
-      // grant_type: "authorization_code",
-      // code: code,
-      grant_type: "refresh_token",
-      refresh_token: code,
-      client_id: CLIENT_ID,
-      client_assertion_type:
-        "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
-      client_assertion: CLIENT_ASSERTION,
-    };
-
-    const { data } = await axios.post(
-      apiUrl,
-      new URLSearchParams(requestData).toString(),
-      config
+    const userId = req?.query?.userId || "";
+    console.log(userId);
+    const { data, totalRefund } = await BankServices.getTotalRefundByUserId(
+      userId
     );
+
     sendAppResponse({
       res,
       data,
+      totalRefund,
       statusCode: 200,
       status: "success",
-      // message: "User updated successfully.",
+      message: "Transactions fetched successfully.",
     });
   } catch (error) {
-    console.error(error);
+    console.log(error);
     next(error);
   }
 };
@@ -105,11 +106,6 @@ exports.createBeneficiary = async (req, res, next) => {
     const data = await BankServices.createBeneficiaryRevolut(user, headers);
 
     const { ppsn } = await PersonalDetails.findOne({ userId: id });
-    //how to send the year to review
-    const { taxResult } = (await CalculationDetails.findOne({
-      userId: id,
-      year: 2023,
-    })) || { taxResult: 0 };
 
     const payload = {
       userId: id,
@@ -117,12 +113,10 @@ exports.createBeneficiary = async (req, res, next) => {
       iban: data.accounts[0].iban,
       beneficiaryId: data.id,
       ppsn: ppsn,
-      submittedDate: "2023-01-01T00:00:00.000Z",
       receivedDate: null,
+      refundReceived: "Not Received",
       totalReceivedBankAmount: 0,
-      totalRefundAmount: taxResult,
     };
-
     const bankDetails = await BankServices.createBeneficiaryDatabase(
       id,
       payload
@@ -130,7 +124,8 @@ exports.createBeneficiary = async (req, res, next) => {
 
     sendAppResponse({
       res,
-      data,
+      // data,
+      bankDetails,
       statusCode: 200,
       status: "success",
       message: "Beneficiary created successfully.",
@@ -144,58 +139,117 @@ exports.createBeneficiary = async (req, res, next) => {
 exports.checkBankReceived = async (req, res, next) => {
   try {
     const data = await BankDetails.find({});
+
     const results = [];
     const headers = req.headers;
 
     for (const detail of data) {
       const {
-        submittedDate,
+        userId,
         receivedDate,
         ppsn,
         totalReceivedBankAmount,
-        totalRefundAmount,
+        accountTitle,
+        status,
+        refundReceivedStatus,
       } = detail;
 
-      if (submittedDate && totalRefundAmount > 0) {
+      const { totalRefund, data: refundList } =
+        await BankServices.getTotalRefundByUserId(userId);
+      const { submittedDate } = (refundList && refundList[0]) || {};
+
+      console.log(
+        "userId",
+        userId,
+        "submittedDate",
+        submittedDate,
+        "totalRefund",
+        totalRefund
+      );
+
+      if (
+        submittedDate &&
+        totalRefund > 0 &&
+        status === "Cannot Initiate Payment"
+      ) {
         const transactions = await BankServices.getTransactions(
           ppsn,
           submittedDate,
           headers,
           receivedDate
         );
-        //   console.log("transactions", transactions);
+        // console.log("transactions", transactions);
 
-        //   total the transactions according to required ppsn
+        // total the transactions according to required ppsn
 
         if (transactions.length) {
           const totalAmountTransactions =
-            Math.abs(totalReceivedBankAmount) +
+            totalReceivedBankAmount +
             transactions.reduce((total, transaction) => {
               return total + transaction.legs[0].amount;
             }, 0);
-          //   console.log("totalAmountTransactions", totalAmountTransactions);
-          // console.log(transactions)
+          console.log("totalAmountTransactions", totalAmountTransactions);
+
           const newReceivedDate = transactions.length
             ? transactions[0].created_at
             : receivedDate;
-          //   console.log("newReceivedDate", newReceivedDate);
+          console.log("newReceivedDate", newReceivedDate);
 
-          //for initiation of payment
-          const bankDetails = await BankServices.initiateTransfer(
-            detail,
-            newReceivedDate,
-            totalAmountTransactions
+          const receivedStatus =
+            (newReceivedDate && "Received") || "Not Received";
+
+          //for updating the receivedDate
+          const bankDetails = await BankDetails.findOneAndUpdate(
+            { userId, ppsn },
+            {
+              receivedDate: newReceivedDate,
+              totalReceivedBankAmount: totalAmountTransactions,
+              refundReceivedStatus: receivedStatus,
+            },
+            { new: true, upsert: true }
           );
-          results.push({ message: "Bank Details Updated", bankDetails });
-        } else {
-          results.push({ message: "No Transactions Found", detail });
-        }
-      } else {
-        results.push({ message: "Cannot initiate", detail });
-      }
+          const details = {
+            userId: userId,
+            accountTitle: accountTitle,
+            submittedDate: submittedDate,
+            receivedDate: newReceivedDate,
+            totalRcvd: totalAmountTransactions,
+            refundExpected: totalRefund,
+            status: status,
+            refundReceivedStatus: receivedStatus,
+          };
 
-      //   console.log("bankDetails", bankDetails);
+          results.push({
+            message: "Bank Details Updated",
+            details,
+          });
+        } else if (refundReceivedStatus === "Received") {
+          const details = {
+            userId: userId,
+            accountTitle: accountTitle,
+            submittedDate: submittedDate,
+            receivedDate: receivedDate,
+            totalRcvd: totalReceivedBankAmount,
+            refundExpected: +totalRefund,
+            status: status,
+          };
+
+          results.push({
+            message: "No Transactions Found",
+            ...details,
+            refundReceivedStatus,
+          });
+        } else {
+          results.push({
+            message: "No Transactions Found",
+            accountTitle,
+            status,
+            refundReceivedStatus,
+          });
+        }
+      }
     }
+    //   console.log("bankDetails", bankDetails);
 
     sendAppResponse({
       res,
@@ -208,6 +262,64 @@ exports.checkBankReceived = async (req, res, next) => {
     next(error);
   }
 };
+exports.transferMoney = async (req, res, next) => {
+  try {
+    const { userId } = req.params;
+    // console.log("userId", userId);
+    const headers = req.headers;
+
+    const accountDetails = await BankDetails.findOne({ userId });
+    const { beneficiaryId, totalReceivedBankAmount } = accountDetails;
+    const { totalRefund } = await BankServices.getTotalRefundByUserId(userId);
+
+    const initiate = await BankServices.validTransfer(
+      totalReceivedBankAmount,
+      520
+    );
+
+    let netRebate = 0;
+    if (initiate === "No-Manual Review") {
+      sendAppResponse({
+        res,
+        statusCode: 200,
+        status: "success",
+        message: "No-Manual Review",
+      });
+    } else {
+      netRebate = await BankServices.getKYCCalculations(
+        "SW354",
+        totalReceivedBankAmount
+      );
+    }
+
+    const reference = generateRandomReferenceId(userId);
+
+    const payload = {
+      request_id: reference,
+      account_id: ACCOUNT_REVOLUT,
+      receiver: {
+        counterparty_id: beneficiaryId,
+      },
+      amount: netRebate,
+      currency: "EUR",
+      reference: reference,
+    };
+    console.log("transferDetails", payload);
+
+    // const transfer = await BankServices.transferMoney(userId, payload, headers);
+    // sendAppResponse({
+    //   res,
+    //   transfer,
+    //   statusCode: 200,
+    //   status: "success",
+    //   message: "Transfer created successfully.",
+    // });
+  } catch (error) {
+    console.error("Error:", error);
+    next(error);
+  }
+};
+
 exports.refundReceivedUserDetails = async (req, res, next) => {
   try {
     const { userId } = req.query;
@@ -330,63 +442,6 @@ exports.paymentDetails = async (req, res, next) => {
   }
 };
 
-exports.transferMoney = async (req, res, next) => {
-  try {
-    const { userId } = req.params;
-    // console.log("userId", userId);
-    const headers = req.headers;
-
-    const accountDetails = await BankDetails.findOne({ userId });
-    const { beneficiaryId, totalRefundAmount } = accountDetails;
-
-    if (!accountDetails) {
-      return sendAppResponse({
-        res,
-        statusCode: 400,
-        status: "error",
-        message: "Beneficiary not found.",
-      });
-    }
-    const reference = generateRandomReferenceId(userId);
-
-    const payload = {
-      request_id: reference,
-      account_id: ACCOUNT_REVOLUT,
-      receiver: {
-        counterparty_id: beneficiaryId,
-      },
-      amount: totalRefundAmount,
-      currency: "EUR",
-      reference: reference,
-    };
-
-    if (accountDetails.status === "Initiate Payment") {
-      const transfer = await BankServices.transferMoney(
-        userId,
-        payload,
-        headers
-      );
-      sendAppResponse({
-        res,
-        transfer,
-        statusCode: 200,
-        status: "success",
-        message: "Transfer created successfully.",
-      });
-    }
-
-    sendAppResponse({
-      res,
-      statusCode: 400,
-      status: "error",
-      message: "Transfer cannot be initiated.",
-    });
-  } catch (error) {
-    console.error("Error:", error);
-    next(error);
-  }
-};
-
 exports.transfer = async (req, res, next) => {
   try {
     const payload = req.body;
@@ -452,35 +507,6 @@ exports.getTransactions = async (req, res, next) => {
   }
 };
 
-exports.getRefundDetails = async (req, res, next) => {
-  try {
-    const userId = req?.query?.userId || "";
-    const taxDetails = await TaxDetails.find({ userId });
-    let totalRefund = 0;
-    const data = [];
-    taxDetails &&
-      taxDetails.length &&
-      taxDetails?.forEach(({ year, taxResult, updatedAt, createdAt }) => {
-        const obj = {
-          year,
-          amount: taxResult && taxResult?.toFixed(2),
-          submitedDate: updatedAt || createdAt,
-        };
-        data.push(obj);
-        totalRefund += taxResult;
-      });
-    totalRefund = totalRefund && totalRefund?.toFixed(2);
-    sendAppResponse({
-      res,
-      data,
-      totalRefund,
-      statusCode: 200,
-      status: "success",
-      message: "Transactions fetched successfully.",
-    });
-  } catch (error) {}
-};
-
 exports.getAccounts = async (req, res, next) => {
   const apiUrlGet = "https://sandbox-b2b.revolut.com/api/1.0/accounts";
 
@@ -517,6 +543,48 @@ exports.getBeneficiary = async (req, res, next) => {
       message: "Beneficiary fetched successfully.",
     });
   } catch (error) {
+    next(error);
+  }
+};
+
+exports.getAccessToken = async (req, res, next) => {
+  try {
+    // console.log(CLIENT_ASSERTION);
+    const apiUrl = "https://sandbox-b2b.revolut.com/api/1.0/auth/token";
+
+    const config = {
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+    };
+    // console.log(req.query);
+    const { code } = req.query;
+
+    const requestData = {
+      // grant_type: "authorization_code",
+      // code: code,
+      grant_type: "refresh_token",
+      refresh_token: code,
+      client_id: CLIENT_ID,
+      client_assertion_type:
+        "urn:ietf:params:oauth:client-assertion-type:jwt-bearer",
+      client_assertion: CLIENT_ASSERTION,
+    };
+
+    const { data } = await axios.post(
+      apiUrl,
+      new URLSearchParams(requestData).toString(),
+      config
+    );
+    sendAppResponse({
+      res,
+      data,
+      statusCode: 200,
+      status: "success",
+      // message: "User updated successfully.",
+    });
+  } catch (error) {
+    console.error(error);
     next(error);
   }
 };

@@ -1,6 +1,8 @@
 const { ACCOUNT_REVOLUT, REVOLUT_URL } = require("../../config/vars");
 const AppError = require("../errors/AppError");
+const BankDefaultValues = require("../models/bankDefaultValues");
 const BankDetails = require("../models/bankDetailsModel");
+const TaxDetails = require("../models/calculationDetailsModel");
 const { default: axios } = require("axios");
 
 function getEndDate(submittedDate, receivedDate) {
@@ -16,7 +18,35 @@ function getEndDate(submittedDate, receivedDate) {
   return { startDate, endDate };
 }
 
+
+
 const BankServices = {
+  async getTotalRefundByUserId(userId = "") {
+    try {
+      const taxDetails = userId
+        ? await TaxDetails.find({ userId }).sort({ year: -1 })
+        : [];
+
+      let totalRefund = 0;
+      const data = [];
+      if (!taxDetails.length) return { data, totalRefund };
+      taxDetails &&
+        taxDetails.length &&
+        taxDetails?.forEach(({ year, taxResult, updatedAt, createdAt }) => {
+          const obj = {
+            year,
+            amount: taxResult && taxResult?.toFixed(2),
+            submittedDate: updatedAt || createdAt,
+          };
+          data.push(obj);
+          totalRefund += taxResult;
+        });
+      totalRefund = totalRefund && +totalRefund?.toFixed(2);
+      return { data, totalRefund };
+    } catch (error) {
+      throw new AppError(error.message, 500);
+    }
+  },
   async createBeneficiaryRevolut(user, headers) {
     try {
       const apiUrlPost = `${REVOLUT_URL}/counterparty`;
@@ -50,7 +80,7 @@ const BankServices = {
     try {
       const apiUrlGet = `${REVOLUT_URL}/transactions`;
       const { startDate, endDate } = getEndDate(submittedDate, receivedDate);
-      //   console.log("startDate", startDate, "endDate", endDate);
+      console.log("startDate", startDate, "endDate", endDate);
 
       const params = {
         from: startDate,
@@ -73,46 +103,101 @@ const BankServices = {
     }
   },
 
-  async initiateTransfer(
-    { userId, ppsn, totalRefundAmount },
-    newReceivedDate,
-    totalAmountTransactions
-  ) {
-    // console.log(
-    //   ppsn,
-    //   userId,
-    //   totalAmountTransactions,
-    //   newReceivedDate,
-    //   totalReceivedBankAmount,
-    //   totalRefundAmount
-    // );
-    try {
-      //for testing
-      let totalBank = totalAmountTransactions;
-      const initiate =
-        totalBank === Math.floor(totalRefundAmount)
-          ? "Initiate Payment"
-          : "Cannot Initiate Payment";
-      // console.log("initiate", initiate);
-      console.log(totalBank);
+  // async initiateTransfer(
+  //   { userId, ppsn },
+  //   totalRefundAmount,
+  //   newReceivedDate,
+  //   totalAmountTransactions
+  // ) {
 
-      const bankDetails = await BankDetails.findOneAndUpdate(
-        { userId, ppsn },
-        {
-          totalReceivedBankAmount: totalBank,
-          receivedDate: newReceivedDate,
-          status: initiate,
-        },
-        { new: true }
-      );
+  //   try {
+  //     //for testing
+  //     const { status, initiate } = await validTransfer(totalAmountTransactions, 520);
 
-      //   console.log("Updated bankDetails:", bankDetails);
-      return bankDetails;
-    } catch (error) {
-      console.error("Error updating bank details:", error.message);
-      throw new AppError(error.message, 500);
+  //     const netRebate= await getKYCCalculations("SW354", totalAmountTransactions);
+  //     //   console.log("Updated bankDetails:", bankDetails);
+  //     return { status, initiate, netRebate };
+  //   } catch (error) {
+  //     console.error("Error updating bank details:", error.message);
+  //     throw new AppError(error.message, 500);
+  //   }
+  // },
+
+  async validTransfer(totalBank, totalRefundAmount) {
+
+    const bankDefaultValues = await BankDefaultValues.findOne({});
+    console.log('======================================')
+    const { errorBand, threshold, returnDifference } = bankDefaultValues || {};
+    // console.log(bankDefaultValues);
+    console.log(
+      "errorBand",
+      errorBand,
+      "threshold",
+      threshold,
+      "returnDifference",
+      returnDifference
+    );
+    console.log("totalBank", totalBank, "totalRefundAmount", totalRefundAmount);
+  
+    const calculatedErrorBand =
+      (totalBank - totalRefundAmount) / totalRefundAmount;
+    const calculatedReturnDifference = totalBank - totalRefundAmount;
+    console.log("calculatedErrorBand", calculatedErrorBand);
+    console.log("calculatedReturnDifference", calculatedReturnDifference);
+  
+    let initiate = "";
+  
+    if (totalRefundAmount < threshold) {
+      initiate = "Yes Continue";
+    } else if (
+      calculatedErrorBand < errorBand / 100 ||
+      calculatedReturnDifference < returnDifference
+    ) {
+      initiate = "No-Manual Review";
+    } else {
+      initiate = "Initiate Payment";
     }
+
+    console.log("initiate", initiate);
+    return initiate;
   },
+  
+  async getKYCCalculations(customerOfferCode, totalBank) {
+    console.log('======================================')
+    const bankDefaultValues = await BankDefaultValues.findOne({});
+    const { customerOfferCodes, VAT } = bankDefaultValues || {};
+    const VATPercent=VAT/100;
+  
+    const code = customerOfferCodes.find(
+      (code) => code.customerOfferCode === customerOfferCode
+    )?.value;
+  
+    let trp = code ? code : 10;
+    console.log("trp", trp);
+  
+    const trp1 = (trp / 100) * totalBank * (1 + VATPercent);
+    console.log("trp fee min", trp1);
+  
+    const trp2 = 40 * (1 + VATPercent);
+    console.log("trp fee max", trp2);
+  
+    const rebateNetValue = totalBank / (1 + VATPercent);
+    console.log("rebateNetValue", rebateNetValue);
+  
+    const trpFee = Math.min(rebateNetValue, Math.max(trp1, trp2));
+  
+    console.log("trpFee", trpFee);
+    const VATPrice = VATPercent * trpFee;
+    console.log("VATPrice", VATPrice);
+  
+    const totalTrpFee = trpFee + VATPrice;
+    console.log("totalTrpFee", totalTrpFee);
+  
+    const netRebate = totalBank - totalTrpFee;
+    console.log("netRebate", netRebate);
+    return netRebate;
+  },
+
   async transferMoney(userId, payload, headers) {
     try {
       const apiUrlPost = `${REVOLUT_URL}/pay`;
@@ -121,7 +206,7 @@ const BankServices = {
       if (!data) {
         throw new AppError("Transfer failed", 500);
       }
-      await BankDetails.findOneAndUpdate({ userId }, { status: "pending" });
+      await BankDetails.findOneAndUpdate({ userId }, { paymentStatus: "pending" });
 
       return data;
     } catch (error) {

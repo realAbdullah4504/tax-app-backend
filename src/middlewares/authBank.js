@@ -38,6 +38,7 @@ const getToken = async () => {
 const authenticateBank = async (req, res, next) => {
     try {
         const accessToken = await getToken();
+        console.log("access token", accessToken);
         if (!accessToken) throw new AppError('Access token missing', 401);
 
         const headers = {
