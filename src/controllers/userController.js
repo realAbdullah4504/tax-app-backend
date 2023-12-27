@@ -363,6 +363,31 @@ exports.assignMemberOrStage =async (req, res, next)=>{
   }
 }
 
+/**
+ * assign stage only
+ * @param {*} req 
+ * @param {*} res 
+ * @param {*} next 
+ */
+exports.assignStage =async (req, res, next)=>{
+  try {
+    // if(!['admin','supervisor'].includes(req.user.role)){
+    //   throw new AppError('you are not authorized to assing member or stage', 403);
+    // }
+    const {ids,...data}=req.body;
+    await UserService.assignMemberOrStage(ids,data);
+    sendAppResponse({
+      res,
+      data:{},
+      statusCode: 200,
+      status: "success",
+      message: "members details has been updated",
+    });
+  } catch (error) {
+    next(error);
+  }
+}
+
 exports.downloadSignedPDF = async (req, res) => {
   try {
     const {userId} = req?.query;

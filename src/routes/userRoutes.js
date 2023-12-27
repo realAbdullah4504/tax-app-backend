@@ -30,6 +30,7 @@ const {
   createMember,
   updateMember,
   assignMemberOrStage,
+  assignStage,
   deleteUser,
   downloadSignedPDF,
   getDefaultTaxValues,
@@ -101,6 +102,7 @@ router.get('/', authenticate, getUsersList);
 // router.post('/fileUpload', authenticate, upload.array('files', 5), fileUpload);
 router.put('/member/:id/block', [authenticate, blockUserValidator], blockUser);
 router.post('/member/assign', authenticate, assignMemberOrStage);
+router.post('/assignStage', authenticate, assignStage);
 router.post('/member', [authenticate, createMemberValidator], createMember);
 router.put('/member/:id', [authenticate, updateMemberValidator], updateMember);
 router.delete('/member', authenticate, deleteMember);
