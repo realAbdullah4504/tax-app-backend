@@ -46,6 +46,7 @@ const authenticateBank = async (req, res, next) => {
             // 'Content-Type': 'application/json',
             // 'Accept': 'application/json',
         };
+        console.log("headers", headers);
         req.headers = headers;
 
         next();

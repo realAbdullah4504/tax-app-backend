@@ -312,8 +312,9 @@ exports.transferMoney = async (req, res, next) => {
     const { beneficiaryId, totalReceivedBankAmount } = accountDetails;
     const { totalRefund } = await BankServices.getTotalRefundByUserId(userId);
 
+    const positiveTotalReceivedBankAmount = Math.abs(totalReceivedBankAmount);
     const initiate = await BankServices.validTransfer(
-      totalReceivedBankAmount,
+      positiveTotalReceivedBankAmount,
       totalRefund
     );
 
@@ -328,7 +329,7 @@ exports.transferMoney = async (req, res, next) => {
     } else {
       netRebate = await BankServices.getKYCCalculations(
         "SW354",
-        totalReceivedBankAmount
+        positiveTotalReceivedBankAmount
       );
     }
 
@@ -346,14 +347,14 @@ exports.transferMoney = async (req, res, next) => {
     };
     console.log("transferDetails", payload);
 
-    // const transfer = await BankServices.transferMoney(userId, payload, headers);
-    // sendAppResponse({
-    //   res,
-    //   transfer,
-    //   statusCode: 200,
-    //   status: "success",
-    //   message: "Transfer created successfully.",
-    // });
+    const transfer = await BankServices.transferMoney(userId, payload, headers);
+    sendAppResponse({
+      res,
+      transfer,
+      statusCode: 200,
+      status: "success",
+      message: "Transfer created successfully.",
+    });
   } catch (error) {
     console.error("Error:", error);
     next(error);
@@ -495,9 +496,9 @@ exports.transfer = async (req, res, next) => {
   try {
     const payload = req.body;
     const headers = req.headers;
-
+    console.log(req.body);
     const apiUrlPost = `${REVOLUT_URL}/pay`;
-    const { data } = await axios.post(apiUrlPost, payload, { headers });
+    const data = await axios.post(apiUrlPost, payload, { headers });
 
     sendAppResponse({
       res,
@@ -507,6 +508,7 @@ exports.transfer = async (req, res, next) => {
       message: "Transfer created successfully.",
     });
   } catch (error) {
+    console.error(error);
     next(error);
   }
 };
