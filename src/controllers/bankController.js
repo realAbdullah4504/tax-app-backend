@@ -19,6 +19,7 @@ const {
   generateRandomReferenceId,
 } = require("../utils/helper/randomReference");
 const BankDefaultValues = require("../models/bankDefaultValues");
+const UserService = require("../services/userService");
 
 exports.saveDefaultValues = async (req, res, next) => {
   const values = req.body;
@@ -114,8 +115,9 @@ exports.createBeneficiary = async (req, res, next) => {
       beneficiaryId: data.id,
       ppsn: ppsn,
       receivedDate: null,
-      refundReceived: "notReceived",
-      paymentStatus: "cannotInitiate",
+      netRebate: 0,
+      refundReceived: "notRefundReceived",
+      paymentStatus: "noManualReview",
       totalReceivedBankAmount: 0,
     };
     const bankDetails = await BankServices.createBeneficiaryDatabase(
@@ -150,9 +152,7 @@ exports.checkBankReceived = async (req, res, next) => {
         receivedDate,
         ppsn,
         totalReceivedBankAmount,
-        accountTitle,
         paymentStatus,
-        refundReceivedStatus,
       } = detail;
 
       const { totalRefund, data: refundList } =
@@ -173,7 +173,7 @@ exports.checkBankReceived = async (req, res, next) => {
       if (
         submittedDate &&
         totalRefund > 0 &&
-        paymentStatus === "cannotInitiate"
+        paymentStatus === "noManualReview"
       ) {
         const transactions = await BankServices.getTransactions(
           ppsn,
@@ -181,9 +181,6 @@ exports.checkBankReceived = async (req, res, next) => {
           headers,
           receivedDate
         );
-        // console.log("transactions", transactions);
-
-        // total the transactions according to required ppsn
 
         if (transactions.length) {
           const totalAmountTransactions =
@@ -198,52 +195,53 @@ exports.checkBankReceived = async (req, res, next) => {
             : receivedDate;
           console.log("newReceivedDate", newReceivedDate);
 
-          const receivedStatus =
-            (newReceivedDate && "received") || "notReceived";
+          const receivedStatus = transactions.length
+            ? "refundReceived"
+            : "notRefundReceived";
 
           //for updating the receivedDate
-          const bankDetails = await BankDetails.findOneAndUpdate(
+          await BankServices.saveBankDetails(
             { userId, ppsn },
             {
               receivedDate: newReceivedDate,
               totalReceivedBankAmount: totalAmountTransactions,
               refundReceivedStatus: receivedStatus,
-            },
-            { new: true, upsert: true }
+            }
           );
-          const details = {
-            userId: userId,
-            accountTitle: accountTitle,
-            submittedDate: submittedDate,
-            receivedDate: newReceivedDate,
-            totalRcvd: totalAmountTransactions,
-            refundExpected: totalRefund,
-            paymentStatus: paymentStatus,
-            refundReceivedStatus: receivedStatus,
-          };
 
-          results.push({
-            message: "Bank Details Updated",
-            details,
+          await UserService.updatedUser({
+            id: userId,
+            data: { stage: "refundReceived" },
           });
-        } else if (refundReceivedStatus === "received") {
-          const details = {
-            userId: userId,
-            accountTitle: accountTitle,
-            submittedDate: submittedDate,
-            receivedDate: receivedDate,
-            totalRcvd: totalReceivedBankAmount,
-            refundExpected: totalRefund,
-            paymentStatus: paymentStatus,
-          };
 
-          results.push({
-            message: "No Transactions Found",
-            ...details,
-            refundReceivedStatus,
-          });
+          const positiveTotalReceivedBankAmount = Math.abs(
+            totalAmountTransactions
+          );
+          const initiate = await BankServices.validTransfer(
+            positiveTotalReceivedBankAmount,
+            totalRefund
+          );
+
+          let netRebate = 0;
+          if (initiate !== "noManualReview") {
+            const { customerOfferCode } =
+              (await UserService.fetchUserDetail(userId)) || {};
+            console.log("customerOfferCode", customerOfferCode);
+
+            netRebate = await BankServices.getKYCCalculations(
+              customerOfferCode,
+              positiveTotalReceivedBankAmount
+            );
+            await BankServices.saveBankDetails(
+              { userId, ppsn },
+              {
+                paymentStatus: initiate,
+                netRebate,
+              }
+            );
+          }
         }
-      } else if (paymentStatus !== "cannotInitiate") {
+      } else if (paymentStatus !== "noManualReview") {
         const transactions =
           (await BankServices.getTransactions(
             userId,
@@ -263,34 +261,56 @@ exports.checkBankReceived = async (req, res, next) => {
               },
               { new: true, upsert: true }
             ));
-
-          const details = {
-            userId: userId,
-            accountTitle: accountTitle,
-            submittedDate: submittedDate,
-            receivedDate: receivedDate,
-            totalRcvd: totalReceivedBankAmount,
-            refundExpected: totalRefund,
-            paymentStatus: transactions[0].state,
-          };
-
-          results.push({
-            message: "No Transactions Found",
-            ...details,
-            refundReceivedStatus,
-          });
         }
-      } else {
-        results.push({
-          message: "No Transactions Found",
-          accountTitle,
-          paymentStatus,
-          refundReceivedStatus,
-        });
       }
     }
     //   console.log("bankDetails", bankDetails);
 
+    sendAppResponse({
+      res,
+      statusCode: 200,
+      status: "success",
+      message: "Bank details updated successfully.",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+exports.getRefundReceivedDetails = async (req, res, next) => {
+  try {
+    const data = await BankDetails.find({});
+    let results = [];
+    for (const detail of data) {
+      const {
+        userId,
+        receivedDate,
+        totalReceivedBankAmount,
+        accountTitle,
+        paymentStatus,
+        refundReceivedStatus,
+      } = detail;
+
+      const { totalRefund, data: refundList } =
+        await BankServices.getTotalRefundByUserId(userId);
+      const { submittedDate } = (refundList && refundList[0]) || {};
+
+      if (
+        submittedDate &&
+        totalRefund > 0 &&
+        refundReceivedStatus === "refundReceived"
+      ) {
+        const details = {
+          accountTitle,
+          submittedDate,
+          receivedDate,
+          totalRcvd: totalReceivedBankAmount,
+          refundExpected: totalRefund,
+          paymentStatus,
+          refundReceivedStatus,
+        };
+        results.push(details);
+      }
+    }
     sendAppResponse({
       res,
       data: results,
@@ -309,30 +329,17 @@ exports.transferMoney = async (req, res, next) => {
     const headers = req.headers;
 
     const accountDetails = await BankDetails.findOne({ userId });
-    const { beneficiaryId, totalReceivedBankAmount } = accountDetails;
-    const { totalRefund } = await BankServices.getTotalRefundByUserId(userId);
+    const { beneficiaryId, netRebate, paymentStatus } = accountDetails || {};
 
-    const positiveTotalReceivedBankAmount = Math.abs(totalReceivedBankAmount);
-    const initiate = await BankServices.validTransfer(
-      positiveTotalReceivedBankAmount,
-      totalRefund
-    );
-
-    let netRebate = 0;
-    if (initiate === "No-Manual Review") {
-      sendAppResponse({
+    if (paymentStatus === "noManualReview") {
+      return sendAppResponse({
         res,
-        statusCode: 200,
-        status: "success",
-        message: "No-Manual Review",
+        statusCode: 400,
+        status: "error",
+        message:
+          "Cannot initiate payment. Please contact support. Manual Review required.",
       });
-    } else {
-      netRebate = await BankServices.getKYCCalculations(
-        "SW354",
-        positiveTotalReceivedBankAmount
-      );
     }
-
     const reference = generateRandomReferenceId(userId);
 
     const payload = {

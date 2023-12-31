@@ -18,8 +18,6 @@ function getEndDate(submittedDate, receivedDate) {
   return { startDate, endDate };
 }
 
-
-
 const BankServices = {
   async getTotalRefundByUserId(userId = "") {
     try {
@@ -103,30 +101,26 @@ const BankServices = {
     }
   },
 
-  // async initiateTransfer(
-  //   { userId, ppsn },
-  //   totalRefundAmount,
-  //   newReceivedDate,
-  //   totalAmountTransactions
-  // ) {
-
-  //   try {
-  //     //for testing
-  //     const { status, initiate } = await validTransfer(totalAmountTransactions, 520);
-
-  //     const netRebate= await getKYCCalculations("SW354", totalAmountTransactions);
-  //     //   console.log("Updated bankDetails:", bankDetails);
-  //     return { status, initiate, netRebate };
-  //   } catch (error) {
-  //     console.error("Error updating bank details:", error.message);
-  //     throw new AppError(error.message, 500);
-  //   }
-  // },
+  async saveBankDetails(
+    { userId, ppsn },
+    payload
+  ) {
+    try {
+      const bankDetails = await BankDetails.findOneAndUpdate(
+        { userId, ppsn },
+        payload,
+        { new: true, upsert: true }
+      );
+      return bankDetails;
+    } catch (error) {
+      console.error("Error updating bank details:", error.message);
+      throw new AppError(error.message, 500);
+    }
+  },
 
   async validTransfer(totalBank, totalRefundAmount) {
-
     const bankDefaultValues = await BankDefaultValues.findOne({});
-    console.log('======================================')
+    console.log("======================================");
     const { errorBand, threshold, returnDifference } = bankDefaultValues || {};
     // console.log(bankDefaultValues);
     console.log(
@@ -138,61 +132,63 @@ const BankServices = {
       returnDifference
     );
     console.log("totalBank", totalBank, "totalRefundAmount", totalRefundAmount);
-  
+
     const calculatedErrorBand =
       (totalBank - totalRefundAmount) / totalRefundAmount;
     const calculatedReturnDifference = totalBank - totalRefundAmount;
     console.log("calculatedErrorBand", calculatedErrorBand);
     console.log("calculatedReturnDifference", calculatedReturnDifference);
-  
+
     let initiate = "";
-  
+
     if (totalRefundAmount < threshold) {
-      initiate = "yes";
+      initiate = "initiate";
     } else if (
       calculatedErrorBand < errorBand / 100 ||
       calculatedReturnDifference < returnDifference
     ) {
-      initiate = "No-Manual Review";
+      initiate = "noManualReview";
     } else {
-      initiate = "yes";
+      initiate = "initiate";
     }
 
     console.log("initiate", initiate);
     return initiate;
   },
-  
+
   async getKYCCalculations(customerOfferCode, totalBank) {
-    console.log('======================================')
+    console.log("======================================");
     const bankDefaultValues = await BankDefaultValues.findOne({});
     const { customerOfferCodes, VAT } = bankDefaultValues || {};
-    const VATPercent=VAT/100;
-  
+    const VATPercent = VAT / 100;
+
     const code = customerOfferCodes.find(
       (code) => code.customerOfferCode === customerOfferCode
     )?.value;
-  
+
+    console.log("code", code);
+    
     let trp = code ? code : 10;
     console.log("trp", trp);
-  
+
     const trp1 = (trp / 100) * totalBank * (1 + VATPercent);
     console.log("trp fee min", trp1);
-  
+
     const trp2 = 40 * (1 + VATPercent);
     console.log("trp fee max", trp2);
-  
+
     const rebateNetValue = totalBank / (1 + VATPercent);
     console.log("rebateNetValue", rebateNetValue);
-  
+
     const trpFee = Math.min(rebateNetValue, Math.max(trp1, trp2));
-  
+
     console.log("trpFee", trpFee);
     const VATPrice = VATPercent * trpFee;
     console.log("VATPrice", VATPrice);
-  
+
     const totalTrpFee = trpFee + VATPrice;
     console.log("totalTrpFee", totalTrpFee);
-  
+
     const netRebate = totalBank - totalTrpFee;
     console.log("netRebate", netRebate);
     return netRebate;
@@ -206,7 +202,10 @@ const BankServices = {
       if (!data) {
         throw new AppError("Transfer failed", 500);
       }
-      await BankDetails.findOneAndUpdate({ userId }, { paymentStatus: "pending" });
+      await BankDetails.findOneAndUpdate(
+        { userId },
+        { paymentStatus: "pending" }
+      );
 
       return data;
     } catch (error) {

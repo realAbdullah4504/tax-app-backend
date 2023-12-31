@@ -62,6 +62,9 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  customerOfferCode: {
+    type: String,
+  },
   passwordResetToken: String,
   passwordResetExpiry: Date,
 },{

@@ -13,11 +13,13 @@ const bankDetailsModel = new mongoose.Schema(
     receivedDate: Date,
 
     totalReceivedBankAmount: Number,
+    netRebate: Number,
     refundReceivedStatus:String,
     paymentStatus: {
       type: String,
       default: "Cannot Initiate Payment",
     },
+
   },
   {
     timestamps: true,

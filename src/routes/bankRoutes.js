@@ -17,6 +17,7 @@ const {
   paymentDetails,
   getRefundDetails,
   saveDefaultValues,
+  getRefundReceivedDetails
 } = bankController;
 
 const router = express.Router();
@@ -36,6 +37,7 @@ router.get(
   authenticateBank,
   checkBankReceived
 );
+router.get("/getRefundReceivedDetails",authenticate,authenticateBank,getRefundReceivedDetails)
 
 router.get("/getUserBankDetails", getUserBankDetails);
 router.get("/getRefundDetails", authenticate, getRefundDetails);
