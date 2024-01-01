@@ -20,6 +20,7 @@ const {
 } = require("../utils/helper/randomReference");
 const BankDefaultValues = require("../models/bankDefaultValues");
 const UserService = require("../services/userService");
+const User = require("../models/userModel");
 
 exports.saveDefaultValues = async (req, res, next) => {
   const values = req.body;
@@ -293,12 +294,16 @@ exports.getRefundReceivedDetails = async (req, res, next) => {
       const { totalRefund, data: refundList } =
         await BankServices.getTotalRefundByUserId(userId);
       const { submittedDate } = (refundList && refundList[0]) || {};
-
+      
+      
       if (
         submittedDate &&
         totalRefund > 0 &&
         refundReceivedStatus === "refundReceived"
-      ) {
+        ) {          
+          const user = await User.findOne({ _id: userId }, '-_id firstName surName email phoneNumber createdAt');
+          const { firstName, surName, email, phoneNumber, createdAt } = user || {};
+
         const details = {
           accountTitle,
           submittedDate,
@@ -307,6 +312,12 @@ exports.getRefundReceivedDetails = async (req, res, next) => {
           refundExpected: totalRefund,
           paymentStatus,
           refundReceivedStatus,
+          userId,
+          firstName,
+          surName, 
+          email,
+          phoneNumber, 
+          createdAt
         };
         results.push(details);
       }
