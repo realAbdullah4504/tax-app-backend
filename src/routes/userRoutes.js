@@ -42,6 +42,7 @@ const {
   getCalculations,
   updateDefaultTaxValues,
   updateFlatRateExpenses,
+  getFlatRateExpenses,
   addCategories,
   getCategories,
 } = taxRatesController;
@@ -69,6 +70,7 @@ router.post('/member/resetMemberPassword', authenticate, memberResetPassword);
 // User
 router.get('/detail', authenticate, getUserProfile);
 router.get('/students', authenticate, getStudents);
+router.get('/getDefaultFlatRateExpense', authenticate, getFlatRateExpenses);
 router.post('/flatRateExpense', authenticate, updateFlatRateExpenses);
 router.post('/add-categories', authenticate, addCategories);
 router.get('/get-categories', authenticate, getCategories);

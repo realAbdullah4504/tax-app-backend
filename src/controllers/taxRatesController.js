@@ -766,3 +766,18 @@ exports.getCategories = async (req, res, next) => {
     next(error);
   }
 };
+exports.getFlatRateExpenses = async (req, res, next) => {
+  try {
+    const year = req.body.year;
+    const data = await FlatRateExpense.find({});
+    sendAppResponse({
+      res,
+      data,
+      statusCode: 200,
+      status: 'success',
+      message: '',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
