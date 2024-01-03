@@ -197,7 +197,7 @@ exports.checkBankReceived = async (req, res, next) => {
           console.log("newReceivedDate", newReceivedDate);
 
           const receivedStatus = transactions.length
-            ? "refundReceived"
+            ? "refundRcvd"
             : "notRefundReceived";
 
           //for updating the receivedDate
@@ -212,7 +212,7 @@ exports.checkBankReceived = async (req, res, next) => {
 
           await UserService.updatedUser({
             id: userId,
-            data: { stage: "refundReceived" },
+            data: { stage: "refundRcvd" },
           });
 
           const positiveTotalReceivedBankAmount = Math.abs(
@@ -299,7 +299,7 @@ exports.getRefundReceivedDetails = async (req, res, next) => {
       if (
         submittedDate &&
         totalRefund > 0 &&
-        refundReceivedStatus === "refundReceived"
+        refundReceivedStatus === "refundRcvd"
         ) {          
           const user = await User.findOne({ _id: userId }, '-_id firstName surName email phoneNumber createdAt');
           const { firstName, surName, email, phoneNumber, createdAt } = user || {};
