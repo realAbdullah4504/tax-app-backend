@@ -275,7 +275,7 @@ exports.getRefundReceivedDetails = async (req, res, next) => {
           refundExpected: totalRefund,
           paymentStatus,
           refundReceivedStatus,
-          userId,
+          _id: userId,
           firstName,
           surName,
           email,
