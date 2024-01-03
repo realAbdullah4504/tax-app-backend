@@ -117,19 +117,19 @@ const calculate = async (year, userId) => {
     elderlyRelative,
     children,
     occupations,
+    spouseOccupations,
     tuitionFeesCredit,
     students,
   } = (await FamilyDetails.findOne({ userId })) || {};
 
   const { incurHealthExpensesDetail, spouseEmployerPays, employerPaysDetails, fullGpMedicalCard } =
     (await HealthDetails.findOne({ userId })) || {};
-
-  let type = '';
+  let type = ''; let spouseFlatRateExpense = 0;
   let marriedType = summaryDetails?.some(({ summary_type }) => summary_type === 'Spouse');
   console.log('marriedType', marriedType);
   const FlatRateExpenseData = (await FlatRateExpense.findOne({ year })) || {};
-  let categoryValue = '';
-  let subCategoryValue = '';
+  let categoryValue = ''; let spouseCategoryValue ="";
+  let subCategoryValue = ''; let spouseSubCategoryValue = '';
   occupations &&
     occupations.length &&
     occupations?.forEach(({ category, subCategory, years }) => {
@@ -138,12 +138,13 @@ const calculate = async (year, userId) => {
         if (subCategory) subCategoryValue = subCategory;
       }
     });
-  const flatRateExpense =
+   
+  let flatRateExpense =
     categoryValue && FlatRateExpenseData
       ? categoryValue && !subCategoryValue
         ? FlatRateExpenseData[categoryValue]
         : FlatRateExpenseData[categoryValue][subCategoryValue]
-      : 100;
+      : 0;
   // const result = marriedType.some((item) => item.spouse === "spouse");
   console.log('====== FlatRateExpense ========', flatRateExpense);
   if (maritalStatus === 'single' && (!incapacitated || !dependentChildren)) {
@@ -167,6 +168,25 @@ const calculate = async (year, userId) => {
     type = marriedType ? 'married2Incomes' : 'married1Income';
   }
   console.log('type', type);
+ // Spouse Flat Rate Expense 
+ if(type=== "married2Incomes"){
+  spouseOccupations &&
+  spouseOccupations.length &&
+  spouseOccupations?.forEach(({ category, subCategory, years }) => {
+    if (years?.includes(year)) {
+      spouseCategoryValue = category;
+      if (subCategory) spouseSubCategoryValue = subCategory;
+    }
+  });
+   spouseFlatRateExpense =
+    spouseCategoryValue && FlatRateExpenseData
+      ? spouseCategoryValue && !spouseSubCategoryValue
+        ? FlatRateExpenseData[spouseCategoryValue]
+        : FlatRateExpenseData[spouseCategoryValue][spouseSubCategoryValue]
+      : 0;
+      flatRateExpense = flatRateExpense + spouseFlatRateExpense
+   console.log('===== spouseFlatRateExpense =======', spouseFlatRateExpense)   
+ }
 
   // Get the year of birth from the date
   const birthYear = dateOfBirth?.getUTCFullYear();
@@ -225,7 +245,7 @@ const calculate = async (year, userId) => {
     standardRateBand +
     totalPension +
     totalIncomeProtection +
-    (flatRateExpense || 100) +
+    (flatRateExpense || 0) +
     (totalPriceWorkedFromHome || 0); //=SUM(D15:D19)
   console.log('adjustedBand', adjustedBand);
 
@@ -263,8 +283,8 @@ const calculate = async (year, userId) => {
   const singleParentFullTimeCourse = students?.find(
     (item) => item.year === year && item?.fullTimeCourse === 'fullTime'
   );
-  const singleParentStandardCredits =
-    type === 'singleParent' && singleParentFullTimeCourse ? singleParent : 0;
+  const singleParentStandardCredits = type === 'singleParent' ? singleParent : 0;
+  // type === 'singleParent' && singleParentFullTimeCourse ? singleParent : 0;
 
   console.log('single parent standard', singleParentFullTimeCourse);
 
@@ -326,6 +346,10 @@ const calculate = async (year, userId) => {
   let totalFeesCourses = 0;
   //=((MIN(F140,E55)-F139 +MIN(E59,F140)-F139)*F141
   //if(E52=Yes,=((MIN(F140,E55)-F139)+(MIN(E59,F140)-F138))*F141,0) individual or total??
+  //=IF(E66="No",0,MIN(F159,E70)+MIN(E74,F159)-F158)*F160 updated formula
+  //F159 courseMaximum
+  //E70, E74 coursefees
+  //
   let totalFeesCoursesFullTime = 0;
   let totalFeesCoursesPartTime = 0;
   let hasFullTimeCourse = false; // Track if there are full-time courses
@@ -475,17 +499,19 @@ const calculate = async (year, userId) => {
   ////***********************************SECTION 4 *************************************************** */
   //USC Calculation
   const uscCalculation = (grossIncomeUsc) => {
-    const usc1 = (Math.min(grossIncomeUsc, uscBands[0]) * uscRatesPercentage[0]) / 100;
+    const usc1 = Math.min(grossIncomeUsc, uscBands[0]) * (uscRatesPercentage[0] / 100);
     console.log('usc1', usc1);
 
     const usc2 =
-      (Math.min(grossIncomeUsc - uscBands[1], uscBands[1]) * uscRatesPercentage[1]) / 100;
+      Math.min(grossIncomeUsc - uscBands[0], uscBands[1]) * (uscRatesPercentage[1] / 100);
     console.log('usc2', usc2);
 
     const usc3 =
-      (Math.min(grossIncomeUsc - (uscBands[0] + uscBands[1]), uscBands[2]) *
-        uscRatesPercentage[2]) /
-      100;
+      Math.min(grossIncomeUsc - (uscBands[0] + uscBands[1]), uscBands[2]) > 0
+        ? (Math.min(grossIncomeUsc - (uscBands[0] + uscBands[1]), uscBands[2]) *
+            uscRatesPercentage[2]) /
+          100
+        : 0;
     console.log('usc3', usc3);
     const usc4 =
       grossIncomeUsc - (uscBands[0] + uscBands[1] + uscBands[2]) > 0
@@ -735,6 +761,21 @@ exports.getCategories = async (req, res, next) => {
       statusCode: 200,
       status: 'success',
       message: 'Categories fetched successfully.',
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+exports.getFlatRateExpenses = async (req, res, next) => {
+  try {
+    const year = req.body.year;
+    const data = await FlatRateExpense.find({});
+    sendAppResponse({
+      res,
+      data,
+      statusCode: 200,
+      status: 'success',
+      message: '',
     });
   } catch (error) {
     next(error);

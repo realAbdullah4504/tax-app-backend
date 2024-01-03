@@ -3,7 +3,12 @@ const User = require('../models/userModel');
 const UserService = require('../services/userService');
 const AppError = require('../errors/AppError');
 const { validationResult } = require('express-validator');
-const { JWT_SECRET, JWT_COOKIE_EXPIRE_IN, NODE_ENV, FORGET_PASSWORD_ROUTE } = require('../../config/vars');
+const {
+  JWT_SECRET,
+  JWT_COOKIE_EXPIRE_IN,
+  NODE_ENV,
+  FORGET_PASSWORD_ROUTE,
+} = require('../../config/vars');
 const sendAppResponse = require('../utils/helper/appResponse');
 const emailService = require('../services/emailService');
 const { TokenFileWebIdentityCredentials } = require('aws-sdk');
@@ -144,12 +149,11 @@ exports.forgetPassword = async (req, res, next) => {
   try {
     const baseUrl = `${req.protocol}://${FORGET_PASSWORD_ROUTE}`;
 
-
     const resetTokenUrl = await UserService.forgotPasswordUser(req?.body?.email, baseUrl);
-    
-    const info = await emailService(resetTokenUrl,req?.body?.email);
+    const userData = await UserService.findUserByEmail(req?.body?.email);
+    const info = await emailService(resetTokenUrl, req?.body?.email, userData);
     // console.log(resetTokenUrl);
-    res.status(200).json({ status: 'success', resetTokenUrl,info});
+    res.status(200).json({ status: 'success', resetTokenUrl, info });
   } catch (error) {
     next(error);
   }

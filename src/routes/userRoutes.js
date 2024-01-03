@@ -30,6 +30,7 @@ const {
   createMember,
   updateMember,
   assignMemberOrStage,
+  assignStage,
   deleteUser,
   downloadSignedPDF,
   getDefaultTaxValues,
@@ -41,6 +42,7 @@ const {
   getCalculations,
   updateDefaultTaxValues,
   updateFlatRateExpenses,
+  getFlatRateExpenses,
   addCategories,
   getCategories,
 } = taxRatesController;
@@ -68,6 +70,7 @@ router.post('/member/resetMemberPassword', authenticate, memberResetPassword);
 // User
 router.get('/detail', authenticate, getUserProfile);
 router.get('/students', authenticate, getStudents);
+router.get('/getDefaultFlatRateExpense', authenticate, getFlatRateExpenses);
 router.post('/flatRateExpense', authenticate, updateFlatRateExpenses);
 router.post('/add-categories', authenticate, addCategories);
 router.get('/get-categories', authenticate, getCategories);
@@ -101,6 +104,7 @@ router.get('/', authenticate, getUsersList);
 // router.post('/fileUpload', authenticate, upload.array('files', 5), fileUpload);
 router.put('/member/:id/block', [authenticate, blockUserValidator], blockUser);
 router.post('/member/assign', authenticate, assignMemberOrStage);
+router.post('/assignStage', authenticate, assignStage);
 router.post('/member', [authenticate, createMemberValidator], createMember);
 router.put('/member/:id', [authenticate, updateMemberValidator], updateMember);
 router.delete('/member', authenticate, deleteMember);
