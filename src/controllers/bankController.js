@@ -199,7 +199,7 @@ exports.checkBankReceived = async (req, res, next) => {
             const { customerOfferCode } = (await UserService.fetchUserDetail(userId)) || {};
             console.log('customerOfferCode', customerOfferCode);
 
-            const {netRebate,VATAmount} = await BankServices.getKYCCalculations(
+            const {netRebate,trpFee,VATAmount} = await BankServices.getKYCCalculations(
               customerOfferCode,
               positiveTotalReceivedBankAmount
             );
@@ -208,6 +208,7 @@ exports.checkBankReceived = async (req, res, next) => {
               {
                 paymentStatus: initiate,
                 netRebate,
+                trpFee,
                 VATAmount,
               }
             );
@@ -670,7 +671,7 @@ checkBankReceivedCron = async () => {
             const { customerOfferCode } = (await UserService.fetchUserDetail(userId)) || {};
             console.log('customerOfferCode', customerOfferCode);
 
-            const {netRebate,VATAmount} = await BankServices.getKYCCalculations(
+            const {netRebate,trpFee,VATAmount} = await BankServices.getKYCCalculations(
               customerOfferCode,
               positiveTotalReceivedBankAmount
             );
@@ -679,6 +680,7 @@ checkBankReceivedCron = async () => {
               {
                 paymentStatus: initiate,
                 netRebate,
+                trpFee,
                 VATAmount
               }
             );
