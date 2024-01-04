@@ -195,12 +195,11 @@ exports.checkBankReceived = async (req, res, next) => {
             totalRefund
           );
 
-          let netRebate = 0;
           if (initiate !== 'noManualReview') {
             const { customerOfferCode } = (await UserService.fetchUserDetail(userId)) || {};
             console.log('customerOfferCode', customerOfferCode);
 
-            netRebate = await BankServices.getKYCCalculations(
+            const {netRebate,trpFee,VATAmount} = await BankServices.getKYCCalculations(
               customerOfferCode,
               positiveTotalReceivedBankAmount
             );
@@ -209,6 +208,8 @@ exports.checkBankReceived = async (req, res, next) => {
               {
                 paymentStatus: initiate,
                 netRebate,
+                trpFee,
+                VATAmount,
               }
             );
           }
@@ -458,7 +459,7 @@ exports.transfer = async (req, res, next) => {
     const headers = req.headers;
     console.log(req.body);
     const apiUrlPost = `${REVOLUT_URL}/pay`;
-    const data = await axios.post(apiUrlPost, payload, { headers });
+    const {data} = await axios.post(apiUrlPost, payload, { headers });
 
     sendAppResponse({
       res,
@@ -666,12 +667,11 @@ checkBankReceivedCron = async () => {
             totalRefund
           );
 
-          let netRebate = 0;
           if (initiate !== 'noManualReview') {
             const { customerOfferCode } = (await UserService.fetchUserDetail(userId)) || {};
             console.log('customerOfferCode', customerOfferCode);
 
-            netRebate = await BankServices.getKYCCalculations(
+            const {netRebate,trpFee,VATAmount} = await BankServices.getKYCCalculations(
               customerOfferCode,
               positiveTotalReceivedBankAmount
             );
@@ -680,6 +680,8 @@ checkBankReceivedCron = async () => {
               {
                 paymentStatus: initiate,
                 netRebate,
+                trpFee,
+                VATAmount
               }
             );
           }

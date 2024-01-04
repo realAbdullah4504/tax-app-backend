@@ -191,7 +191,7 @@ const BankServices = {
 
     const netRebate = totalBank - totalTrpFee;
     console.log("netRebate", netRebate);
-    return netRebate;
+    return { netRebate,trpFee,VATAmount: VATPrice };
   },
 
   async transferMoney(userId, payload, headers) {
