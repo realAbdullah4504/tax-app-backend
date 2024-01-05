@@ -326,7 +326,7 @@ const calculate = async (year, userId) => {
   //     ? 0
   //     : 1600 - (grossTaxableIncome - 7200) / 2;
   const carerCredit = grossIncomeUscSpouse
-    ? homeCarerCredit(child, elderlyRelativeCare, grossIncomeUscSpouse)
+    ? homeCarerCredit(child, elderlyRelativeCare, grossIncomeUscSpouse, homeCarer)
     : 0;
 
   console.log('carerCredit', carerCredit);
@@ -804,14 +804,14 @@ exports.getFlatRateExpenses = async (req, res, next) => {
 };
 
 //home care credit formula
-function homeCarerCredit(children, elderlyRelativeCare, grossIncomeUscSpouse) {
+function homeCarerCredit(children, elderlyRelativeCare, grossIncomeUscSpouse, homeCarer) {
   if (children > 0 || elderlyRelativeCare) {
     if (grossIncomeUscSpouse < 7200) {
-      return 1700;
+      return homeCarer;
     } else if (grossIncomeUscSpouse > 10600) {
       return 0;
     } else {
-      return 1700 - (grossIncomeUscSpouse - 7200) / 2;
+      return homeCarer - (grossIncomeUscSpouse - 7200) / 2;
     }
   } else {
     // Handle the case where the conditions are not met
