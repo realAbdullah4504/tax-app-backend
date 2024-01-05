@@ -318,12 +318,17 @@ const calculate = async (year, userId) => {
   // =IF(AND(E37>0,E128-((N2-E129)/2)>0),E128-((N2-E129)/2),0)
 
   let married1incomes = 100000;
-  let carerCredit =
-    grossTaxableIncome < 7200
-      ? 1600
-      : grossTaxableIncome > 10600
-      ? 0
-      : 1600 - (grossTaxableIncome - 7200) / 2;
+  let child = children?.length + incapacitatedChildrenDetails?.length;
+  // let carerCredit =
+  //   grossTaxableIncome < 7200
+  //     ? 1600
+  //     : grossTaxableIncome > 10600
+  //     ? 0
+  //     : 1600 - (grossTaxableIncome - 7200) / 2;
+  const carerCredit = grossIncomeUscSpouse
+    ? homeCarerCredit(child, elderlyRelativeCare, grossIncomeUscSpouse)
+    : 0;
+
   console.log('carerCredit', carerCredit);
 
   let incapacitatedChild = incapacitatedChildrenDetails?.length ? incapacitated : 0;
@@ -431,12 +436,13 @@ const calculate = async (year, userId) => {
       previouslyRefunded,
     }) => {
       if (healthYear === year) {
-        HealthExpenses +=
-          ((gpHospConsultant + prescriptions + nonRoutineDental + otherAmount) *
+        totalHealthExpenses +=
+          ((gpHospConsultant + prescriptions + nonRoutineDental - previouslyRefunded) *
             allowableHealthExpenses) /
           100;
-        homeCareExpenses = careHomeCarer * 0.4;
-        totalHealthExpenses = HealthExpenses + homeCareExpenses - previouslyRefunded;
+        // ((gpHospConsultant + prescriptions + nonRoutineDental) * allowableHealthExpenses) / 100;
+        // homeCareExpenses = careHomeCarer * 0.4;
+        // totalHealthExpenses = HealthExpenses - previouslyRefunded;
       }
     }
   );
@@ -796,3 +802,19 @@ exports.getFlatRateExpenses = async (req, res, next) => {
     next(error);
   }
 };
+
+//home care credit formula
+function homeCarerCredit(children, elderlyRelativeCare, grossIncomeUscSpouse) {
+  if (children > 0 || elderlyRelativeCare) {
+    if (grossIncomeUscSpouse < 7200) {
+      return 1700;
+    } else if (grossIncomeUscSpouse > 10600) {
+      return 0;
+    } else {
+      return 1700 - (grossIncomeUscSpouse - 7200) / 2;
+    }
+  } else {
+    // Handle the case where the conditions are not met
+    return 0;
+  }
+}
