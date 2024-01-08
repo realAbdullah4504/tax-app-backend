@@ -325,9 +325,10 @@ const calculate = async (year, userId) => {
   //     : grossTaxableIncome > 10600
   //     ? 0
   //     : 1600 - (grossTaxableIncome - 7200) / 2;
-  const carerCredit = grossIncomeUscSpouse
-    ? homeCarerCredit(child, elderlyRelativeCare, grossIncomeUscSpouse, homeCarer)
-    : 0;
+  const carerCredit =
+    type === 'married2Incomes' && grossIncomeUscSpouse
+      ? homeCarerCredit(child, elderlyRelativeCare, grossIncomeUscSpouse, homeCarer)
+      : 0;
 
   console.log('carerCredit', carerCredit);
 
