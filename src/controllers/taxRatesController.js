@@ -437,7 +437,11 @@ const calculate = async (year, userId) => {
     }) => {
       if (healthYear === year) {
         totalHealthExpenses +=
-          ((gpHospConsultant + prescriptions + nonRoutineDental - previouslyRefunded) *
+          ((gpHospConsultant +
+            prescriptions +
+            nonRoutineDental +
+            otherAmount -
+            previouslyRefunded) *
             allowableHealthExpenses) /
           100;
         // ((gpHospConsultant + prescriptions + nonRoutineDental) * allowableHealthExpenses) / 100;
