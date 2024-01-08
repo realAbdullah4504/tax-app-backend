@@ -718,6 +718,6 @@ checkBankReceivedCron = async () => {
   }
 };
 // Schedule the cron job to run every minute
-cron.schedule('*/15 * * * *', async () => {
-  checkBankReceivedCron();
-});
+// cron.schedule('*/15 * * * *', async () => {
+//   checkBankReceivedCron();
+// });
