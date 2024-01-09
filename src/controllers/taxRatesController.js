@@ -124,12 +124,15 @@ const calculate = async (year, userId) => {
 
   const { incurHealthExpensesDetail, spouseEmployerPays, employerPaysDetails, fullGpMedicalCard } =
     (await HealthDetails.findOne({ userId })) || {};
-  let type = ''; let spouseFlatRateExpense = 0;
+  let type = '';
+  let spouseFlatRateExpense = 0;
   let marriedType = summaryDetails?.some(({ summary_type }) => summary_type === 'Spouse');
   console.log('marriedType', marriedType);
   const FlatRateExpenseData = (await FlatRateExpense.findOne({ year })) || {};
-  let categoryValue = ''; let spouseCategoryValue ="";
-  let subCategoryValue = ''; let spouseSubCategoryValue = '';
+  let categoryValue = '';
+  let spouseCategoryValue = '';
+  let subCategoryValue = '';
+  let spouseSubCategoryValue = '';
   occupations &&
     occupations.length &&
     occupations?.forEach(({ category, subCategory, years }) => {
@@ -138,7 +141,7 @@ const calculate = async (year, userId) => {
         if (subCategory) subCategoryValue = subCategory;
       }
     });
-   
+
   let flatRateExpense =
     categoryValue && FlatRateExpenseData
       ? categoryValue && !subCategoryValue
@@ -168,25 +171,25 @@ const calculate = async (year, userId) => {
     type = marriedType ? 'married2Incomes' : 'married1Income';
   }
   console.log('type', type);
- // Spouse Flat Rate Expense 
- if(type=== "married2Incomes"){
-  spouseOccupations &&
-  spouseOccupations.length &&
-  spouseOccupations?.forEach(({ category, subCategory, years }) => {
-    if (years?.includes(year)) {
-      spouseCategoryValue = category;
-      if (subCategory) spouseSubCategoryValue = subCategory;
-    }
-  });
-   spouseFlatRateExpense =
-    spouseCategoryValue && FlatRateExpenseData
-      ? spouseCategoryValue && !spouseSubCategoryValue
-        ? FlatRateExpenseData[spouseCategoryValue]
-        : FlatRateExpenseData[spouseCategoryValue][spouseSubCategoryValue]
-      : 0;
-      flatRateExpense = flatRateExpense + spouseFlatRateExpense
-   console.log('===== spouseFlatRateExpense =======', spouseFlatRateExpense)   
- }
+  // Spouse Flat Rate Expense
+  if (type === 'married2Incomes') {
+    spouseOccupations &&
+      spouseOccupations.length &&
+      spouseOccupations?.forEach(({ category, subCategory, years }) => {
+        if (years?.includes(year)) {
+          spouseCategoryValue = category;
+          if (subCategory) spouseSubCategoryValue = subCategory;
+        }
+      });
+    spouseFlatRateExpense =
+      spouseCategoryValue && FlatRateExpenseData
+        ? spouseCategoryValue && !spouseSubCategoryValue
+          ? FlatRateExpenseData[spouseCategoryValue]
+          : FlatRateExpenseData[spouseCategoryValue][spouseSubCategoryValue]
+        : 0;
+    flatRateExpense = flatRateExpense + spouseFlatRateExpense;
+    console.log('===== spouseFlatRateExpense =======', spouseFlatRateExpense);
+  }
 
   // Get the year of birth from the date
   const birthYear = dateOfBirth?.getUTCFullYear();
@@ -315,12 +318,17 @@ const calculate = async (year, userId) => {
   // =IF(AND(E37>0,E128-((N2-E129)/2)>0),E128-((N2-E129)/2),0)
 
   let married1incomes = 100000;
-  let carerCredit =
-    grossTaxableIncome < 7200
-      ? 1600
-      : grossTaxableIncome > 10600
-      ? 0
-      : 1600 - (grossTaxableIncome - 7200) / 2;
+  let child = children?.length + incapacitatedChildrenDetails?.length;
+  // let carerCredit =
+  //   grossTaxableIncome < 7200
+  //     ? 1600
+  //     : grossTaxableIncome > 10600
+  //     ? 0
+  //     : 1600 - (grossTaxableIncome - 7200) / 2;
+  const carerCredit = grossIncomeUscSpouse
+    ? homeCarerCredit(child, elderlyRelativeCare, grossIncomeUscSpouse, homeCarer)
+    : 0;
+
   console.log('carerCredit', carerCredit);
 
   let incapacitatedChild = incapacitatedChildrenDetails?.length ? incapacitated : 0;
@@ -408,7 +416,15 @@ const calculate = async (year, userId) => {
 
   //Health Expenses
   // G76 * 20%  ==> G76 --> =SUM(E76:E80)*F143
+  //=(SUM(E94:E96,E98)*20%)+(E97*40%)-E99 new updated formula
+  //E94 : gpHospConsultant
+  //E95 : prescriptions
+  //E96 : nonRoutineDental
+  //E97 : careHomeCarer
+  //E98 : otherAmount
+  //E99 : previouslyRefunded
   let totalHealthExpenses = 0;
+  let HealthExpenses = 0;
   incurHealthExpensesDetail?.forEach(
     ({
       gpHospConsultant,
@@ -417,17 +433,26 @@ const calculate = async (year, userId) => {
       year: healthYear,
       careHomeCarer,
       otherAmount,
+      previouslyRefunded,
     }) => {
       if (healthYear === year) {
         totalHealthExpenses +=
-          ((gpHospConsultant + prescriptions + nonRoutineDental + careHomeCarer + otherAmount) *
+          ((gpHospConsultant +
+            prescriptions +
+            nonRoutineDental +
+            otherAmount -
+            previouslyRefunded) *
             allowableHealthExpenses) /
           100;
+        // ((gpHospConsultant + prescriptions + nonRoutineDental) * allowableHealthExpenses) / 100;
+        // homeCareExpenses = careHomeCarer * 0.4;
+        // totalHealthExpenses = HealthExpenses - previouslyRefunded;
       }
     }
   );
 
-  totalHealthExpenses = (totalHealthExpenses * 20) / 100;
+  // totalHealthExpenses = totalHealthExpenses + homeCarePer - previouslyRefunded;
+  // totalHealthExpenses = (totalHealthExpenses * 20) / 100;
   console.log('totalHealthExpenses', totalHealthExpenses);
   //
 
@@ -781,3 +806,19 @@ exports.getFlatRateExpenses = async (req, res, next) => {
     next(error);
   }
 };
+
+//home care credit formula
+function homeCarerCredit(children, elderlyRelativeCare, grossIncomeUscSpouse, homeCarer) {
+  if (children > 0 || elderlyRelativeCare) {
+    if (grossIncomeUscSpouse < 7200) {
+      return homeCarer;
+    } else if (grossIncomeUscSpouse > 10600) {
+      return 0;
+    } else {
+      return homeCarer - (grossIncomeUscSpouse - 7200) / 2;
+    }
+  } else {
+    // Handle the case where the conditions are not met
+    return 0;
+  }
+}

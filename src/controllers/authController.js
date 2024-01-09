@@ -147,7 +147,7 @@ exports.resendCode = async (req, res, next) => {
 };
 exports.forgetPassword = async (req, res, next) => {
   try {
-    const baseUrl = `${req.protocol}://${FORGET_PASSWORD_ROUTE}`;
+    const baseUrl = `${FORGET_PASSWORD_ROUTE}`;
 
     const resetTokenUrl = await UserService.forgotPasswordUser(req?.body?.email, baseUrl);
     const userData = await UserService.findUserByEmail(req?.body?.email);

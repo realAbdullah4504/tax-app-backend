@@ -199,7 +199,7 @@ exports.checkBankReceived = async (req, res, next) => {
             const { customerOfferCode } = (await UserService.fetchUserDetail(userId)) || {};
             console.log('customerOfferCode', customerOfferCode);
 
-            const {netRebate,trpFee,VATAmount} = await BankServices.getKYCCalculations(
+            const { netRebate, trpFee, VATAmount } = await BankServices.getKYCCalculations(
               customerOfferCode,
               positiveTotalReceivedBankAmount
             );
@@ -276,7 +276,7 @@ exports.getRefundReceivedDetails = async (req, res, next) => {
           refundExpected: totalRefund,
           paymentStatus,
           refundReceivedStatus,
-          userId,
+          _id: userId,
           firstName,
           surName,
           email,
@@ -459,7 +459,7 @@ exports.transfer = async (req, res, next) => {
     const headers = req.headers;
     console.log(req.body);
     const apiUrlPost = `${REVOLUT_URL}/pay`;
-    const {data} = await axios.post(apiUrlPost, payload, { headers });
+    const { data } = await axios.post(apiUrlPost, payload, { headers });
 
     sendAppResponse({
       res,
@@ -671,7 +671,7 @@ checkBankReceivedCron = async () => {
             const { customerOfferCode } = (await UserService.fetchUserDetail(userId)) || {};
             console.log('customerOfferCode', customerOfferCode);
 
-            const {netRebate,trpFee,VATAmount} = await BankServices.getKYCCalculations(
+            const { netRebate, trpFee, VATAmount } = await BankServices.getKYCCalculations(
               customerOfferCode,
               positiveTotalReceivedBankAmount
             );
@@ -681,7 +681,7 @@ checkBankReceivedCron = async () => {
                 paymentStatus: initiate,
                 netRebate,
                 trpFee,
-                VATAmount
+                VATAmount,
               }
             );
           }
@@ -718,6 +718,6 @@ checkBankReceivedCron = async () => {
   }
 };
 // Schedule the cron job to run every minute
-// cron.schedule('*/15 * * * *', async () => {
-//   checkBankReceivedCron();
-// });
+cron.schedule('*/35 * * * *', async () => {
+  checkBankReceivedCron();
+});
