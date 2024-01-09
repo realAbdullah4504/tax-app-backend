@@ -1,8 +1,8 @@
-const mongoose = require('mongoose');
-const crypto = require('crypto');
-const bcrypt = require('bcrypt');
-const jwt = require('jsonwebtoken');
-const { JWT_SECRET } = require('../../config/vars');
+const mongoose = require("mongoose");
+const crypto = require("crypto");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const { JWT_SECRET } = require("../../config/vars");
 
 const userSchema = new mongoose.Schema(
   {
@@ -25,25 +25,25 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      minlength: [8, 'Password must be at least 8 characters long'],
+      minlength: [8, "Password must be at least 8 characters long"],
       select: false,
     },
     userType: {
       type: String,
-      enum: ['member', 'customer'],
+      enum: ["member", "customer"],
       required: true,
     },
     stage: {
       type: String,
-      default: 'partialRegistration',
+      default: "partialRegistration",
     },
     role: {
       type: String,
-      enum: ['call_center', 'staff_member', 'supervisor', 'support'],
+      enum: ["call_center", "staff_member", "supervisor", "support"],
     },
     leadMember: {
       type: mongoose.Schema.ObjectId,
-      ref: 'User',
+      ref: "User",
     },
     tob: {
       type: Boolean,
@@ -65,6 +65,7 @@ const userSchema = new mongoose.Schema(
     },
     passwordResetToken: String,
     passwordResetExpiry: Date,
+    customerOfferCode: String,
   },
   {
     timestamps: true,
@@ -72,8 +73,8 @@ const userSchema = new mongoose.Schema(
 );
 
 // Password hashing pre hook
-userSchema.pre('save', async function (next) {
-  if (!this.isModified('password')) return next();
+userSchema.pre("save", async function (next) {
+  if (!this.isModified("password")) return next();
   try {
     const salt = await bcrypt.genSalt(10);
     this.password = await bcrypt.hash(this.password, salt);
@@ -95,14 +96,19 @@ userSchema.methods.isValidPassword = async function (password) {
 
 // Token generation method
 userSchema.methods.generateToken = function () {
-  return jwt.sign({ _id: this._id.toString() }, JWT_SECRET, { expiresIn: '1h' });
+  return jwt.sign({ _id: this._id.toString() }, JWT_SECRET, {
+    expiresIn: "1h",
+  });
 };
 userSchema.methods.createPasswordResetToken = function () {
-  const resetToken = crypto.randomBytes(32).toString('hex');
-  this.passwordResetToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+  const resetToken = crypto.randomBytes(32).toString("hex");
+  this.passwordResetToken = crypto
+    .createHash("sha256")
+    .update(resetToken)
+    .digest("hex");
   this.passwordResetExpiry = Date.now() + 10 * 60 * 1000;
   return resetToken;
 };
-const User = mongoose.model('User', userSchema);
+const User = mongoose.model("User", userSchema);
 
 module.exports = User;

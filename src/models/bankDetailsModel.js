@@ -20,6 +20,9 @@ const bankDetailsModel = new mongoose.Schema(
       default: "Cannot Initiate Payment",
     },
 
+    trpFee: Number,
+    VATAmount: Number,
+
   },
   {
     timestamps: true,
