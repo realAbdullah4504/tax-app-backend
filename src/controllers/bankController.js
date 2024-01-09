@@ -256,6 +256,9 @@ exports.getRefundReceivedDetails = async (req, res, next) => {
         accountTitle,
         paymentStatus,
         refundReceivedStatus,
+        trpFee,
+        VATAmount,
+        netRebate,
       } = detail;
 
       const { totalRefund, data: refundList } = await BankServices.getTotalRefundByUserId(userId);
@@ -272,8 +275,8 @@ exports.getRefundReceivedDetails = async (req, res, next) => {
           accountTitle,
           submittedDate,
           receivedDate,
-          totalRcvd: totalReceivedBankAmount,
-          refundExpected: totalRefund,
+          totalRcvd: totalReceivedBankAmount && totalReceivedBankAmount.toFixed(),
+          refundExpected: totalRefund && totalRefund.toFixed(),
           paymentStatus,
           refundReceivedStatus,
           _id: userId,
@@ -282,6 +285,9 @@ exports.getRefundReceivedDetails = async (req, res, next) => {
           email,
           phoneNumber,
           createdAt,
+          trpFee: trpFee && trpFee.toFixed(),
+          VATAmount: VATAmount && VATAmount.toFixed(),
+          netRebate: netRebate && netRebate.toFixed(),
         };
         results.push(details);
       }
