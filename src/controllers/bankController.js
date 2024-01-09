@@ -214,12 +214,27 @@ exports.checkBankReceived = async (req, res, next) => {
             );
           }
         }
-      } else if (paymentStatus !== 'noManualReview') {
+      } else if (
+        paymentStatus !== 'noManualReview' &&
+        paymentStatus !== 'completed' &&
+        paymentStatus !== 'failed'
+      ) {
         const transactions =
           (await BankServices.getTransactions(userId, submittedDate, headers, null)) || [];
 
         if (transactions.length) {
           console.log('transactions=================', transactions[0].state);
+          if (transactions[0].state === 'completed') {
+            await UserService.updatedUser({
+              id: userId,
+              data: { stage: 'completed' },
+            });
+          } else if (transactions[0].state === 'failed') {
+            await UserService.updatedUser({
+              id: userId,
+              data: { stage: 'failedTransactions' },
+            });
+          }
           const bankDetails =
             transactions.length &&
             (await BankDetails.findOneAndUpdate(

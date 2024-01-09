@@ -1,29 +1,24 @@
-const { ACCOUNT_REVOLUT, REVOLUT_URL } = require("../../config/vars");
-const AppError = require("../errors/AppError");
-const BankDefaultValues = require("../models/bankDefaultValues");
-const BankDetails = require("../models/bankDetailsModel");
-const TaxDetails = require("../models/calculationDetailsModel");
-const { default: axios } = require("axios");
-
+const { ACCOUNT_REVOLUT, REVOLUT_URL } = require('../../config/vars');
+const AppError = require('../errors/AppError');
+const BankDefaultValues = require('../models/bankDefaultValues');
+const BankDetails = require('../models/bankDetailsModel');
+const TaxDetails = require('../models/calculationDetailsModel');
+const { default: axios } = require('axios');
+const { UserService } = require('./userService');
 function getEndDate(submittedDate, receivedDate) {
-  const newReceivedDate = receivedDate
-    ? new Date(receivedDate.getTime() + 5)
-    : null;
+  const newReceivedDate = receivedDate ? new Date(receivedDate.getTime() + 5) : null;
 
   const startDate = newReceivedDate ? newReceivedDate : submittedDate;
   const year = new Date(submittedDate).getFullYear();
-  const endDate =
-    new Date().getFullYear() === year ? new Date() : new Date(`${year}-12-31`);
+  const endDate = new Date().getFullYear() === year ? new Date() : new Date(`${year}-12-31`);
 
   return { startDate, endDate };
 }
 
 const BankServices = {
-  async getTotalRefundByUserId(userId = "") {
+  async getTotalRefundByUserId(userId = '') {
     try {
-      const taxDetails = userId
-        ? await TaxDetails.find({ userId }).sort({ year: -1 })
-        : [];
+      const taxDetails = userId ? await TaxDetails.find({ userId }).sort({ year: -1 }) : [];
 
       let totalRefund = 0;
       const data = [];
@@ -58,15 +53,11 @@ const BankServices = {
 
   async createBeneficiaryDatabase(id, payload) {
     try {
-      const bankDetails = await BankDetails.findOneAndUpdate(
-        { userId: id },
-        payload,
-        {
-          runValidators: true,
-          upsert: true,
-          new: true,
-        }
-      );
+      const bankDetails = await BankDetails.findOneAndUpdate({ userId: id }, payload, {
+        runValidators: true,
+        upsert: true,
+        new: true,
+      });
 
       return bankDetails;
     } catch (error) {
@@ -78,7 +69,7 @@ const BankServices = {
     try {
       const apiUrlGet = `${REVOLUT_URL}/transactions`;
       const { startDate, endDate } = getEndDate(submittedDate, receivedDate);
-      console.log("startDate", startDate, "endDate", endDate);
+      console.log('startDate', startDate, 'endDate', endDate);
 
       const params = {
         from: startDate,
@@ -101,63 +92,58 @@ const BankServices = {
     }
   },
 
-  async saveBankDetails(
-    { userId, ppsn },
-    payload
-  ) {
+  async saveBankDetails({ userId, ppsn }, payload) {
     try {
-      const bankDetails = await BankDetails.findOneAndUpdate(
-        { userId, ppsn },
-        payload,
-        { new: true, upsert: true }
-      );
+      const bankDetails = await BankDetails.findOneAndUpdate({ userId, ppsn }, payload, {
+        new: true,
+        upsert: true,
+      });
       return bankDetails;
     } catch (error) {
-      console.error("Error updating bank details:", error.message);
+      console.error('Error updating bank details:', error.message);
       throw new AppError(error.message, 500);
     }
   },
 
   async validTransfer(totalBank, totalRefundAmount) {
     const bankDefaultValues = await BankDefaultValues.findOne({});
-    console.log("======================================");
+    console.log('======================================');
     const { errorBand, threshold, returnDifference } = bankDefaultValues || {};
     // console.log(bankDefaultValues);
     console.log(
-      "errorBand",
+      'errorBand',
       errorBand,
-      "threshold",
+      'threshold',
       threshold,
-      "returnDifference",
+      'returnDifference',
       returnDifference
     );
-    console.log("totalBank", totalBank, "totalRefundAmount", totalRefundAmount);
+    console.log('totalBank', totalBank, 'totalRefundAmount', totalRefundAmount);
 
-    const calculatedErrorBand =
-      (totalBank - totalRefundAmount) / totalRefundAmount;
+    const calculatedErrorBand = (totalBank - totalRefundAmount) / totalRefundAmount;
     const calculatedReturnDifference = totalBank - totalRefundAmount;
-    console.log("calculatedErrorBand", calculatedErrorBand);
-    console.log("calculatedReturnDifference", calculatedReturnDifference);
+    console.log('calculatedErrorBand', calculatedErrorBand);
+    console.log('calculatedReturnDifference', calculatedReturnDifference);
 
-    let initiate = "";
+    let initiate = '';
 
     if (totalRefundAmount < threshold) {
-      initiate = "initiate";
+      initiate = 'initiate';
     } else if (
       calculatedErrorBand < errorBand / 100 ||
       calculatedReturnDifference < returnDifference
     ) {
-      initiate = "noManualReview";
+      initiate = 'noManualReview';
     } else {
-      initiate = "initiate";
+      initiate = 'initiate';
     }
 
-    console.log("initiate", initiate);
+    console.log('initiate', initiate);
     return initiate;
   },
 
   async getKYCCalculations(customerOfferCode, totalBank) {
-    console.log("======================================");
+    console.log('======================================');
     const bankDefaultValues = await BankDefaultValues.findOne({});
     const { customerOfferCodes, VAT } = bankDefaultValues || {};
     const VATPercent = VAT / 100;
@@ -166,32 +152,32 @@ const BankServices = {
       (code) => code.customerOfferCode === customerOfferCode
     )?.value;
 
-    console.log("code", code);
-    
+    console.log('code', code);
+
     let trp = code ? code : 10;
-    console.log("trp", trp);
+    console.log('trp', trp);
 
     const trp1 = (trp / 100) * totalBank * (1 + VATPercent);
-    console.log("trp fee min", trp1);
+    console.log('trp fee min', trp1);
 
     const trp2 = 40 * (1 + VATPercent);
-    console.log("trp fee max", trp2);
+    console.log('trp fee max', trp2);
 
     const rebateNetValue = totalBank / (1 + VATPercent);
-    console.log("rebateNetValue", rebateNetValue);
+    console.log('rebateNetValue', rebateNetValue);
 
     const trpFee = Math.min(rebateNetValue, Math.max(trp1, trp2));
 
-    console.log("trpFee", trpFee);
+    console.log('trpFee', trpFee);
     const VATPrice = VATPercent * trpFee;
-    console.log("VATPrice", VATPrice);
+    console.log('VATPrice', VATPrice);
 
     const totalTrpFee = trpFee + VATPrice;
-    console.log("totalTrpFee", totalTrpFee);
+    console.log('totalTrpFee', totalTrpFee);
 
     const netRebate = totalBank - totalTrpFee;
-    console.log("netRebate", netRebate);
-    return { netRebate,trpFee,VATAmount: VATPrice };
+    console.log('netRebate', netRebate);
+    return { netRebate, trpFee, VATAmount: VATPrice };
   },
 
   async transferMoney(userId, payload, headers) {
@@ -200,16 +186,24 @@ const BankServices = {
       const { data } = await axios.post(apiUrlPost, payload, { headers });
 
       if (!data) {
-        throw new AppError("Transfer failed", 500);
+        throw new AppError('Transfer failed', 500);
       }
-      await BankDetails.findOneAndUpdate(
-        { userId },
-        { paymentStatus: "pending" }
-      );
+      await BankDetails.findOneAndUpdate({ userId }, { paymentStatus: data.state });
+      if (data?.state === 'completed') {
+        await UserService.updatedUser({
+          id: userId,
+          data: { stage: 'completed' },
+        });
+      } else if (data?.state === 'failed') {
+        await UserService.updatedUser({
+          id: userId,
+          data: { stage: 'failedTransactions' },
+        });
+      }
 
       return data;
     } catch (error) {
-      console.error("Error:", error);
+      console.error('Error:', error);
       throw new AppError(error.message, 500);
     }
   },
