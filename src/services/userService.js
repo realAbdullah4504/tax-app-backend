@@ -345,6 +345,36 @@ const UserService = {
         { name: 'Text3', text: userDetail.surName },
         { name: 'Text4', text: signedDate },
         { name: 'Name of Account Holder', text: 'Tax Rebate Pro' },
+        // { name: 'select preferred option', text: 'Tax Return Pro' },
+        // {
+        //   name: 'I confirm that this authorisation will remain in force until Revenue is formally notified of its',
+        //   text: 'Tax Return Pro',
+        // },
+        // {
+        //   name: 'due to me by the Revenue Commissioners by electronic funds transfer to the following bank',
+        //   text: 'Tax Return Pro',
+        // },
+        // {
+        //   name: 'insert name of tax agency on my behalf is refunded in a similar manner',
+        //   text: 'Tax Return Pro',
+        // },
+        // { name: 'same I understand that', text: 'Tax Return Pro' },
+        // { name: 'understand that my agent', text: 'Tax Return Pro' },
+        // { name: 'I understand and agree that', text: 'Tax Return Pro' },
+        // {
+        //   name: 'insert name of tax agency in respect of the services carried out on',
+        //   text: 'Tax Return Pro',
+        // },
+        // {
+        //   name: 'I confirm that I will provide the necessary documentation to',
+        //   text: 'Tax Return Pro',
+        // },
+        // { name: 'reliefs made to Revenue on my behalf by', text: 'Tax Return Pro' },
+        // {
+        //   name: 'I confirm that I will provide details of all my sources of income to',
+        //   text: 'Tax Return Pro',
+        // },
+        // { name: 'I understand that', text: 'Tax Return Pro' },
       ];
 
       pdfFieldData.forEach(({ name, text }) => {
@@ -434,26 +464,26 @@ const UserService = {
         throw new AppError('There are no children against this user.', 404);
       }
       const { children } = data || [];
-      return children ;
+      return children;
     } catch (error) {
       throw error;
     }
   },
 
-
   // Helper functions
-  getDOBText (dateOfBirth) {
-    if(!!dateOfBirth) {
+  getDOBText(dateOfBirth) {
+    if (!!dateOfBirth) {
       const dob = new Date(dateOfBirth);
       const dobDay = dob.getDate() < 10 ? `0${dob.getDate()}` : dob.getDate();
       const dobMonth = dob.getMonth() < 10 ? `0${dob.getMonth()}` : dob.getMonth();
       const dobyear = dob.getFullYear();
       const dobText = `${dobDay}${dobMonth}${dobyear}`;
       return dobText;
-    } return '';
+    }
+    return '';
   },
 
-  getSignatureDate () {
+  getSignatureDate() {
     const currentDate = new Date();
     const signDay =
       currentDate.getDate() < 10 ? `0${currentDate.getDate()}` : currentDate.getDate();
