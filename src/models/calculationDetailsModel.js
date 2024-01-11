@@ -34,6 +34,8 @@ const calculationDetail = new mongoose.Schema(
     homeCarer: Number, // carerCredit
     Incapacitation: Number, //incapacitatedChild
     elderlyRelative: Number, // totalElderlyRelativeCredit
+    nursingCredit: Number, // Nursing & Home carer Credit
+    nursingAdjustedBand: Number, //Nursing & Home carer adjusted Band
     tuition: Number, //totalFeesCourses
     rent: Number, //totalRent
     workFromHomePer: Number, //miscWorkFromHome

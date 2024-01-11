@@ -261,7 +261,7 @@ exports.checkBankReceived = async (req, res, next) => {
 };
 exports.getRefundReceivedDetails = async (req, res, next) => {
   try {
-    const data = await BankDetails.find({});
+    const data = await BankDetails.find({ paymentStatus: { $nin: ['completed'] } });
     let results = [];
     for (const detail of data) {
       const {
