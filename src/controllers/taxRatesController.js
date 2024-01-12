@@ -247,10 +247,42 @@ const calculate = async (year, userId) => {
 
   console.log('totalPriceWorkedFromHome', totalPriceWorkedFromHome);
 
+  //Nursnig home & Home carer credit
+  //=IF(E58="No",0,E59*20%)
+  //=IF(E63="No",0,MIN(E64,75000)*20%)
+  //=SUM('Questions for App'!G58,'Questions for App'!G63)
+  let nursingAmountOne = 0;
+  let nursingAmountTwo = 0;
+  let nursingAmount = 0;
+  let nursingAdjustedBand = 0;
+  let nursingDetailsObj1 = {};
+  let nursingDetailsObj2 = {};
+  if (isPayNursingHome) {
+    nursingDetailsObj1 = nursingDetail && nursingDetail.find((x) => x.year === year);
+
+    nursingAmountOne = nursingDetailsObj1?.amount;
+    nursingAmountOne = nursingAmountOne * 0.2;
+  }
+  if (isCarerExpense) {
+    nursingDetailsObj2 = carerExpenseDetail && carerExpenseDetail.find((x) => x.year === year);
+    nursingAmountTwo = nursingDetailsObj2?.netCost;
+    nursingAmountTwo = Math.min(nursingAmountTwo, 75000) * 0.2;
+  }
+  nursingAmount = nursingAmountOne + nursingAmountTwo;
+  console.log('Nursing Amount', nursingAmount);
+
+  //Adjusted Band for Nursing & Home carer Expense
+  //=SUM('Questions for App'!E59,'Questions for App'!E64)
+  //=SUM('Questions for App'!E59,MIN('Questions for App'!E64,75000)) new
+  nursingAdjustedBand =
+    (nursingDetailsObj1?.amount || 0) + Math.min(nursingDetailsObj2?.netCost || 0, 75000);
+  console.log('Nursing nursingAdjustedBand', nursingAdjustedBand);
+
   const adjustedBand =
     over65Exemption +
     standardRateBand +
     totalPension +
+    nursingAdjustedBand +
     totalIncomeProtection +
     (flatRateExpense || 0) +
     (totalPriceWorkedFromHome || 0); //=SUM(D15:D19)
@@ -354,34 +386,6 @@ const calculate = async (year, userId) => {
     });
   }
   console.log('totalElderlyRelativeCredit', totalElderlyRelativeCredit);
-  //Nursnig home & Home carer credit
-  //=IF(E58="No",0,E59*20%)
-  //=IF(E63="No",0,MIN(E64,75000)*20%)
-  //=SUM('Questions for App'!G58,'Questions for App'!G63)
-  let nursingAmountOne = 0;
-  let nursingAmountTwo = 0;
-  let nursingAmount = 0;
-  let nursingAdjustedBand = 0;
-  let nursingDetailsObj1 = {};
-  let nursingDetailsObj2 = {};
-  if (isPayNursingHome) {
-    nursingDetailsObj1 = nursingDetail && nursingDetail.find((x) => x.year === year);
-
-    nursingAmountOne = nursingDetailsObj1?.amount;
-    nursingAmountOne = nursingAmountOne * 0.2;
-  }
-  if (isCarerExpense) {
-    nursingDetailsObj2 = carerExpenseDetail && carerExpenseDetail.find((x) => x.year === year);
-    nursingAmountTwo = nursingDetailsObj2?.netCost;
-    nursingAmountTwo = Math.min(nursingAmountTwo, 75000) * 0.2;
-  }
-  nursingAmount = nursingAmountOne + nursingAmountTwo;
-  console.log('Nursing Amount', nursingAmount);
-
-  //Adjusted Band for Nursing & Home carer Expense
-  //=SUM('Questions for App'!E59,'Questions for App'!E64)
-  nursingAdjustedBand = (nursingDetailsObj1?.amount || 0) + (nursingDetailsObj2?.netCost || 0);
-  console.log('Nursing nursingAdjustedBand', nursingAdjustedBand);
 
   //TOTAL FEE FOR ALL COURSES FORMULA                                                                                                                                                                                                   \\\\\\\\\\\\\\\
   let totalFeesCourses = 0;
@@ -541,6 +545,7 @@ const calculate = async (year, userId) => {
     carerCredit +
     incapacitatedChild +
     totalElderlyRelativeCredit +
+    nursingAmount +
     totalFeesCourses +
     totalRent +
     miscWorkFromHome +
