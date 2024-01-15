@@ -330,6 +330,7 @@ const UserService = {
 
       const form = pdfDoc.getForm();
       const dobText = this.getDOBText(personalDetail?.dateOfBirth);
+      // const currentDate = this.getDOBText(personalDetail?.dateOfBirth);
       const signedDate = this.getSignatureDate();
 
       const pdfFieldData = [
@@ -345,37 +346,38 @@ const UserService = {
         { name: 'undefined_8', text: 'REVOIE23' },
         { name: 'Text3', text: userDetail.surName },
         { name: 'Text4', text: signedDate },
+        { name: 'Text5', text: signedDate },
         { name: 'Name of Account Holder', text: 'Tax Rebate Pro' },
         // { name: 'select preferred option', text: 'Tax Return Pro' },
-        // {
-        //   name: 'I confirm that this authorisation will remain in force until Revenue is formally notified of its',
-        //   text: 'Tax Return Pro',
-        // },
-        // {
-        //   name: 'due to me by the Revenue Commissioners by electronic funds transfer to the following bank',
-        //   text: 'Tax Return Pro',
-        // },
-        // {
-        //   name: 'insert name of tax agency on my behalf is refunded in a similar manner',
-        //   text: 'Tax Return Pro',
-        // },
-        // { name: 'same I understand that', text: 'Tax Return Pro' },
-        // { name: 'understand that my agent', text: 'Tax Return Pro' },
-        // { name: 'I understand and agree that', text: 'Tax Return Pro' },
-        // {
-        //   name: 'insert name of tax agency in respect of the services carried out on',
-        //   text: 'Tax Return Pro',
-        // },
-        // {
-        //   name: 'I confirm that I will provide the necessary documentation to',
-        //   text: 'Tax Return Pro',
-        // },
-        // { name: 'reliefs made to Revenue on my behalf by', text: 'Tax Return Pro' },
-        // {
-        //   name: 'I confirm that I will provide details of all my sources of income to',
-        //   text: 'Tax Return Pro',
-        // },
-        // { name: 'I understand that', text: 'Tax Return Pro' },
+        {
+          name: 'I confirm that this authorisation will remain in force until Revenue is formally notified of its',
+          text: 'Tax Return Pro',
+        },
+        {
+          name: 'due to me by the Revenue Commissioners by electronic funds transfer to the following bank',
+          text: 'Tax Return Pro',
+        },
+        {
+          name: 'insert name of tax agency on my behalf is refunded in a similar manner',
+          text: 'Tax Return Pro',
+        },
+        { name: 'same I understand that', text: 'Tax Return Pro' },
+        { name: 'understand that my agent', text: 'Tax Return Pro' },
+        { name: 'I understand and agree that', text: 'Tax Return Pro' },
+        {
+          name: 'insert name of tax agency in respect of the services carried out on',
+          text: 'Tax Return Pro',
+        },
+        {
+          name: 'I confirm that I will provide the necessary documentation to',
+          text: 'Tax Return Pro',
+        },
+        { name: 'reliefs made to Revenue on my behalf by', text: 'Tax Return Pro' },
+        {
+          name: 'I confirm that I will provide details of all my sources of income to',
+          text: 'Tax Return Pro',
+        },
+        { name: 'I understand that', text: 'Tax Return Pro' },
       ];
 
       pdfFieldData.forEach(({ name, text }) => {
