@@ -39,7 +39,7 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ['call_center', 'staff_member', 'supervisor', 'support'],
+      enum: ['call_center', 'staff_member', 'supervisor', 'support', 'admin'],
     },
     leadMember: {
       type: mongoose.Schema.ObjectId,
