@@ -16,7 +16,7 @@ const User = require('../../models/userModel');
 module.exports = async()=>{
     try {
         const adminUser = await User.findOne({role:'admin'});
-        if(!adminUser){
+         if(!adminUser){
           await  User.create(adminDetails);
         }
     } catch (error) {

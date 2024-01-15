@@ -44,7 +44,7 @@ const createMemberValidator = [
   body('role')
     .notEmpty()
     .withMessage('role is required')
-    .isIn(['call_center', 'staff_member', 'supervisor', 'support'])
+    .isIn(['call_center', 'staff_member', 'supervisor', 'support','admin'])
     .withMessage('role must be [call_center |staff_member|supervisor|support]'),
 ];
 

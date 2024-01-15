@@ -45,6 +45,7 @@ const getSchemaByType = (type) => {
 };
 const UserService = {
   async registerUser(userData) {
+    console.log(userData);
     try {
       const user = new User(userData);
       const resp = await user.save();
