@@ -260,12 +260,12 @@ const calculate = async (year, userId) => {
   if (isPayNursingHome) {
     nursingDetailsObj1 = nursingDetail && nursingDetail.find((x) => x.year === year);
 
-    nursingAmountOne = nursingDetailsObj1?.amount;
+    nursingAmountOne = valueConverter(nursingDetailsObj1?.amount);
     nursingAmountOne = nursingAmountOne * 0.2;
   }
   if (isCarerExpense) {
     nursingDetailsObj2 = carerExpenseDetail && carerExpenseDetail.find((x) => x.year === year);
-    nursingAmountTwo = nursingDetailsObj2?.netCost;
+    nursingAmountTwo = valueConverter(nursingDetailsObj2?.netCost);
     nursingAmountTwo = Math.min(nursingAmountTwo, 75000) * 0.2;
   }
   nursingAmount = nursingAmountOne + nursingAmountTwo;
