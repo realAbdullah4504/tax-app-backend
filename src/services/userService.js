@@ -212,8 +212,13 @@ const UserService = {
    * Fetch users list
    * @param {*} type
    */
-  async fetchUsersList(type, filters) {
-    const { firstName, lastName, email, stage, member } = filters;
+  async fetchUsersList(queryParams) {
+    const { firstName, lastName, email, stage, member, type } = queryParams;
+    let { page, pageSize, sortField, sortOrder } = queryParams;
+    page = parseInt(page) || 1;
+    pageSize = parseInt(pageSize) || 10;
+    sortField = sortField || 'name';
+    sortOrder = sortOrder === 'desc' ? -1 : 1;
     const query = {
       ...(firstName && { firstName: new RegExp(firstName, 'i') }),
       ...(lastName && { surName: new RegExp(lastName, 'i') }),
@@ -222,7 +227,15 @@ const UserService = {
       ...(stage && { stage: new RegExp(stage, 'i') }),
       ...(member && { leadMember: member }),
     };
-    return await User.find(query);
+    const totalDocuments = await User.countDocuments(query);
+    const users = await User.find(query)
+      .skip((page - 1) * pageSize)
+      .limit(pageSize)
+      .sort({ [sortField]: sortOrder });
+    return {
+      data: users,
+      totalRecord: totalDocuments,
+    };
   },
 
   /**
