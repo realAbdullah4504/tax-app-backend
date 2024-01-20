@@ -819,7 +819,12 @@ exports.addCategories = async (req, res, next) => {
 
 exports.getCategories = async (req, res, next) => {
   try {
-    const data = await Category.find({});
+    const data = await Category.find({}).sort({label:1}) .populate({
+      path: 'subcategories',
+      options: {
+          sort: { label: 1 }  // sort subcategories alphabetically within each 
+      }
+  });
     sendAppResponse({
       res,
       data,
