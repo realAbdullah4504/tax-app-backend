@@ -13,6 +13,7 @@ const IncapacitatedChildrenDetails = {
   incapacityNature: String,
   dateOfBirth: Date,
   ppsn: String,
+  permanentIncapacity: String,
 };
 const studentDetail = {
   id: Number,
@@ -24,7 +25,7 @@ const studentDetail = {
 };
 const elderlyRelativeDetail = {
   id: Number,
-  name: String,
+  dateOfBirth: Date,
   ppsn: String,
   annualIncome: Number,
   liveInOrWithin2Km: String,
