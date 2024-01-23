@@ -17,6 +17,7 @@ const {
   paymentDetails,
   getRefundDetails,
   saveDefaultValues,
+  saveBankDetail,
   getRefundReceivedDetails
 } = bankController;
 
@@ -31,6 +32,7 @@ router.post(
   createBeneficiary
 );
 router.post("/saveDefaultValues", saveDefaultValues);
+router.post("/saveBankDetail",authenticate, saveBankDetail);
 router.get(
   "/checkBankReceived",
   authenticate,

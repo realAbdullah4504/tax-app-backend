@@ -35,6 +35,26 @@ exports.saveDefaultValues = async (req, res, next) => {
     next(error);
   }
 };
+exports.saveBankDetail = async (req, res, next) => {
+  const userId = req?.user?._id;
+  console.log('============', userId, req.body)
+  try {
+    const data = await BankDetails.findOneAndUpdate(userId, req?.body, {
+      upsert: true,
+      new: true,
+    });
+    sendAppResponse({
+      res,
+      data,
+      statusCode: 200,
+      status: 'success',
+      message: 'Bank Detail saved successfully.',
+    });
+  } catch (error) {
+    console.error(error);
+    next(error);
+  }
+};
 exports.getUserBankDetails = async (req, res, next) => {
   try {
     const { userId } = req?.query || '';
