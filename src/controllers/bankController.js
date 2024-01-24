@@ -1,4 +1,4 @@
-const { NetworkContextImpl } = require('twilio/lib/rest/supersim/v1/network');
+const mongoose = require('mongoose');
 const sendAppResponse = require('../utils/helper/appResponse');
 const cron = require('node-cron');
 const axios = require('axios');
@@ -37,12 +37,12 @@ exports.saveDefaultValues = async (req, res, next) => {
 };
 exports.saveBankDetail = async (req, res, next) => {
   const userId = req?.user?._id;
-  console.log('============', userId, req.body)
   try {
-    const data = await BankDetails.findOneAndUpdate(userId, req?.body, {
-      upsert: true,
-      new: true,
-    });
+    const data = await BankDetails.findOneAndUpdate(
+      { userId: new mongoose.Types.ObjectId(userId) }, // Correct query condition
+      req?.body,
+      { upsert: true, new: true }
+    );
     sendAppResponse({
       res,
       data,
