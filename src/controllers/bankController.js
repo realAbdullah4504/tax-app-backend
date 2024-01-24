@@ -37,7 +37,7 @@ exports.saveDefaultValues = async (req, res, next) => {
 };
 exports.saveBankDetail = async (req, res, next) => {
   const userId = req?.user?._id;
-  console.log('============', userId, req.body)
+  console.log('============', userId, req.body);
   try {
     const data = await BankDetails.findOneAndUpdate(userId, req?.body, {
       upsert: true,
@@ -341,7 +341,6 @@ exports.getRefundReceivedDetails = async (req, res, next) => {
 exports.transferMoney = async (req, res, next) => {
   try {
     const { userId } = req.params;
-    // console.log("userId", userId);
     const headers = req.headers;
 
     const accountDetails = await BankDetails.findOne({ userId });
