@@ -341,7 +341,6 @@ exports.getRefundReceivedDetails = async (req, res, next) => {
 exports.transferMoney = async (req, res, next) => {
   try {
     const { userId } = req.params;
-    // console.log("userId", userId);
     const headers = req.headers;
 
     const accountDetails = await BankDetails.findOne({ userId });
