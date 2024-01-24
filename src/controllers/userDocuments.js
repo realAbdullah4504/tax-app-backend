@@ -21,12 +21,22 @@ exports.fileUpload = async (req, res, next) => {
       const {user}=req.query;
       const userId=user ||req.user._id;
       const resp = await userDocumentService.getUserFiles(userId);
-      sendAppResponse({
-        res,
-        data: resp,
-        statusCode: 200,
-        status: "success",
-      });
+      if (!resp || !resp?.length) {
+        sendAppResponse({
+          res,
+          data: [],
+          message:"User files not found",
+          statusCode: 404,
+          status: "success",
+        });
+      } else{
+        sendAppResponse({
+          res,
+          data: resp,
+          statusCode: 200,
+          status: "success",
+        });
+      }
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: "Error retrieving user file information" });

@@ -87,9 +87,6 @@ const userDocumentService = {
   async getUserFiles(userId) {
     try {
       const userDocuments = await UserDocuments.findOne({ userId });
-      if (!userDocuments) {
-        return res.status(404).json({ error: 'User file not found' });
-      }
       // Get the list of filenames from the user's document
       // const fileNames = userFile.fileName;
       // const objectKeys = fileNames.map((item) => `${prefix}${item?.name}`);
