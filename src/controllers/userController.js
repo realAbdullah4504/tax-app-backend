@@ -1,4 +1,5 @@
 const User = require('../models/userModel');
+const PersonalInfo = require('../models/personalDetailsModel');
 const TaxDefaultValuesModel = require('../models/taxDefaultValuesModel');
 const { validationResult } = require('express-validator');
 const AppError = require('../errors/AppError');
@@ -68,14 +69,38 @@ exports.updateUserDetail = async (req, res, next) => {
 
 exports.getUsersList = async (req, res, next) => {
   try {
-    const users = await UserService.fetchUsersList(req.query);
-    sendAppResponse({
-      res,
-      data: users,
-      statusCode: 200,
-      status: 'success',
-      message: 'Users list',
-    });
+    const { data: users } = await UserService.fetchUsersList(req.query);
+    if(Array.isArray(users) && users.length){
+      async function fetchPersonalData(userId) {
+        try {
+          const personalData = await PersonalInfo.findOne({ userId });
+          const {dateOfBirth, ppsn} = personalData || {};
+          return {dateOfBirth, ppsn};
+        } catch (error) {
+          console.error(`Failed to fetch personal data for user ${userId}:`, error);
+          return {};
+        }
+      }
+      try {
+        const results = await Promise.all(users.map(async(user) => {
+          const {_id, firstName, surName, email, createAt} = user || {};
+          const userData = {_id, firstName, surName, email, registrationDate:createAt};
+          const personalData = await fetchPersonalData(_id);
+          return personalData ? {...userData, ...personalData} : userData;
+        }));
+
+        sendAppResponse({
+          res,
+          data: results,
+          statusCode: 200,
+          status: 'success',
+          message: 'Users list',
+        });
+      } catch (error) {
+        console.error('Failed to fetch user list:', error);
+        next(error);
+      }
+    }
   } catch (error) {
     next(error);
   }
